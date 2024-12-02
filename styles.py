@@ -88,5 +88,77 @@ def load_styles():
             font-weight: 600;
             margin-bottom: 8px;
         }
+        
+        /* Note styling */
+        .note-cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 40px;
+            margin: 0 auto;
+        }
+        
+        .note-icon {
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .note-icon.empty {
+            border: 2px dashed #ccc;
+            color: #ccc;
+        }
+        
+        .note-icon.filled {
+            background-color: #1f77b4;
+            color: white;
+            border: none;
+        }
+        
+        .note-icon:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Note popup styling */
+        .note-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            width: 300px;
+        }
+        
+        .note-popup textarea {
+            width: 100%;
+            min-height: 100px;
+            margin: 10px 0;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        
+        .note-popup-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        /* Make note column more compact */
+        [data-testid="column"]:nth-child(9) {
+            max-width: 60px !important;
+            padding: 0 !important;
+        }
         </style>
     """

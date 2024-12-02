@@ -180,6 +180,15 @@ def show_client_dashboard():
             for payment in payments:
                 provider_name = payment[0] or "N/A"
                 
+                # Format currency values
+                def format_currency(value):
+                    try:
+                        if value is None or value == "":
+                            return "N/A"
+                        return f"${float(value):,.2f}"
+                    except (ValueError, TypeError):
+                        return "N/A"
+                
                 # Format payment period
                 if payment[1] == payment[3] and payment[2] == payment[4]:
                     period = f"Q{payment[1]} {payment[2]}"
@@ -197,16 +206,19 @@ def show_client_dashboard():
                     except:
                         received_date = payment[6]
                 
-                # Format currency values
-                total_assets = f"${payment[7]:,.2f}" if payment[7] else "N/A"
-                expected_fee = f"${payment[8]:,.2f}" if payment[8] is not None else "N/A"
-                actual_fee = f"${payment[9]:,.2f}" if payment[9] is not None else "N/A"
+                # Format all currency values using the helper function
+                total_assets = format_currency(payment[7])
+                expected_fee = format_currency(payment[8])
+                actual_fee = format_currency(payment[9])
                 
                 # Calculate fee discrepancy
-                if payment[8] is not None and payment[9] is not None:
-                    discrepancy = payment[9] - payment[8]
-                    discrepancy_str = f"${discrepancy:,.2f}" if discrepancy >= 0 else f"-${abs(discrepancy):,.2f}"
-                else:
+                try:
+                    if payment[8] is not None and payment[9] is not None and payment[8] != "" and payment[9] != "":
+                        discrepancy = float(payment[9]) - float(payment[8])
+                        discrepancy_str = f"${discrepancy:,.2f}" if discrepancy >= 0 else f"-${abs(discrepancy):,.2f}"
+                    else:
+                        discrepancy_str = "N/A"
+                except (ValueError, TypeError):
                     discrepancy_str = "N/A"
                 
                 # Notes with edit functionality
@@ -232,12 +244,66 @@ def show_client_dashboard():
             # Function to handle note updates
             def handle_note_edit(payment_id, new_note):
                 update_payment_note(payment_id, new_note)
-                st.success("Note updated successfully!")
-                time.sleep(0.5)
+                # Clear the active note state
+                if 'active_note_payment_id' in st.session_state:
+                    del st.session_state.active_note_payment_id
                 st.rerun()
             
+            def render_note_cell(payment_id, note):
+                # Initialize session state for this note's popup if not exists
+                if f"show_note_popup_{payment_id}" not in st.session_state:
+                    st.session_state[f"show_note_popup_{payment_id}"] = False
+                
+                has_note = bool(note)
+                icon_content = "💬" if has_note else "⭕"
+                
+                # Create the note button with tooltip
+                if st.button(
+                    icon_content, 
+                    key=f"note_button_{payment_id}",
+                    help=note if has_note else "Add note",
+                    use_container_width=False
+                ):
+                    # Auto-save if there's an active note and we're switching to a different one
+                    if 'active_note_payment_id' in st.session_state:
+                        active_id = st.session_state.active_note_payment_id
+                        if active_id != payment_id and f"note_textarea_{active_id}" in st.session_state:
+                            handle_note_edit(active_id, st.session_state[f"note_textarea_{active_id}"])
+                    
+                    # Toggle the note form
+                    if 'active_note_payment_id' in st.session_state and st.session_state.active_note_payment_id == payment_id:
+                        # Auto-save on toggle off
+                        if f"note_textarea_{payment_id}" in st.session_state:
+                            handle_note_edit(payment_id, st.session_state[f"note_textarea_{payment_id}"])
+                        del st.session_state.active_note_payment_id
+                    else:
+                        st.session_state.active_note_payment_id = payment_id
+                    st.rerun()
+                
+                # Style the button
+                st.markdown(f"""
+                    <style>
+                        [data-testid="baseButton-secondary"]:has(div[key="note_button_{payment_id}"]) {{
+                            width: 32px !important;
+                            height: 32px !important;
+                            padding: 0 !important;
+                            border-radius: 50% !important;
+                            display: flex !important;
+                            align-items: center !important;
+                            justify-content: center !important;
+                            background: transparent !important;
+                            border: {has_note and "none" or "2px dashed #ccc"} !important;
+                            color: {has_note and "#1f77b4" or "#ccc"} !important;
+                            margin: 0 auto !important;
+                        }}
+                    </style>
+                """, unsafe_allow_html=True)
+            
+            # Create a container for the full-width note form
+            note_form_container = st.container()
+            
             # Display column headers
-            header_cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 3])
+            header_cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1])
             with header_cols[0]:
                 st.markdown('<p class="payment-header">Provider</p>', unsafe_allow_html=True)
             with header_cols[1]:
@@ -257,32 +323,49 @@ def show_client_dashboard():
             with header_cols[8]:
                 st.markdown('<p class="payment-header">Notes</p>', unsafe_allow_html=True)
             
-            # Display each row with editable notes
+            # Display each row with note icons
             for index, row in df.iterrows():
-                cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 3])
-                
-                with cols[0]:
-                    st.write(row["Provider"])
-                with cols[1]:
-                    st.write(row["Period"])
-                with cols[2]:
-                    st.write(row["Frequency"])
-                with cols[3]:
-                    st.write(row["Received"])
-                with cols[4]:
-                    st.write(row["Total Assets"])
-                with cols[5]:
-                    st.write(row["Expected Fee"])
-                with cols[6]:
-                    st.write(row["Actual Fee"])
-                with cols[7]:
-                    st.write(row["Discrepancy"])
-                with cols[8]:
-                    new_note = st.text_input(
-                        "Notes",
-                        value=row["Notes"],
-                        key=f"note_{row['payment_id']}",
-                        label_visibility="collapsed"
-                    )
-                    if new_note != row["Notes"]:
-                        handle_note_edit(row["payment_id"], new_note)
+                row_container = st.container()
+                with row_container:
+                    cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1])
+                    
+                    with cols[0]:
+                        st.write(row["Provider"])
+                    with cols[1]:
+                        st.write(row["Period"])
+                    with cols[2]:
+                        st.write(row["Frequency"])
+                    with cols[3]:
+                        st.write(row["Received"])
+                    with cols[4]:
+                        st.write(row["Total Assets"])
+                    with cols[5]:
+                        st.write(row["Expected Fee"])
+                    with cols[6]:
+                        st.write(row["Actual Fee"])
+                    with cols[7]:
+                        st.write(row["Discrepancy"])
+                    with cols[8]:
+                        render_note_cell(row["payment_id"], row["Notes"])
+                    
+                    # If this is the active note row, render the full-width form
+                    if (
+                        'active_note_payment_id' in st.session_state 
+                        and st.session_state.active_note_payment_id == row["payment_id"]
+                    ):
+                        with st.container():
+                            # Create columns to position the note field
+                            note_cols = st.columns([7, 9])  # 7 units for spacing, 9 for the note
+                            
+                            # Use the second column for the note
+                            with note_cols[1]:
+                                st.markdown(f"""<div style="border-top: 1px solid #eee; padding-top: 0.5rem;"></div>""", unsafe_allow_html=True)
+                                
+                                # Note input starting from middle of table
+                                st.text_area(
+                                    f"Note for {row['Provider']} - {row['Period']}",
+                                    value=row["Notes"] or "",
+                                    key=f"note_textarea_{row['payment_id']}",
+                                    height=100,
+                                    placeholder="Enter note here..."
+                                )

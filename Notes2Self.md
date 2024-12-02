@@ -1,18 +1,31 @@
-# Project Notes
+# Notes2Self
 
-## Project Structure
-- Modular organization with identical functionality to original version
-- CSS is centralized in app.py for consistent styling across all pages
-- Files:
-  - `app.py`: Main entry point with CSS and page routing
-  - `sidebar.py`: Navigation sidebar component
-  - `pages/`:
-    - `quarterly_summary.py`: Quarterly Summary page
-    - `client_dashboard.py`: Client dashboard with metrics and payment history
-    - `manage_clients.py`: Client management page
-    - `bulk_payment_entry.py`: Bulk payment entry page
+## Project: 401K Payment Tracker
+- This is a Streamlit app for tracking 401K payments and client information
+- Uses SQLite database for data storage
+
+## Recent Changes
+- Improved notes functionality in payment history table
+- Switched to native Streamlit components for note editing
+- Using 📝 icon for existing notes and ⭕ for empty notes
+- Fixed note entry modal width (now uses 80% of screen width)
+- Keeping UI clean by minimizing space used for notes column
+- Added context information to note modal
 
 ## User Preferences
-- Prefers clean code with minimal comments
-- CSS is kept in app.py to ensure styles are loaded at startup
-- Functionality is identical to the original version
+- Prefers clean UI with minimal distractions
+- Wants easy access to notes without cluttering the interface
+- Values quick editing capabilities
+- Needs adequate space for note entry
+
+## Technical Notes
+- Using Streamlit's native components for better compatibility
+- Implemented in-place note editing with session state
+- Using column-based layout for proper modal width control
+- Keeping implementations simple and reliable
+
+## TODO
+- Consider adding character limit to notes
+- Maybe add timestamp for note modifications
+- Could add note history feature in future
+- Consider adding note templates or quick-add options
