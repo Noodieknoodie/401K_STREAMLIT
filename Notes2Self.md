@@ -15,7 +15,7 @@ The app has been modularized into the following components:
 ## User Preferences
 - Prefers clean code with minimal comments
 - CSS is kept within individual files as needed, no global CSS file
-- Functionality should remain identical to the original monolithic version
+
 
 ## Database Structure
 The app uses SQLite with the following tables:
