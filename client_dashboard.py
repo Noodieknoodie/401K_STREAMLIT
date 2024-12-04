@@ -10,180 +10,16 @@ from utils import (
     format_phone_number_ui, format_phone_number_db, validate_phone_number
 )
 
-def init_contact_state():
-    """Initialize contact form state"""
-    if 'contact_state' not in st.session_state:
-        reset_contact_state()
-
-def reset_contact_state():
-    """Reset contact form state"""
-    st.session_state.contact_state = {
-        'show_dialog': False,
-        'client_id': None,
-        'contact_type': None,
-        'form_data': {
-            'name': '',
-            'phone': '',
-            'fax': '',
-            'email': '',
-            'physical_address': '',
-            'mailing_address': ''
-        },
-        'show_confirm': False,
-        'pending_action': None  # Track pending state changes
-    }
-
-def update_contact_state(**kwargs):
-    """Atomic update of contact state"""
-    if 'contact_state' not in st.session_state:
-        init_contact_state()
-    st.session_state.contact_state.update(kwargs)
-
-def has_form_data():
-    """Check if any field has data"""
-    return any(
-        value.strip() 
-        for value in st.session_state.contact_state['form_data'].values()
-    )
-
-@st.dialog("Add Contact")
-def contact_modal():
-    """Display the contact form modal"""
-    # Only show if explicitly enabled
-    if not st.session_state.contact_state['show_dialog']:
-        return False
-    
-    # Handle any pending actions
-    if st.session_state.contact_state.get('pending_action') == 'close':
-        reset_contact_state()
-        st.rerun()
-        return False
-    
-    st.subheader(f"Add {st.session_state.contact_state['contact_type']}")
-
-    # Form fields with state persistence
-    name = st.text_input(
-        "Name",
-        value=st.session_state.contact_state['form_data']['name']
-    )
-    
-    # Phone with formatting
-    phone_input = st.text_input(
-        "Phone",
-        value=st.session_state.contact_state['form_data']['phone'],
-        help="Enter 10 digits for automatic formatting"
-    )
-    phone = format_phone_number_ui(phone_input) if phone_input else ""
-        
-    # Fax with formatting
-    fax_input = st.text_input(
-        "Fax",
-        value=st.session_state.contact_state['form_data']['fax'],
-        help="Enter 10 digits for automatic formatting"
-    )
-    fax = format_phone_number_ui(fax_input) if fax_input else ""
-        
-    email = st.text_input(
-        "Email",
-        value=st.session_state.contact_state['form_data']['email']
-    )
-    physical_address = st.text_area(
-        "Physical Address",
-        value=st.session_state.contact_state['form_data']['physical_address']
-    )
-    mailing_address = st.text_area(
-        "Mailing Address",
-        value=st.session_state.contact_state['form_data']['mailing_address']
-    )
-
-    # Update form data
-    st.session_state.contact_state['form_data'].update({
-        'name': name,
-        'phone': phone,
-        'fax': fax,
-        'email': email,
-        'physical_address': physical_address,
-        'mailing_address': mailing_address
-    })
-
-    # Action buttons
-    col1, col2 = st.columns([1, 1])
-    
-    # Save button
-    with col1:
-        if st.button("Save", type="primary", use_container_width=True):
-            # Validate phone/fax if provided
-            if phone and not validate_phone_number(phone):
-                st.error("Please enter a valid 10-digit phone number.")
-                return True
-            if fax and not validate_phone_number(fax):
-                st.error("Please enter a valid 10-digit fax number.")
-                return True
-
-            # Check if any field is filled
-            if not has_form_data():
-                st.error("Please fill in at least one field.")
-                return True
-
-            try:
-                # Format data for database
-                form_data = {
-                    'contact_name': name,
-                    'phone': format_phone_number_db(phone) if phone else '',
-                    'email': email,
-                    'fax': format_phone_number_db(fax) if fax else '',
-                    'physical_address': physical_address,
-                    'mailing_address': mailing_address
-                }
-
-                # Add to database
-                add_contact(
-                    st.session_state.contact_state['client_id'],
-                    st.session_state.contact_state['contact_type'],
-                    form_data
-                )
-                st.success(f"{st.session_state.contact_state['contact_type']} added successfully!")
-                time.sleep(1)
-                reset_contact_state()
-                st.rerun()
-
-            except Exception as e:
-                st.error(f"Error saving contact: {str(e)}")
-                return True
-
-    # Cancel button
-    with col2:
-        if st.button("Cancel", use_container_width=True):
-            if has_form_data() and not st.session_state.contact_state['show_confirm']:
-                update_contact_state(show_confirm=True)
-                st.warning("Are you sure? All entered data will be lost.")
-                col3, col4 = st.columns([1, 1])
-                with col3:
-                    if st.button("Yes, Cancel", key="confirm_yes", use_container_width=True):
-                        update_contact_state(pending_action='close')
-                        st.rerun()
-                with col4:
-                    if st.button("No, Continue", key="confirm_no", use_container_width=True):
-                        update_contact_state(show_confirm=False)
-                        st.rerun()
-            else:
-                update_contact_state(pending_action='close')
-                st.rerun()
-    
-    return True
-
-def show_client_dashboard():
-    """Render the client dashboard page"""
-    # Initialize session state for modal management
-    if 'active_modal' not in st.session_state:
-        st.session_state.active_modal = None
-    if 'modal_data' not in st.session_state:
-        st.session_state.modal_data = {
-            'client_id': None,
+# Contact form state management
+def init_contact_form_state():
+    if 'contact_form' not in st.session_state:
+        st.session_state.contact_form = {
+            'is_open': False,
             'contact_type': None,
-            'show_confirm': False,
-            'fields': {
-                'name': '',
+            'has_validation_error': False,
+            'show_cancel_confirm': False,
+            'form_data': {
+                'contact_name': '',
                 'phone': '',
                 'fax': '',
                 'email': '',
@@ -191,8 +27,192 @@ def show_client_dashboard():
                 'mailing_address': ''
             }
         }
+
+def clear_form():
+    if 'contact_form' in st.session_state:
+        st.session_state.contact_form['form_data'] = {
+            'contact_name': '',
+            'phone': '',
+            'fax': '',
+            'email': '',
+            'physical_address': '',
+            'mailing_address': ''
+        }
+        st.session_state.contact_form['is_open'] = False
+        st.session_state.contact_form['has_validation_error'] = False
+        st.session_state.contact_form['show_cancel_confirm'] = False
+        
+        # Clear the contacts cache to force a refresh
+        get_contacts.clear()
+
+def validate_form_data(form_data):
+    """Check if at least one field has data"""
+    return any(value.strip() for value in form_data.values())
+
+def has_unsaved_changes(form_data):
+    """Check if any field has data entered"""
+    return any(value.strip() for value in form_data.values())
+
+def clear_validation_error():
+    """Clear the validation error state"""
+    st.session_state.contact_form['has_validation_error'] = False
+
+def format_phone_on_change():
+    """Format phone number as user types"""
+    clear_validation_error()
+    key = f"phone_{st.session_state.contact_form['contact_type']}"
+    if key in st.session_state:
+        st.session_state.contact_form['form_data']['phone'] = format_phone_number_ui(st.session_state[key])
+
+def format_fax_on_change():
+    """Format fax number as user types"""
+    clear_validation_error()
+    key = f"fax_{st.session_state.contact_form['contact_type']}"
+    if key in st.session_state:
+        st.session_state.contact_form['form_data']['fax'] = format_phone_number_ui(st.session_state[key])
+
+@st.dialog('Add Contact')
+def show_contact_form():
+    if not st.session_state.contact_form['is_open']:
+        return
     
+    st.subheader(f"Add {st.session_state.contact_form['contact_type']} Contact")
+    
+    # Contact form fields
+    contact_name = st.text_input(
+        "Name",
+        key=f"contact_name_{st.session_state.contact_form['contact_type']}",
+        value=st.session_state.contact_form['form_data']['contact_name'],
+        on_change=clear_validation_error
+    )
+    
+    # Phone input with live formatting
+    phone_input = st.text_input(
+        "Phone",
+        key=f"phone_{st.session_state.contact_form['contact_type']}",
+        value=st.session_state.contact_form['form_data']['phone'],
+        on_change=format_phone_on_change,
+        placeholder="5555555555"
+    )
+    
+    # Fax input with live formatting
+    fax_input = st.text_input(
+        "Fax",
+        key=f"fax_{st.session_state.contact_form['contact_type']}",
+        value=st.session_state.contact_form['form_data']['fax'],
+        on_change=format_fax_on_change,
+        placeholder="5555555555"
+    )
+    
+    email = st.text_input(
+        "Email",
+        key=f"email_{st.session_state.contact_form['contact_type']}",
+        value=st.session_state.contact_form['form_data']['email'],
+        on_change=clear_validation_error
+    )
+    
+    physical_address = st.text_area(
+        "Physical Address",
+        key=f"physical_address_{st.session_state.contact_form['contact_type']}",
+        value=st.session_state.contact_form['form_data']['physical_address'],
+        on_change=clear_validation_error
+    )
+    
+    mailing_address = st.text_area(
+        "Mailing Address",
+        key=f"mailing_address_{st.session_state.contact_form['contact_type']}",
+        value=st.session_state.contact_form['form_data']['mailing_address'],
+        on_change=clear_validation_error
+    )
+    
+    # Format phone numbers for database storage
+    phone_db = format_phone_number_db(phone_input)
+    fax_db = format_phone_number_db(fax_input)
+    
+    # Validate phone numbers
+    if phone_input and not validate_phone_number(phone_input):
+        st.error("Please enter a valid 10-digit phone number")
+        return
+    
+    if fax_input and not validate_phone_number(fax_input):
+        st.error("Please enter a valid 10-digit fax number")
+        return
+    
+    # Capture form data
+    form_data = {
+        'contact_name': contact_name,
+        'phone': phone_db,
+        'fax': fax_db,
+        'email': email,
+        'physical_address': physical_address,
+        'mailing_address': mailing_address
+    }
+    
+    # Show validation error if present
+    if st.session_state.contact_form['has_validation_error']:
+        st.error("Please fill in at least one field.")
+    
+    # Show cancel confirmation if needed
+    if st.session_state.contact_form['show_cancel_confirm']:
+        st.warning("You have unsaved changes. Are you sure you want to cancel?")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Yes, Discard Changes", type="primary", use_container_width=True):
+                print("\n❌ Form cancelled - changes discarded")
+                clear_form()
+                st.rerun()
+        with col2:
+            if st.button("No, Go Back", use_container_width=True):
+                st.session_state.contact_form['show_cancel_confirm'] = False
+                st.rerun()
+    else:
+        # Normal save/cancel buttons
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Save", use_container_width=True):
+                if validate_form_data(form_data):
+                    # Get client_id from session state
+                    client_id = next(
+                        client[0] for client in get_clients()
+                        if client[1] == st.session_state.client_selector_dashboard
+                    )
+                    
+                    # Save contact to database
+                    contact_id = add_contact(
+                        client_id,
+                        st.session_state.contact_form['contact_type'],
+                        form_data
+                    )
+                    
+                    if contact_id:
+                        print(f"\n✅ Successfully added {st.session_state.contact_form['contact_type']} contact to database:")
+                        for field, value in form_data.items():
+                            print(f"  {field}: {value}")
+                        clear_form()
+                        st.rerun()
+                else:
+                    st.session_state.contact_form['has_validation_error'] = True
+                    st.rerun()
+        
+        with col2:
+            if st.button("Cancel", use_container_width=True):
+                if has_unsaved_changes(form_data):
+                    st.session_state.contact_form['show_cancel_confirm'] = True
+                    st.rerun()
+                else:
+                    print("\n❌ Form cancelled - no changes to discard")
+                    clear_form()
+                    st.rerun()
+
+def show_client_dashboard():
     st.write("👥 Client Dashboard")
+    
+    # Initialize contact form state
+    init_contact_form_state()
+    
+    # Show contact form dialog if open
+    if 'contact_form' in st.session_state and st.session_state.contact_form['is_open']:
+        show_contact_form()
     
     # Client selector in a compact container
     clients = get_clients()
@@ -205,11 +225,7 @@ def show_client_dashboard():
     )
     
     if selected_client_name != "Select a client...":
-        # Reset form state when client changes
-        if ('selected_client' not in st.session_state or 
-            st.session_state.selected_client != selected_client_name):
-            st.session_state.selected_client = selected_client_name
-            reset_contact_state()
+
         
         client_id = next(
             client[0] for client in clients if client[1] == selected_client_name
@@ -247,15 +263,10 @@ def show_client_dashboard():
                 
                 # Add Contact button
                 if st.button("Add Primary Contact", key="add_primary", use_container_width=True):
-                    # Reset any existing state first
-                    reset_contact_state()
-                    # Then set new state
-                    update_contact_state(
-                        show_dialog=True,
-                        client_id=client_id,
-                        contact_type="Primary Contact"
-                    )
+                    st.session_state.contact_form['is_open'] = True
+                    st.session_state.contact_form['contact_type'] = 'Primary'
                     st.rerun()
+                # TODO: Add functionality
         
         # Authorized Contacts Card
         with c2:
@@ -275,15 +286,10 @@ def show_client_dashboard():
                 
                 # Add Contact button
                 if st.button("Add Authorized Contact", key="add_authorized", use_container_width=True):
-                    # Reset any existing state first
-                    reset_contact_state()
-                    # Then set new state
-                    update_contact_state(
-                        show_dialog=True,
-                        client_id=client_id,
-                        contact_type="Authorized Contact"
-                    )
+                    st.session_state.contact_form['is_open'] = True
+                    st.session_state.contact_form['contact_type'] = 'Authorized'
                     st.rerun()
+                # TODO: Add functionality
         
         # Provider Contacts Card
         with c3:
@@ -303,15 +309,12 @@ def show_client_dashboard():
                 
                 # Add Contact button
                 if st.button("Add Provider Contact", key="add_provider", use_container_width=True):
-                    # Reset any existing state first
-                    reset_contact_state()
-                    # Then set new state
-                    update_contact_state(
-                        show_dialog=True,
-                        client_id=client_id,
-                        contact_type="Provider Contact"
-                    )
+                    st.session_state.contact_form['is_open'] = True
+                    st.session_state.contact_form['contact_type'] = 'Provider'
                     st.rerun()
+                # TODO: Add functionality
+             
+
         # Payments History Section
         st.markdown("<div style='margin: 2rem 0 1rem 0;'></div>", unsafe_allow_html=True)
         st.markdown("### Payment History")
