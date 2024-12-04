@@ -7,14 +7,7 @@ def load_styles():
             background-color: #f8f9fa;
         }
         
-        /* Button styling */
-        .stButton>button {
-            width: 100%;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-        }
+
         
         /* Expander styling */
         [data-testid="stExpander"] {

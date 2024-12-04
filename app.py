@@ -20,7 +20,7 @@ st.markdown(load_styles(), unsafe_allow_html=True)
 def main():
     # Initialize session state for navigation
     if 'current_page' not in st.session_state:
-        st.session_state.current_page = 'Quarterly Summary'
+        st.session_state.current_page = '📊 Quarterly Summary'  # Ensure it matches the button text
     if 'selected_client' not in st.session_state:
         st.session_state.selected_client = None
 
@@ -28,13 +28,14 @@ def main():
     render_sidebar()
 
     # Main content area
-    if st.session_state.current_page == 'Quarterly Summary':
+    current_page = st.session_state.current_page
+    if current_page == '📊 Quarterly Summary':
         show_quarterly_summary()
-    elif st.session_state.current_page == 'Client Dashboard':
+    elif current_page == '👥 Client Dashboard':
         show_client_dashboard()
-    elif st.session_state.current_page == 'Manage Clients':
+    elif current_page == '⚙️ Manage Clients':
         show_manage_clients()
-    elif st.session_state.current_page == 'Bulk Payment Entry':
+    elif current_page == '📝 Bulk Payment Entry':
         show_bulk_payment_entry()
 
 if __name__ == "__main__":

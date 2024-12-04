@@ -1,21 +1,28 @@
 import streamlit as st
+from streamlit_extras.button_selector import button_selector
 
 def render_sidebar():
-    """Render the sidebar navigation"""
+    """Render the sidebar navigation with full-width buttons using Streamlit Extras."""
     with st.sidebar:
         st.title("401K Payment Tracker")
         st.subheader("Navigation")
-        
-        # Navigation buttons with icons
+
+        # Navigation options
         nav_options = [
-            ('📊 Quarterly Summary', 'Quarterly Summary'),
-            ('👥 Client Dashboard', 'Client Dashboard'),
-            ('⚙️ Manage Clients', 'Manage Clients'),
-            ('📝 Bulk Payment Entry', 'Bulk Payment Entry')
+            '📊 Quarterly Summary',
+            '👥 Client Dashboard',
+            '⚙️ Manage Clients',
+            '📝 Bulk Payment Entry'
         ]
-        
-        for icon_label, page in nav_options:
-            if st.button(icon_label, key=f"nav_{page}"):
-                st.session_state.current_page = page
-                if page != 'Client Dashboard':
-                    st.session_state.selected_client = None
+
+        # Use button_selector for navigation and get the selected index
+        selected_index = button_selector(
+            nav_options,
+            index=nav_options.index(st.session_state.current_page) if 'current_page' in st.session_state else 0,
+            spec=1,  # Vertical alignment for buttons
+            key="sidebar_selector",
+            label="Select a page:"
+        )
+
+        # Update session state with the selected page
+        st.session_state.current_page = nav_options[selected_index]
