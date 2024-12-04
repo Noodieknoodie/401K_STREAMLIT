@@ -1,3 +1,4 @@
+# utils.py 
 import sqlite3
 import streamlit as st
 from datetime import datetime
@@ -180,3 +181,64 @@ def update_payment_note(payment_id, new_note):
         conn.commit()
     finally:
         conn.close()
+
+def format_phone_number_ui(number):
+    """Format phone number for UI display: (XXX) XXX-XXXX"""
+    if not number:
+        return ""
+    # Remove any non-digit characters
+    digits = ''.join(filter(str.isdigit, number))
+    
+    # Progressive formatting as user types
+    if len(digits) <= 3:
+        return digits
+    elif len(digits) <= 6:
+        return f"({digits[:3]}) {digits[3:]}"
+    elif len(digits) <= 10:
+        return f"({digits[:3]}) {digits[3:6]}-{digits[6:]}"
+    return f"({digits[:3]}) {digits[3:6]}-{digits[6:10]}"
+
+def format_phone_number_db(number):
+    """Format phone number for database storage: XXX-XXX-XXXX"""
+    if not number:
+        return ""
+    # Remove any non-digit characters
+    digits = ''.join(filter(str.isdigit, number))
+    if len(digits) == 10:
+        return f"{digits[:3]}-{digits[3:6]}-{digits[6:]}"
+    return number
+
+def validate_phone_number(number):
+    """Validate phone number format"""
+    if not number:
+        return True  # Empty is valid as field is optional
+    digits = ''.join(filter(str.isdigit, number))
+    return len(digits) == 10
+
+def add_contact(client_id, contact_type, contact_data):
+    """Add a new contact to the database"""
+    # Clean up contact type to match database values
+    contact_type = contact_type.split()[0]  # Extract first word (Primary/Authorized/Provider)
+    
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO contacts (
+                client_id, contact_type, contact_name, phone, 
+                email, fax, physical_address, mailing_address
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            client_id,
+            contact_type,
+            contact_data.get('contact_name'),
+            contact_data.get('phone'),
+            contact_data.get('email'),
+            contact_data.get('fax'),
+            contact_data.get('physical_address'),
+            contact_data.get('mailing_address')
+        ))
+        conn.commit()
+        return cursor.lastrowid
+    finally:
+        conn.close()        

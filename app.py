@@ -1,6 +1,6 @@
+# app.py
 import streamlit as st
 from sidebar import render_sidebar
-from styles import load_styles
 from quarterly_summary import show_quarterly_summary
 from client_dashboard import show_client_dashboard
 from manage_clients import show_manage_clients
@@ -13,9 +13,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-# Load and apply all styles
-st.markdown(load_styles(), unsafe_allow_html=True)
 
 def main():
     # Initialize session state for navigation

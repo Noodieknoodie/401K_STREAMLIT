@@ -1,3 +1,4 @@
+# client_dashboard.py
 import streamlit as st
 import pandas as pd
 import time
@@ -5,11 +6,192 @@ from datetime import datetime
 from utils import (
     get_clients, get_client_details, get_active_contract, 
     get_latest_payment, get_contacts, get_payment_history,
-    calculate_rate_conversions, update_payment_note
+    calculate_rate_conversions, update_payment_note, add_contact,
+    format_phone_number_ui, format_phone_number_db, validate_phone_number
 )
+
+def init_contact_state():
+    """Initialize contact form state"""
+    if 'contact_state' not in st.session_state:
+        reset_contact_state()
+
+def reset_contact_state():
+    """Reset contact form state"""
+    st.session_state.contact_state = {
+        'show_dialog': False,
+        'client_id': None,
+        'contact_type': None,
+        'form_data': {
+            'name': '',
+            'phone': '',
+            'fax': '',
+            'email': '',
+            'physical_address': '',
+            'mailing_address': ''
+        },
+        'show_confirm': False,
+        'pending_action': None  # Track pending state changes
+    }
+
+def update_contact_state(**kwargs):
+    """Atomic update of contact state"""
+    if 'contact_state' not in st.session_state:
+        init_contact_state()
+    st.session_state.contact_state.update(kwargs)
+
+def has_form_data():
+    """Check if any field has data"""
+    return any(
+        value.strip() 
+        for value in st.session_state.contact_state['form_data'].values()
+    )
+
+@st.dialog("Add Contact")
+def contact_modal():
+    """Display the contact form modal"""
+    # Only show if explicitly enabled
+    if not st.session_state.contact_state['show_dialog']:
+        return False
+    
+    # Handle any pending actions
+    if st.session_state.contact_state.get('pending_action') == 'close':
+        reset_contact_state()
+        st.rerun()
+        return False
+    
+    st.subheader(f"Add {st.session_state.contact_state['contact_type']}")
+
+    # Form fields with state persistence
+    name = st.text_input(
+        "Name",
+        value=st.session_state.contact_state['form_data']['name']
+    )
+    
+    # Phone with formatting
+    phone_input = st.text_input(
+        "Phone",
+        value=st.session_state.contact_state['form_data']['phone'],
+        help="Enter 10 digits for automatic formatting"
+    )
+    phone = format_phone_number_ui(phone_input) if phone_input else ""
+        
+    # Fax with formatting
+    fax_input = st.text_input(
+        "Fax",
+        value=st.session_state.contact_state['form_data']['fax'],
+        help="Enter 10 digits for automatic formatting"
+    )
+    fax = format_phone_number_ui(fax_input) if fax_input else ""
+        
+    email = st.text_input(
+        "Email",
+        value=st.session_state.contact_state['form_data']['email']
+    )
+    physical_address = st.text_area(
+        "Physical Address",
+        value=st.session_state.contact_state['form_data']['physical_address']
+    )
+    mailing_address = st.text_area(
+        "Mailing Address",
+        value=st.session_state.contact_state['form_data']['mailing_address']
+    )
+
+    # Update form data
+    st.session_state.contact_state['form_data'].update({
+        'name': name,
+        'phone': phone,
+        'fax': fax,
+        'email': email,
+        'physical_address': physical_address,
+        'mailing_address': mailing_address
+    })
+
+    # Action buttons
+    col1, col2 = st.columns([1, 1])
+    
+    # Save button
+    with col1:
+        if st.button("Save", type="primary", use_container_width=True):
+            # Validate phone/fax if provided
+            if phone and not validate_phone_number(phone):
+                st.error("Please enter a valid 10-digit phone number.")
+                return True
+            if fax and not validate_phone_number(fax):
+                st.error("Please enter a valid 10-digit fax number.")
+                return True
+
+            # Check if any field is filled
+            if not has_form_data():
+                st.error("Please fill in at least one field.")
+                return True
+
+            try:
+                # Format data for database
+                form_data = {
+                    'contact_name': name,
+                    'phone': format_phone_number_db(phone) if phone else '',
+                    'email': email,
+                    'fax': format_phone_number_db(fax) if fax else '',
+                    'physical_address': physical_address,
+                    'mailing_address': mailing_address
+                }
+
+                # Add to database
+                add_contact(
+                    st.session_state.contact_state['client_id'],
+                    st.session_state.contact_state['contact_type'],
+                    form_data
+                )
+                st.success(f"{st.session_state.contact_state['contact_type']} added successfully!")
+                time.sleep(1)
+                reset_contact_state()
+                st.rerun()
+
+            except Exception as e:
+                st.error(f"Error saving contact: {str(e)}")
+                return True
+
+    # Cancel button
+    with col2:
+        if st.button("Cancel", use_container_width=True):
+            if has_form_data() and not st.session_state.contact_state['show_confirm']:
+                update_contact_state(show_confirm=True)
+                st.warning("Are you sure? All entered data will be lost.")
+                col3, col4 = st.columns([1, 1])
+                with col3:
+                    if st.button("Yes, Cancel", key="confirm_yes", use_container_width=True):
+                        update_contact_state(pending_action='close')
+                        st.rerun()
+                with col4:
+                    if st.button("No, Continue", key="confirm_no", use_container_width=True):
+                        update_contact_state(show_confirm=False)
+                        st.rerun()
+            else:
+                update_contact_state(pending_action='close')
+                st.rerun()
+    
+    return True
 
 def show_client_dashboard():
     """Render the client dashboard page"""
+    # Initialize session state for modal management
+    if 'active_modal' not in st.session_state:
+        st.session_state.active_modal = None
+    if 'modal_data' not in st.session_state:
+        st.session_state.modal_data = {
+            'client_id': None,
+            'contact_type': None,
+            'show_confirm': False,
+            'fields': {
+                'name': '',
+                'phone': '',
+                'fax': '',
+                'email': '',
+                'physical_address': '',
+                'mailing_address': ''
+            }
+        }
+    
     st.write("👥 Client Dashboard")
     
     # Client selector in a compact container
@@ -23,11 +205,11 @@ def show_client_dashboard():
     )
     
     if selected_client_name != "Select a client...":
-        # Reset expanders when client changes
-        if st.session_state.selected_client != selected_client_name:
+        # Reset form state when client changes
+        if ('selected_client' not in st.session_state or 
+            st.session_state.selected_client != selected_client_name):
             st.session_state.selected_client = selected_client_name
-            if 'expander_states' in st.session_state:
-                del st.session_state.expander_states
+            reset_contact_state()
         
         client_id = next(
             client[0] for client in clients if client[1] == selected_client_name
@@ -35,78 +217,11 @@ def show_client_dashboard():
         
         # Get all required data
         client_details = get_client_details(client_id)
-        active_contract = get_active_contract(client_id)
-        latest_payment = get_latest_payment(client_id)
-        
-        # Compact container for metrics
-        with st.container():
-            # First row - 4 columns
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.metric("Client Name", client_details[0], client_details[1] if client_details[1] else None)
-            with col2:
-                st.metric("Provider", active_contract[1] if active_contract and active_contract[1] else "N/A")
-            with col3:
-                st.metric("Contract #", active_contract[0] if active_contract and active_contract[0] else "N/A")
-            with col4:
-                st.metric("Participants", active_contract[2] if active_contract and active_contract[2] else "N/A")
-
-            # Second row - 4 columns
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                rate_value = 'N/A'
-                rate_type = None
-                rate_conversions = None
-                
-                if active_contract and active_contract[5]:
-                    if active_contract[5] == 'percentage':
-                        if active_contract[6]:
-                            rate_value = f"{active_contract[6]*100:.3f}%"
-                    else:
-                        if active_contract[7]:
-                            rate_value = f"${active_contract[7]:,.2f}"
-                    
-                    if rate_value != 'N/A':
-                        rate_type = active_contract[5].title()
-                        schedule = active_contract[4] if active_contract[4] else None
-                        rate_value, rate_conversions = calculate_rate_conversions(
-                            rate_value, 
-                            active_contract[5],
-                            schedule
-                        )
-                
-                st.metric(
-                    "Rate", 
-                    rate_value,
-                    rate_conversions if rate_conversions else rate_type
-                )
-            
-            with col2:
-                st.metric("Payment Schedule", active_contract[4].title() if active_contract and active_contract[4] else "N/A")
-            
-            with col3:
-                last_payment = 'No payments'
-                payment_date = None
-                if latest_payment and latest_payment[0]:
-                    last_payment = f"${latest_payment[0]:,.2f}"
-                    payment_date = latest_payment[1]
-                st.metric("Last Payment", last_payment, payment_date)
-            
-            with col4:
-                aum_value = 'Not available'
-                aum_date = None
-                if latest_payment and latest_payment[2]:
-                    aum_value = f"${latest_payment[2]:,.2f}"
-                    aum_date = f"Q{latest_payment[3]} {latest_payment[4]}"
-                st.metric("Last Recorded AUM", aum_value, aum_date)
-
-        # Small spacing before next section
-        st.markdown("<div style='margin: 0.5rem 0;'></div>", unsafe_allow_html=True)
+        contacts = get_contacts(client_id)
         
         # Create three equal-width columns for contact cards
         c1, c2, c3 = st.columns(3)
         
-        contacts = get_contacts(client_id)
         contact_types = {'Primary': [], 'Authorized': [], 'Provider': []}
         
         if contacts:
@@ -129,7 +244,18 @@ def show_client_dashboard():
                         """, unsafe_allow_html=True)
                 else:
                     st.write("No primary contacts")
-                st.button("Add Primary Contact", key="add_primary", use_container_width=True)
+                
+                # Add Contact button
+                if st.button("Add Primary Contact", key="add_primary", use_container_width=True):
+                    # Reset any existing state first
+                    reset_contact_state()
+                    # Then set new state
+                    update_contact_state(
+                        show_dialog=True,
+                        client_id=client_id,
+                        contact_type="Primary Contact"
+                    )
+                    st.rerun()
         
         # Authorized Contacts Card
         with c2:
@@ -146,7 +272,18 @@ def show_client_dashboard():
                         """, unsafe_allow_html=True)
                 else:
                     st.write("No authorized contacts")
-                st.button("Add Authorized Contact", key="add_authorized", use_container_width=True)
+                
+                # Add Contact button
+                if st.button("Add Authorized Contact", key="add_authorized", use_container_width=True):
+                    # Reset any existing state first
+                    reset_contact_state()
+                    # Then set new state
+                    update_contact_state(
+                        show_dialog=True,
+                        client_id=client_id,
+                        contact_type="Authorized Contact"
+                    )
+                    st.rerun()
         
         # Provider Contacts Card
         with c3:
@@ -163,8 +300,18 @@ def show_client_dashboard():
                         """, unsafe_allow_html=True)
                 else:
                     st.write("No provider contacts")
-                st.button("Add Provider Contact", key="add_provider", use_container_width=True)
-
+                
+                # Add Contact button
+                if st.button("Add Provider Contact", key="add_provider", use_container_width=True):
+                    # Reset any existing state first
+                    reset_contact_state()
+                    # Then set new state
+                    update_contact_state(
+                        show_dialog=True,
+                        client_id=client_id,
+                        contact_type="Provider Contact"
+                    )
+                    st.rerun()
         # Payments History Section
         st.markdown("<div style='margin: 2rem 0 1rem 0;'></div>", unsafe_allow_html=True)
         st.markdown("### Payment History")
@@ -255,7 +402,7 @@ def show_client_dashboard():
                     st.session_state[f"show_note_popup_{payment_id}"] = False
                 
                 has_note = bool(note)
-                icon_content = "💬" if has_note else "⭕"
+                icon_content = "🟢" if has_note else "◯"
                 
                 # Create the note button with tooltip
                 if st.button(
@@ -278,8 +425,7 @@ def show_client_dashboard():
                         del st.session_state.active_note_payment_id
                     else:
                         st.session_state.active_note_payment_id = payment_id
-                    st.rerun()
-                
+                    st.rerun()                
                 # Style the button
                 st.markdown(f"""
                     <style>
@@ -369,3 +515,4 @@ def show_client_dashboard():
                                     height=100,
                                     placeholder="Enter note here..."
                                 )
+

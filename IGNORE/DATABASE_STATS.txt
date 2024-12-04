@@ -1,0 +1,273 @@
+Table: sqlite_sequence
+  Column: name
+    % Nulls: 0.00%
+    Unique Values: 4
+    Diverse: No
+    Average Length: 8.00 characters
+    Length Range: {'min': 7, 'max': 9}
+  Column: seq
+    % Nulls: 0.00%
+    Unique Values: 4
+    Diverse: No
+    Average Length: 2.25 characters
+    Length Range: {'min': 2, 'max': 3}
+
+Table: clients
+  Column: client_id
+    % Nulls: 0.00%
+    Unique Values: 29
+    Diverse: Yes
+    Average Length: 1.69 characters
+    Length Range: {'min': 1, 'max': 2}
+  Column: display_name
+    % Nulls: 0.00%
+    Unique Values: 29
+    Diverse: Yes
+    Average Length: 12.97 characters
+    Length Range: {'min': 5, 'max': 27}
+  Column: full_name
+    % Nulls: 0.00%
+    Unique Values: 29
+    Diverse: Yes
+    Average Length: 25.00 characters
+    Length Range: {'min': 4, 'max': 58}
+  Column: ima_signed_date
+    % Nulls: 31.03%
+    Unique Values: 18
+    Diverse: Yes
+    Average Length: 10.00 characters
+    Length Range: {'min': 10, 'max': 10}
+  Column: file_path_account_documentation
+    % Nulls: 100.00%
+    Unique Values: 0
+    Diverse: No
+    Average Length: nan characters
+    Length Range: {'min': nan, 'max': nan}
+  Column: file_path_consulting_fees
+    % Nulls: 100.00%
+    Unique Values: 0
+    Diverse: No
+    Average Length: nan characters
+    Length Range: {'min': nan, 'max': nan}
+  Column: file_path_meetings
+    % Nulls: 100.00%
+    Unique Values: 0
+    Diverse: No
+    Average Length: nan characters
+    Length Range: {'min': nan, 'max': nan}
+
+Table: contacts
+  Column: contact_id
+    % Nulls: 0.00%
+    Unique Values: 68
+    Diverse: Yes
+    Average Length: 1.87 characters
+    Length Range: {'min': 1, 'max': 2}
+  Column: client_id
+    % Nulls: 0.00%
+    Unique Values: 29
+    Diverse: Yes
+    Average Length: 1.65 characters
+    Length Range: {'min': 1, 'max': 2}
+  Column: contact_type
+    % Nulls: 0.00%
+    Unique Values: 3
+    Diverse: No
+    Average Length: 8.37 characters
+    Length Range: {'min': 7, 'max': 10}
+  Column: contact_name
+    % Nulls: 7.35%
+    Unique Values: 57
+    Diverse: Yes
+    Average Length: 12.41 characters
+    Length Range: {'min': 4, 'max': 20}
+  Column: phone
+    % Nulls: 42.65%
+    Unique Values: 30
+    Diverse: Yes
+    Average Length: 12.00 characters
+    Length Range: {'min': 12, 'max': 12}
+  Column: email
+    % Nulls: 25.00%
+    Unique Values: 46
+    Diverse: Yes
+    Average Length: 22.04 characters
+    Length Range: {'min': 13, 'max': 35}
+  Column: fax
+    % Nulls: 97.06%
+    Unique Values: 2
+    Diverse: No
+    Average Length: 12.50 characters
+    Length Range: {'min': 12, 'max': 13}
+  Column: physical_address
+    % Nulls: 52.94%
+    Unique Values: 28
+    Diverse: Yes
+    Average Length: 37.88 characters
+    Length Range: {'min': 30, 'max': 52}
+  Column: mailing_address
+    % Nulls: 75.00%
+    Unique Values: 17
+    Diverse: Yes
+    Average Length: 38.35 characters
+    Length Range: {'min': 30, 'max': 52}
+
+Table: contracts
+  Column: contract_id
+    % Nulls: 0.00%
+    Unique Values: 35
+    Diverse: Yes
+    Average Length: 1.74 characters
+    Length Range: {'min': 1, 'max': 2}
+  Column: client_id
+    % Nulls: 0.00%
+    Unique Values: 29
+    Diverse: Yes
+    Average Length: 1.66 characters
+    Length Range: {'min': 1, 'max': 2}
+  Column: active
+    % Nulls: 0.00%
+    Unique Values: 2
+    Diverse: No
+    Average Length: 4.17 characters
+    Length Range: {'min': 4, 'max': 5}
+  Column: contract_number
+    % Nulls: 20.00%
+    Unique Values: 26
+    Diverse: Yes
+    Average Length: 5.46 characters
+    Length Range: {'min': 0, 'max': 8}
+  Column: provider_name
+    % Nulls: 0.00%
+    Unique Values: 15
+    Diverse: Yes
+    Average Length: 11.49 characters
+    Length Range: {'min': 3, 'max': 30}
+  Column: contract_start_date
+    % Nulls: 91.43%
+    Unique Values: 3
+    Diverse: No
+    Average Length: 10.67 characters
+    Length Range: {'min': 10, 'max': 12}
+  Column: fee_type
+    % Nulls: 2.86%
+    Unique Values: 2
+    Diverse: No
+    Average Length: 7.71 characters
+    Length Range: {'min': 4, 'max': 10}
+  Column: percent_rate
+    % Nulls: 2.86%
+    Unique Values: 14
+    Diverse: Yes
+    Average Length: 4.59 characters
+    Length Range: {'min': 0, 'max': 8}
+  Column: flat_rate
+    % Nulls: 62.86%
+    Unique Values: 10
+    Diverse: No
+    Average Length: 6.08 characters
+    Length Range: {'min': 6, 'max': 7}
+  Column: payment_schedule
+    % Nulls: 2.86%
+    Unique Values: 2
+    Diverse: No
+    Average Length: 8.06 characters
+    Length Range: {'min': 7, 'max': 9}
+  Column: payment_type
+    % Nulls: 0.00%
+    Unique Values: 6
+    Diverse: No
+    Average Length: 7.06 characters
+    Length Range: {'min': 0, 'max': 15}
+  Column: num_people
+    % Nulls: 14.29%
+    Unique Values: 20
+    Diverse: Yes
+    Average Length: 4.23 characters
+    Length Range: {'min': 3, 'max': 5}
+  Column: notes
+    % Nulls: 94.29%
+    Unique Values: 2
+    Diverse: No
+    Average Length: 67.00 characters
+    Length Range: {'min': 0, 'max': 134}
+
+Table: payments
+  Column: payment_id
+    % Nulls: 0.00%
+    Unique Values: 924
+    Diverse: Yes
+    Average Length: 2.88 characters
+    Length Range: {'min': 1, 'max': 3}
+  Column: contract_id
+    % Nulls: 0.00%
+    Unique Values: 35
+    Diverse: Yes
+    Average Length: 1.69 characters
+    Length Range: {'min': 1, 'max': 2}
+  Column: client_id
+    % Nulls: 0.00%
+    Unique Values: 29
+    Diverse: Yes
+    Average Length: 1.64 characters
+    Length Range: {'min': 1, 'max': 2}
+  Column: received_date
+    % Nulls: 0.00%
+    Unique Values: 360
+    Diverse: Yes
+    Average Length: 10.00 characters
+    Length Range: {'min': 10, 'max': 10}
+  Column: applied_start_quarter
+    % Nulls: 0.00%
+    Unique Values: 4
+    Diverse: No
+    Average Length: 1.00 characters
+    Length Range: {'min': 1, 'max': 1}
+  Column: applied_start_year
+    % Nulls: 0.00%
+    Unique Values: 8
+    Diverse: No
+    Average Length: 4.00 characters
+    Length Range: {'min': 4, 'max': 4}
+  Column: applied_end_quarter
+    % Nulls: 0.00%
+    Unique Values: 4
+    Diverse: No
+    Average Length: 1.00 characters
+    Length Range: {'min': 1, 'max': 1}
+  Column: applied_end_year
+    % Nulls: 0.00%
+    Unique Values: 8
+    Diverse: No
+    Average Length: 4.00 characters
+    Length Range: {'min': 4, 'max': 4}
+  Column: total_assets
+    % Nulls: 51.30%
+    Unique Values: 443
+    Diverse: Yes
+    Average Length: 6.53 characters
+    Length Range: {'min': 1, 'max': 8}
+  Column: expected_fee
+    % Nulls: 73.48%
+    Unique Values: 148
+    Diverse: Yes
+    Average Length: 6.08 characters
+    Length Range: {'min': 3, 'max': 7}
+  Column: actual_fee
+    % Nulls: 0.11%
+    Unique Values: 674
+    Diverse: Yes
+    Average Length: 6.15 characters
+    Length Range: {'min': 4, 'max': 8}
+  Column: method
+    % Nulls: 0.00%
+    Unique Values: 6
+    Diverse: No
+    Average Length: 8.10 characters
+    Length Range: {'min': 0, 'max': 15}
+  Column: notes
+    % Nulls: 81.60%
+    Unique Values: 113
+    Diverse: Yes
+    Average Length: 40.93 characters
+    Length Range: {'min': 0, 'max': 138}
