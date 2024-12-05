@@ -8,7 +8,7 @@ from utils import (
     get_latest_payment, get_contacts, get_payment_history,
     calculate_rate_conversions, update_payment_note, add_contact,
     format_phone_number_ui, format_phone_number_db, validate_phone_number,
-    delete_contact
+    delete_contact, update_contact
 )
 
 # Contact form state management
@@ -16,7 +16,9 @@ def init_contact_form_state():
     if 'contact_form' not in st.session_state:
         st.session_state.contact_form = {
             'is_open': False,
+            'mode': 'add',  # 'add' or 'edit'
             'contact_type': None,
+            'contact_id': None,  # Used for edit mode
             'has_validation_error': False,
             'show_cancel_confirm': False,
             'form_data': {
@@ -76,12 +78,15 @@ def format_fax_on_change():
     if key in st.session_state:
         st.session_state.contact_form['form_data']['fax'] = format_phone_number_ui(st.session_state[key])
 
-@st.dialog('Add Contact')
+@st.dialog('Contact Form')
 def show_contact_form():
     if not st.session_state.contact_form['is_open']:
         return
     
-    st.subheader(f"Add {st.session_state.contact_form['contact_type']} Contact")
+    mode = st.session_state.contact_form['mode']
+    action = "Edit" if mode == "edit" else "Add"
+    
+    st.subheader(f"{action} {st.session_state.contact_form['contact_type']} Contact")
     
     # Contact form fields
     contact_name = st.text_input(
@@ -182,19 +187,30 @@ def show_contact_form():
                         if client[1] == st.session_state.client_selector_dashboard
                     )
                     
-                    # Save contact to database
-                    contact_id = add_contact(
-                        client_id,
-                        st.session_state.contact_form['contact_type'],
-                        form_data
-                    )
-                    
-                    if contact_id:
-                        print(f"\n✅ Successfully added {st.session_state.contact_form['contact_type']} contact to database:")
-                        for field, value in form_data.items():
-                            print(f"  {field}: {value}")
-                        clear_form()
-                        st.rerun()
+                    if mode == "edit":
+                        # Update existing contact
+                        if update_contact(st.session_state.contact_form['contact_id'], form_data):
+                            print(f"\n✅ Successfully updated {st.session_state.contact_form['contact_type']} contact in database:")
+                            for field, value in form_data.items():
+                                print(f"  {field}: {value}")
+                            clear_form()
+                            get_contacts.clear()  # Clear the contacts cache
+                            st.rerun()
+                    else:
+                        # Add new contact
+                        contact_id = add_contact(
+                            client_id,
+                            st.session_state.contact_form['contact_type'],
+                            form_data
+                        )
+                        
+                        if contact_id:
+                            print(f"\n✅ Successfully added {st.session_state.contact_form['contact_type']} contact to database:")
+                            for field, value in form_data.items():
+                                print(f"  {field}: {value}")
+                            clear_form()
+                            get_contacts.clear()  # Clear the contacts cache
+                            st.rerun()
                 else:
                     st.session_state.contact_form['has_validation_error'] = True
                     st.rerun()
@@ -213,13 +229,32 @@ def render_contact_card(contact):
     """Render a single contact card with strict grid layout"""
     # Main container for each contact
     with st.container():
+        # Show delete confirmation if this is the contact being deleted
+        if st.session_state.show_delete_confirm and st.session_state.delete_contact_id == contact[7]:
+            confirm_col1, confirm_col2, confirm_col3 = st.columns([2,1,1])
+            with confirm_col1:
+                st.warning("Delete this contact?")
+            with confirm_col2:
+                if st.button("Yes", key=f"confirm_delete_{contact[7]}", type="primary"):
+                    if delete_contact(contact[7]):
+                        st.session_state.delete_contact_id = None
+                        st.session_state.show_delete_confirm = False
+                        get_contacts.clear()
+                        st.rerun()
+            with confirm_col3:
+                if st.button("No", key=f"cancel_delete_{contact[7]}"):
+                    st.session_state.delete_contact_id = None
+                    st.session_state.show_delete_confirm = False
+                    st.rerun()
+            return  # Skip showing the contact while confirming delete
+
         # Two-column layout: Info | Actions
         info_col, action_col = st.columns([6, 1])
         
         with info_col:
             # Name - using text() for smaller size
             if contact[1]:
-                st.write(f"**{contact[1]}**")  # Bold but not huge
+                st.text(contact[1])
             # Contact details - all using text() for consistency
             if contact[2]:
                 st.text(f"📞 {contact[2]}")
@@ -233,47 +268,27 @@ def render_contact_card(contact):
         with action_col:
             # Action buttons stacked vertically, right-aligned
             if st.button("✏️", key=f"edit_{contact[7]}", help="Edit contact"):
-                st.info("Edit functionality coming soon", icon="ℹ️")
+                # Set up edit mode
+                st.session_state.contact_form['mode'] = 'edit'
+                st.session_state.contact_form['is_open'] = True
+                st.session_state.contact_form['contact_type'] = contact[0]
+                st.session_state.contact_form['contact_id'] = contact[7]
+                st.session_state.contact_form['form_data'] = {
+                    'contact_name': contact[1] or '',
+                    'phone': contact[2] or '',
+                    'email': contact[3] or '',
+                    'fax': contact[4] or '',
+                    'physical_address': contact[5] or '',
+                    'mailing_address': contact[6] or ''
+                }
+                st.rerun()
             if st.button("🗑️", key=f"delete_{contact[7]}", help="Delete contact"):
                 st.session_state.delete_contact_id = contact[7]
                 st.session_state.show_delete_confirm = True
                 st.rerun()
-
-def show_contact_section(contact_type, contacts, section_key):
-    """Display a contact section with proper spacing and behavior"""
-    with st.expander(f"{contact_type} Contact ({len(contacts)})", expanded=False):
-        if contacts:
-            for idx, contact in enumerate(contacts):
-                # Show contact
-                render_contact_card(contact)
-                # Show delete confirmation after the contact if it's being deleted
-                if st.session_state.show_delete_confirm and st.session_state.delete_contact_id == contact[7]:
-                    with st.container():
-                        st.warning("Delete this contact?")
-                        c1, c2 = st.columns(2)
-                        with c1:
-                            if st.button("Confirm", key=f"confirm_delete_{contact[7]}", type="primary"):
-                                if delete_contact(contact[7]):
-                                    st.session_state.delete_contact_id = None
-                                    st.session_state.show_delete_confirm = False
-                                    get_contacts.clear()
-                                    st.rerun()
-                        with c2:
-                            if st.button("Cancel", key=f"cancel_delete_{contact[7]}"):
-                                st.session_state.delete_contact_id = None
-                                st.session_state.show_delete_confirm = False
-                                st.rerun()
-                # Add divider except for last contact
-                if idx < len(contacts) - 1:
-                    st.divider()
-        else:
-            st.caption(f"No {contact_type.lower()} contacts")
         
-        # Add Contact button at bottom
-        if st.button(f"Add {contact_type} Contact", key=f"add_{section_key}", use_container_width=True):
-            st.session_state.contact_form['is_open'] = True
-            st.session_state.contact_form['contact_type'] = contact_type
-            st.rerun()
+        # Minimal separator
+        st.divider()
 
 def show_client_dashboard():
     st.write("👥 Client Dashboard")
@@ -296,6 +311,8 @@ def show_client_dashboard():
     )
     
     if selected_client_name != "Select a client...":
+
+        
         client_id = next(
             client[0] for client in clients if client[1] == selected_client_name
         )
@@ -314,15 +331,56 @@ def show_client_dashboard():
                 if contact[0] in contact_types:
                     contact_types[contact[0]].append(contact)
         
-        # Display contact sections
+        # Primary Contacts Card
         with c1:
-            show_contact_section('Primary', contact_types['Primary'], 'primary')
+            with st.expander(f"Primary Contact ({len(contact_types['Primary'])})", expanded=False):
+                if contact_types['Primary']:
+                    for contact in contact_types['Primary']:
+                        render_contact_card(contact)
+                    if st.button("Add Primary Contact", key="add_primary", use_container_width=True):
+                        st.session_state.contact_form['is_open'] = True
+                        st.session_state.contact_form['contact_type'] = 'Primary'
+                        st.rerun()
+                else:
+                    st.caption("No primary contacts")
+                    if st.button("Add Primary Contact", key="add_primary", use_container_width=True):
+                        st.session_state.contact_form['is_open'] = True
+                        st.session_state.contact_form['contact_type'] = 'Primary'
+                        st.rerun()
         
+        # Authorized Contacts Card
         with c2:
-            show_contact_section('Authorized', contact_types['Authorized'], 'authorized')
+            with st.expander(f"Authorized Contact ({len(contact_types['Authorized'])})", expanded=False):
+                if contact_types['Authorized']:
+                    for contact in contact_types['Authorized']:
+                        render_contact_card(contact)
+                    if st.button("Add Authorized Contact", key="add_authorized", use_container_width=True):
+                        st.session_state.contact_form['is_open'] = True
+                        st.session_state.contact_form['contact_type'] = 'Authorized'
+                        st.rerun()
+                else:
+                    st.caption("No authorized contacts")
+                    if st.button("Add Authorized Contact", key="add_authorized", use_container_width=True):
+                        st.session_state.contact_form['is_open'] = True
+                        st.session_state.contact_form['contact_type'] = 'Authorized'
+                        st.rerun()
         
+        # Provider Contacts Card
         with c3:
-            show_contact_section('Provider', contact_types['Provider'], 'provider')
+            with st.expander(f"Provider Contact ({len(contact_types['Provider'])})", expanded=False):
+                if contact_types['Provider']:
+                    for contact in contact_types['Provider']:
+                        render_contact_card(contact)
+                    if st.button("Add Provider Contact", key="add_provider", use_container_width=True):
+                        st.session_state.contact_form['is_open'] = True
+                        st.session_state.contact_form['contact_type'] = 'Provider'
+                        st.rerun()
+                else:
+                    st.caption("No provider contacts")
+                    if st.button("Add Provider Contact", key="add_provider", use_container_width=True):
+                        st.session_state.contact_form['is_open'] = True
+                        st.session_state.contact_form['contact_type'] = 'Provider'
+                        st.rerun()
         
         # Payments History Section
         st.markdown("<div style='margin: 2rem 0 1rem 0;'></div>", unsafe_allow_html=True)

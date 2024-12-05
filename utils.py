@@ -250,9 +250,34 @@ def delete_contact(contact_id):
         cursor = conn.cursor()
         cursor.execute("DELETE FROM contacts WHERE contact_id = ?", (contact_id,))
         conn.commit()
-        return cursor.rowcount > 0  # Returns True if a row was deleted
-    except sqlite3.Error as e:
-        print(f"Error deleting contact: {e}")
-        return False
+        return True
     finally:
-        conn.close()        
+        conn.close()
+
+def update_contact(contact_id, contact_data):
+    """Update an existing contact in the database"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE contacts 
+            SET contact_name = ?, 
+                phone = ?, 
+                email = ?, 
+                fax = ?, 
+                physical_address = ?, 
+                mailing_address = ?
+            WHERE contact_id = ?
+        """, (
+            contact_data.get('contact_name'),
+            contact_data.get('phone'),
+            contact_data.get('email'),
+            contact_data.get('fax'),
+            contact_data.get('physical_address'),
+            contact_data.get('mailing_address'),
+            contact_id
+        ))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
