@@ -328,8 +328,8 @@ def get_payment_year_quarters(client_id):
     finally:
         conn.close()
 
-def get_paginated_payment_history(client_id, offset=0, limit=None, year=None, quarter=None):
-    """Get paginated payment records with optional year/quarter filter."""
+def get_paginated_payment_history(client_id, offset=0, limit=None, years=None, quarters=None):
+    """Get paginated payment records with optional year/quarter filters."""
     base_query = """
         SELECT 
             c.provider_name,
@@ -351,14 +351,17 @@ def get_paginated_payment_history(client_id, offset=0, limit=None, year=None, qu
     
     params = [client_id]
     
-    # Separate year and quarter filters
-    if year is not None:
-        base_query += " AND p.applied_start_year = ?"
-        params.append(year)
+    # Handle multiple years filter
+    if years and len(years) > 0:
+        year_placeholders = ','.join(['?' for _ in years])
+        base_query += f" AND p.applied_start_year IN ({year_placeholders})"
+        params.extend(years)
     
-    if quarter is not None:
-        base_query += " AND p.applied_start_quarter = ?"
-        params.append(quarter)
+    # Handle multiple quarters filter
+    if quarters and len(quarters) > 0:
+        quarter_placeholders = ','.join(['?' for _ in quarters])
+        base_query += f" AND p.applied_start_quarter IN ({quarter_placeholders})"
+        params.extend(quarters)
     
     base_query += " ORDER BY p.received_date DESC, p.payment_id DESC"
     

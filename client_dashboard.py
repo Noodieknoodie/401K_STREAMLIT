@@ -301,7 +301,6 @@ def show_payment_history(client_id):
     if 'payment_offset' not in st.session_state:
         st.session_state.payment_offset = 0
     
-    
     # Get data first
     total_payments = get_total_payment_count(client_id)
     year_quarters = get_payment_year_quarters(client_id)
@@ -311,56 +310,51 @@ def show_payment_history(client_id):
     
     with cols[0]:
         years = sorted(list(set(yq[0] for yq in year_quarters)), reverse=True)
-        selected_year = st.selectbox(
+        selected_years = st.multiselect(
             "Year",
-            ["All Years"] + years,
+            options=years,
+            default=None,
             key="year_filter",
-            label_visibility="hidden"
+            label_visibility="hidden",
+            placeholder="Select years..."
         )
     
     with cols[1]:
-        if selected_year != "All Years":
-            quarters = sorted([yq[1] for yq in year_quarters if yq[0] == selected_year])
-            quarter_options = {
-                1: "Q1 (Jan-Mar)",
-                2: "Q2 (Apr-Jun)",
-                3: "Q3 (Jul-Sep)",
-                4: "Q4 (Oct-Dec)"
-            }
-            selected_quarter = st.selectbox(
-                "Quarter",
-                ["All Quarters"] + [quarter_options[q] for q in quarters],
-                key="quarter_filter",
-                label_visibility="hidden"
-            )
-        else:
-            selected_quarter = "All Quarters"
-            st.selectbox(
-                "Quarter",
-                ["All Quarters"],
-                disabled=True,
-                key="quarter_filter_disabled",
-                label_visibility="hidden"
-            )
+        quarters = [1, 2, 3, 4]  # All possible quarters
+        quarter_options = {
+            1: "Q1 (Jan-Mar)",
+            2: "Q2 (Apr-Jun)",
+            3: "Q3 (Jul-Sep)",
+            4: "Q4 (Oct-Dec)"
+        }
+        selected_quarters = st.multiselect(
+            "Quarter",
+            options=list(quarter_options.values()),
+            default=None,
+            key="quarter_filter",
+            label_visibility="hidden",
+            placeholder="Select quarters..."
+        )
     
     with cols[2]:
         st.write(f"Showing {len(st.session_state.payment_data)} of {total_payments} payments")
     
     # Update filter handling
-    year_filter = None if selected_year == "All Years" else selected_year
-    quarter_filter = None
-    if selected_quarter != "All Quarters" and selected_quarter != "":
-        quarter_filter = int(selected_quarter[1])
+    year_filters = None if not selected_years else selected_years
+    quarter_filters = None
+    if selected_quarters:
+        # Convert quarter labels back to numbers
+        quarter_filters = [int(q[1]) for q in selected_quarters]
     
     # Check if filters changed
-    if ('current_year' not in st.session_state or 
-        'current_quarter' not in st.session_state or
-        st.session_state.get('current_year') != year_filter or
-        st.session_state.get('current_quarter') != quarter_filter):
+    if ('current_years' not in st.session_state or 
+        'current_quarters' not in st.session_state or
+        st.session_state.get('current_years') != year_filters or
+        st.session_state.get('current_quarters') != quarter_filters):
         st.session_state.payment_data = []
         st.session_state.payment_offset = 0
-        st.session_state.current_year = year_filter
-        st.session_state.current_quarter = quarter_filter
+        st.session_state.current_years = year_filters
+        st.session_state.current_quarters = quarter_filters
     
     # Get viewport size and records per page
     records_per_page = get_viewport_record_count()
@@ -372,8 +366,8 @@ def show_payment_history(client_id):
             client_id,
             offset=st.session_state.payment_offset,
             limit=records_per_page,
-            year=year_filter,
-            quarter=quarter_filter
+            years=year_filters,  # Changed from year to years
+            quarters=quarter_filters  # Changed from quarter to quarters
         )
         
         if new_payments:
@@ -633,7 +627,74 @@ def show_client_dashboard():
         
         # Get all required data
         client_details = get_client_details(client_id)
+        active_contract = get_active_contract(client_id)
+        latest_payment = get_latest_payment(client_id)
         contacts = get_contacts(client_id)
+
+        # Compact container for metrics
+        with st.container():
+            # First row - 4 columns
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Client Name", client_details[0], client_details[1] if client_details[1] else None)
+            with col2:
+                st.metric("Provider", active_contract[1] if active_contract and active_contract[1] else "N/A")
+            with col3:
+                st.metric("Contract #", active_contract[0] if active_contract and active_contract[0] else "N/A")
+            with col4:
+                st.metric("Participants", active_contract[2] if active_contract and active_contract[2] else "N/A")
+
+            # Second row - 4 columns
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                rate_value = 'N/A'
+                rate_type = None
+                rate_conversions = None
+                
+                if active_contract and active_contract[5]:
+                    if active_contract[5] == 'percentage':
+                        if active_contract[6]:
+                            rate_value = f"{active_contract[6]*100:.3f}%"
+                    else:
+                        if active_contract[7]:
+                            rate_value = f"${active_contract[7]:,.2f}"
+                    
+                    if rate_value != 'N/A':
+                        rate_type = active_contract[5].title()
+                        schedule = active_contract[4] if active_contract[4] else None
+                        rate_value, rate_conversions = calculate_rate_conversions(
+                            rate_value, 
+                            active_contract[5],
+                            schedule
+                        )
+                
+                st.metric(
+                    "Rate", 
+                    rate_value,
+                    rate_conversions if rate_conversions else rate_type
+                )
+            
+            with col2:
+                st.metric("Payment Schedule", active_contract[4].title() if active_contract and active_contract[4] else "N/A")
+            
+            with col3:
+                last_payment = 'No payments'
+                payment_date = None
+                if latest_payment and latest_payment[0]:
+                    last_payment = f"${latest_payment[0]:,.2f}"
+                    payment_date = latest_payment[1]
+                st.metric("Last Payment", last_payment, payment_date)
+            
+            with col4:
+                aum_value = 'Not available'
+                aum_date = None
+                if latest_payment and latest_payment[2]:
+                    aum_value = f"${latest_payment[2]:,.2f}"
+                    aum_date = f"Q{latest_payment[3]} {latest_payment[4]}"
+                st.metric("Last Recorded AUM", aum_value, aum_date)
+
+        # Small spacing before next section
+        st.markdown("<div style='margin: 0.5rem 0;'></div>", unsafe_allow_html=True)
         
         # Create three equal-width columns for contact cards
         c1, c2, c3 = st.columns(3)
