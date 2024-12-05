@@ -281,3 +281,94 @@ def update_contact(contact_id, contact_data):
         return True
     finally:
         conn.close()
+
+def get_viewport_record_count():
+    """Calculate how many records fit in the viewport based on row height."""
+    # Approximate row height in pixels (including padding)
+    row_height = 45
+    
+    # Get viewport height (default to reasonable size if can't detect)
+    try:
+        # Using streamlit's current viewport height minus headers/margins
+        viewport_height = st.session_state.get('_viewport_height', 800) - 200  # 200px for headers/margins
+    except:
+        viewport_height = 600  # Fallback height
+    
+    # Calculate records that fit in viewport
+    return max(10, int(viewport_height / row_height))
+
+def get_total_payment_count(client_id):
+    """Get total number of payments for a client."""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT COUNT(*) 
+            FROM payments p
+            WHERE p.client_id = ?
+        """, (client_id,))
+        return cursor.fetchone()[0]
+    finally:
+        conn.close()
+
+def get_payment_year_quarters(client_id):
+    """Get all available year/quarter combinations for quick navigation."""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT DISTINCT 
+                applied_start_year as year,
+                applied_start_quarter as quarter
+            FROM payments 
+            WHERE client_id = ?
+            ORDER BY year DESC, quarter DESC
+        """, (client_id,))
+        return cursor.fetchall()
+    finally:
+        conn.close()
+
+def get_paginated_payment_history(client_id, offset=0, limit=None, year=None, quarter=None):
+    """Get paginated payment records with optional year/quarter filter."""
+    base_query = """
+        SELECT 
+            c.provider_name,
+            p.applied_start_quarter,
+            p.applied_start_year,
+            p.applied_end_quarter,
+            p.applied_end_year,
+            c.payment_schedule,
+            p.received_date,
+            p.total_assets,
+            p.expected_fee,
+            p.actual_fee,
+            p.notes,
+            p.payment_id
+        FROM payments p
+        JOIN contracts c ON p.contract_id = c.contract_id
+        WHERE p.client_id = ?
+    """
+    
+    params = [client_id]
+    
+    # Separate year and quarter filters
+    if year is not None:
+        base_query += " AND p.applied_start_year = ?"
+        params.append(year)
+    
+    if quarter is not None:
+        base_query += " AND p.applied_start_quarter = ?"
+        params.append(quarter)
+    
+    base_query += " ORDER BY p.received_date DESC, p.payment_id DESC"
+    
+    if limit is not None:
+        base_query += f" LIMIT {limit} OFFSET {offset}"
+    
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(base_query, params)
+        return cursor.fetchall()
+    finally:
+        conn.close()
