@@ -1,0 +1,41 @@
+Workflows:
+
+Create new branch, add, commit, and push
+— git checkout -b feature-branch
+— git add .
+— git commit -m "Progress on feature"
+— git push -u origin feature-branch
+
+Pull and switch to new branch
+— git pull
+— git checkout feature-branch
+
+Start a new repository
+— git init
+— git remote add origin https://github.com/yourusername/ERIKSREPO.git
+— git add .
+— git commit -m "Initial commit"
+— git push -u origin main
+
+Sync local changes with remote updates
+— git pull
+— git add .
+— git commit -m "Sync with remote changes"
+— git push
+
+Fix merge conflicts after pull
+— git pull
+— Resolve conflicts in files
+— git add .
+— git commit -m "Resolved merge conflicts"
+— git push
+
+Merge a feature branch into main
+— git checkout main
+— git pull
+— git merge feature-branch
+— git push
+
+Delete a branch after merging
+— git branch -d feature-branch
+— git push origin --delete feature-branch

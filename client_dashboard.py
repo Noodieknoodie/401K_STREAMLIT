@@ -701,4 +701,3 @@ def show_client_dashboard():
         st.markdown("### Payment History")
         
         show_payment_history(client_id)
-
