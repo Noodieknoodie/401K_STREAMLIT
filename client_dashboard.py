@@ -7,7 +7,8 @@ from utils import (
     get_clients, get_client_details, get_active_contract, 
     get_latest_payment, get_contacts, get_payment_history,
     calculate_rate_conversions, update_payment_note, add_contact,
-    format_phone_number_ui, format_phone_number_db, validate_phone_number
+    format_phone_number_ui, format_phone_number_db, validate_phone_number,
+    delete_contact
 )
 
 # Contact form state management
@@ -27,6 +28,10 @@ def init_contact_form_state():
                 'mailing_address': ''
             }
         }
+    if 'delete_contact_id' not in st.session_state:
+        st.session_state.delete_contact_id = None
+    if 'show_delete_confirm' not in st.session_state:
+        st.session_state.show_delete_confirm = False
 
 def clear_form():
     if 'contact_form' in st.session_state:
@@ -204,6 +209,72 @@ def show_contact_form():
                     clear_form()
                     st.rerun()
 
+def render_contact_card(contact):
+    """Render a single contact card with strict grid layout"""
+    # Main container for each contact
+    with st.container():
+        # Two-column layout: Info | Actions
+        info_col, action_col = st.columns([6, 1])
+        
+        with info_col:
+            # Name - using text() for smaller size
+            if contact[1]:
+                st.write(f"**{contact[1]}**")  # Bold but not huge
+            # Contact details - all using text() for consistency
+            if contact[2]:
+                st.text(f"📞 {contact[2]}")
+            if contact[3]:
+                st.text(f"✉️ {contact[3]}")
+            if contact[4]:
+                st.text(f"📠 {contact[4]}")
+            if contact[5] or contact[6]:
+                st.text(f"📍 {contact[5] or contact[6]}")
+        
+        with action_col:
+            # Action buttons stacked vertically, right-aligned
+            if st.button("✏️", key=f"edit_{contact[7]}", help="Edit contact"):
+                st.info("Edit functionality coming soon", icon="ℹ️")
+            if st.button("🗑️", key=f"delete_{contact[7]}", help="Delete contact"):
+                st.session_state.delete_contact_id = contact[7]
+                st.session_state.show_delete_confirm = True
+                st.rerun()
+
+def show_contact_section(contact_type, contacts, section_key):
+    """Display a contact section with proper spacing and behavior"""
+    with st.expander(f"{contact_type} Contact ({len(contacts)})", expanded=False):
+        if contacts:
+            for idx, contact in enumerate(contacts):
+                # Show contact
+                render_contact_card(contact)
+                # Show delete confirmation after the contact if it's being deleted
+                if st.session_state.show_delete_confirm and st.session_state.delete_contact_id == contact[7]:
+                    with st.container():
+                        st.warning("Delete this contact?")
+                        c1, c2 = st.columns(2)
+                        with c1:
+                            if st.button("Confirm", key=f"confirm_delete_{contact[7]}", type="primary"):
+                                if delete_contact(contact[7]):
+                                    st.session_state.delete_contact_id = None
+                                    st.session_state.show_delete_confirm = False
+                                    get_contacts.clear()
+                                    st.rerun()
+                        with c2:
+                            if st.button("Cancel", key=f"cancel_delete_{contact[7]}"):
+                                st.session_state.delete_contact_id = None
+                                st.session_state.show_delete_confirm = False
+                                st.rerun()
+                # Add divider except for last contact
+                if idx < len(contacts) - 1:
+                    st.divider()
+        else:
+            st.caption(f"No {contact_type.lower()} contacts")
+        
+        # Add Contact button at bottom
+        if st.button(f"Add {contact_type} Contact", key=f"add_{section_key}", use_container_width=True):
+            st.session_state.contact_form['is_open'] = True
+            st.session_state.contact_form['contact_type'] = contact_type
+            st.rerun()
+
 def show_client_dashboard():
     st.write("👥 Client Dashboard")
     
@@ -225,8 +296,6 @@ def show_client_dashboard():
     )
     
     if selected_client_name != "Select a client...":
-
-        
         client_id = next(
             client[0] for client in clients if client[1] == selected_client_name
         )
@@ -245,76 +314,16 @@ def show_client_dashboard():
                 if contact[0] in contact_types:
                     contact_types[contact[0]].append(contact)
         
-        # Primary Contacts Card
+        # Display contact sections
         with c1:
-            with st.expander(f"Primary Contact ({len(contact_types['Primary'])})", expanded=False):
-                if contact_types['Primary']:
-                    for contact in contact_types['Primary']:
-                        st.markdown(f"""
-                        <div class="contact-info">
-                            <div class="contact-name">{contact[1] if contact[1] else ''}</div>
-                            <div class="contact-detail">📞 {contact[2] if contact[2] else 'No phone'}</div>
-                            <div class="contact-detail">✉️ {contact[3] if contact[3] else 'No email'}</div>
-                            {'<div class="contact-detail">📍 ' + (contact[5] or contact[6]) + '</div>' if (contact[5] or contact[6]) else ''}
-                        </div>
-                        """, unsafe_allow_html=True)
-                else:
-                    st.write("No primary contacts")
-                
-                # Add Contact button
-                if st.button("Add Primary Contact", key="add_primary", use_container_width=True):
-                    st.session_state.contact_form['is_open'] = True
-                    st.session_state.contact_form['contact_type'] = 'Primary'
-                    st.rerun()
-                # TODO: Add functionality
+            show_contact_section('Primary', contact_types['Primary'], 'primary')
         
-        # Authorized Contacts Card
         with c2:
-            with st.expander(f"Authorized Contact ({len(contact_types['Authorized'])})", expanded=False):
-                if contact_types['Authorized']:
-                    for contact in contact_types['Authorized']:
-                        st.markdown(f"""
-                        <div class="contact-info">
-                            <div class="contact-name">{contact[1] if contact[1] else ''}</div>
-                            <div class="contact-detail">📞 {contact[2] if contact[2] else 'No phone'}</div>
-                            <div class="contact-detail">✉️ {contact[3] if contact[3] else 'No email'}</div>
-                            {'<div class="contact-detail">📍 ' + (contact[5] or contact[6]) + '</div>' if (contact[5] or contact[6]) else ''}
-                        </div>
-                        """, unsafe_allow_html=True)
-                else:
-                    st.write("No authorized contacts")
-                
-                # Add Contact button
-                if st.button("Add Authorized Contact", key="add_authorized", use_container_width=True):
-                    st.session_state.contact_form['is_open'] = True
-                    st.session_state.contact_form['contact_type'] = 'Authorized'
-                    st.rerun()
-                # TODO: Add functionality
+            show_contact_section('Authorized', contact_types['Authorized'], 'authorized')
         
-        # Provider Contacts Card
         with c3:
-            with st.expander(f"Provider Contact ({len(contact_types['Provider'])})", expanded=False):
-                if contact_types['Provider']:
-                    for contact in contact_types['Provider']:
-                        st.markdown(f"""
-                        <div class="contact-info">
-                            <div class="contact-name">{contact[1] if contact[1] else ''}</div>
-                            <div class="contact-detail">📞 {contact[2] if contact[2] else 'No phone'}</div>
-                            <div class="contact-detail">✉️ {contact[3] if contact[3] else 'No email'}</div>
-                            {'<div class="contact-detail">📍 ' + (contact[5] or contact[6]) + '</div>' if (contact[5] or contact[6]) else ''}
-                        </div>
-                        """, unsafe_allow_html=True)
-                else:
-                    st.write("No provider contacts")
-                
-                # Add Contact button
-                if st.button("Add Provider Contact", key="add_provider", use_container_width=True):
-                    st.session_state.contact_form['is_open'] = True
-                    st.session_state.contact_form['contact_type'] = 'Provider'
-                    st.rerun()
-                # TODO: Add functionality
-             
-
+            show_contact_section('Provider', contact_types['Provider'], 'provider')
+        
         # Payments History Section
         st.markdown("<div style='margin: 2rem 0 1rem 0;'></div>", unsafe_allow_html=True)
         st.markdown("### Payment History")

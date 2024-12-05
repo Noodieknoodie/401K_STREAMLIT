@@ -242,3 +242,17 @@ def add_contact(client_id, contact_type, contact_data):
         return cursor.lastrowid
     finally:
         conn.close()        
+
+def delete_contact(contact_id):
+    """Delete a contact from the database"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM contacts WHERE contact_id = ?", (contact_id,))
+        conn.commit()
+        return cursor.rowcount > 0  # Returns True if a row was deleted
+    except sqlite3.Error as e:
+        print(f"Error deleting contact: {e}")
+        return False
+    finally:
+        conn.close()        
