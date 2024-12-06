@@ -282,21 +282,6 @@ def update_contact(contact_id, contact_data):
     finally:
         conn.close()
 
-def get_viewport_record_count():
-    """Calculate how many records fit in the viewport based on row height."""
-    # Approximate row height in pixels (including padding)
-    row_height = 45
-    
-    # Get viewport height (default to reasonable size if can't detect)
-    try:
-        # Using streamlit's current viewport height minus headers/margins
-        viewport_height = st.session_state.get('_viewport_height', 800) - 200  # 200px for headers/margins
-    except:
-        viewport_height = 600  # Fallback height
-    
-    # Calculate records that fit in viewport
-    return max(10, int(viewport_height / row_height))
-
 def get_total_payment_count(client_id):
     """Get total number of payments for a client."""
     conn = get_database_connection()

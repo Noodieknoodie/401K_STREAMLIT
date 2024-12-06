@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 from utils.utils import (
-    get_payment_history, update_payment_note, get_viewport_record_count,
+    get_payment_history, update_payment_note,
     get_paginated_payment_history, get_total_payment_count,
     get_payment_year_quarters
 )
@@ -159,7 +159,7 @@ def show_payment_history(client_id):
             f"Viewing payments from {datetime.now().year}" if time_filter == "This Year" else
             f"Viewing payments from {year}" + (f" Q{quarter[1]}" if quarter != "All Quarters" else "")
         )
-        st.markdown(f"<div style='text-align: right'>*{status_text}*</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='text-align: right'>{status_text}</div>", unsafe_allow_html=True)
     
     # Determine filters based on selection
     if time_filter == "All Time":
@@ -180,24 +180,20 @@ def show_payment_history(client_id):
         st.session_state.payment_offset = 0
         st.session_state.current_filters = current_filters
     
-    # Get viewport size and records per page
-    records_per_page = get_viewport_record_count()
-    
-    # Load more data if needed
-    if (not st.session_state.payment_data or 
-        st.session_state.payment_offset >= len(st.session_state.payment_data)):
+    # Load initial data if needed
+    if len(st.session_state.payment_data) == 0:
         new_payments = get_paginated_payment_history(
             client_id,
-            offset=st.session_state.payment_offset,
-            limit=records_per_page,
+            offset=0,
+            limit=25,
             years=year_filters,
             quarters=quarter_filters
         )
-        
         if new_payments:
             table_data = format_payment_data(new_payments)
             st.session_state.payment_data.extend(table_data)
     
+    # Now check if we have any data to display
     if not st.session_state.payment_data:
         st.info("No payment history available for this client.", icon="ℹ️")
         return
@@ -205,102 +201,78 @@ def show_payment_history(client_id):
     # Create DataFrame for display
     df = pd.DataFrame(st.session_state.payment_data)
     
-    # Scrollable container for the table
-    st.markdown('<div class="payment-container">', unsafe_allow_html=True)
-    
-    # Display headers (sticky)
-    header_cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1])
-    with header_cols[0]:
-        st.markdown('<p class="payment-header">Provider</p>', unsafe_allow_html=True)
-    with header_cols[1]:
-        st.markdown('<p class="payment-header">Period</p>', unsafe_allow_html=True)
-    with header_cols[2]:
-        st.markdown('<p class="payment-header">Frequency</p>', unsafe_allow_html=True)
-    with header_cols[3]:
-        st.markdown('<p class="payment-header">Received</p>', unsafe_allow_html=True)
-    with header_cols[4]:
-        st.markdown('<p class="payment-header">Total Assets</p>', unsafe_allow_html=True)
-    with header_cols[5]:
-        st.markdown('<p class="payment-header">Expected Fee</p>', unsafe_allow_html=True)
-    with header_cols[6]:
-        st.markdown('<p class="payment-header">Actual Fee</p>', unsafe_allow_html=True)
-    with header_cols[7]:
-        st.markdown('<p class="payment-header">Discrepancy</p>', unsafe_allow_html=True)
-    with header_cols[8]:
-        st.markdown('<p class="payment-header">Notes</p>', unsafe_allow_html=True)
+    # Create scrollable container with fixed height
+    st.markdown("""
+        <style>
+        div[data-testid="stVerticalBlock"] > div:has(div.stDataFrame) {
+            height: 600px;
+            overflow-y: auto;
+            padding-right: 1rem;
+        }
+        div.stDataFrame {
+            height: 100%;
+        }
+        div.stDataFrame thead th {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1;
+        }
+        </style>
+    """, unsafe_allow_html=True)
     
     # Display rows
     for index, row in df.iterrows():
-        row_container = st.container()
-        with row_container:
-            cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1])
-            
-            with cols[0]:
-                st.write(row["Provider"])
-            with cols[1]:
-                st.write(row["Period"])
-            with cols[2]:
-                st.write(row["Frequency"])
-            with cols[3]:
-                st.write(row["Received"])
-            with cols[4]:
-                st.write(row["Total Assets"])
-            with cols[5]:
-                st.write(row["Expected Fee"])
-            with cols[6]:
-                st.write(row["Actual Fee"])
-            with cols[7]:
-                st.write(row["Discrepancy"])
-            with cols[8]:
-                render_note_cell(row["payment_id"], row["Notes"])
-            
-            # Note editing form
-            if (
-                'active_note_payment_id' in st.session_state 
-                and st.session_state.active_note_payment_id == row["payment_id"]
-            ):
-                with st.container():
-                    note_cols = st.columns([7, 9])
-                    with note_cols[1]:
-                        st.markdown(f"""<div style="border-top: 1px solid #eee; padding-top: 0.5rem;"></div>""", unsafe_allow_html=True)
-                        st.text_area(
-                            f"Note for {row['Provider']} - {row['Period']}",
-                            value=row["Notes"] or "",
-                            key=f"note_textarea_{row['payment_id']}",
-                            height=100,
-                            placeholder="Enter note here..."
-                        )
+        cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1])
+        
+        with cols[0]:
+            st.write(row["Provider"])
+        with cols[1]:
+            st.write(row["Period"])
+        with cols[2]:
+            st.write(row["Frequency"])
+        with cols[3]:
+            st.write(row["Received"])
+        with cols[4]:
+            st.write(row["Total Assets"])
+        with cols[5]:
+            st.write(row["Expected Fee"])
+        with cols[6]:
+            st.write(row["Actual Fee"])
+        with cols[7]:
+            st.write(row["Discrepancy"])
+        with cols[8]:
+            render_note_cell(row["payment_id"], row["Notes"])
+        
+        # Note editing form
+        if (
+            'active_note_payment_id' in st.session_state 
+            and st.session_state.active_note_payment_id == row["payment_id"]
+        ):
+            with st.container():
+                note_cols = st.columns([7, 9])
+                with note_cols[1]:
+                    st.markdown(f"""<div style="border-top: 1px solid #eee; padding-top: 0.5rem;"></div>""", unsafe_allow_html=True)
+                    st.text_area(
+                        f"Note for {row['Provider']} - {row['Period']}",
+                        value=row["Notes"] or "",
+                        key=f"note_textarea_{row['payment_id']}",
+                        height=100,
+                        placeholder="Enter note here..."
+                    )
     
-    st.markdown('</div>', unsafe_allow_html=True)  # End of scrollable container
-    
-    # Navigation controls
-    if len(st.session_state.payment_data) > get_viewport_record_count():
-        st.markdown(
-            f"""
-            <div class="scroll-top">
-                <button kind="secondary" class="stButton">
-                    <div style="font-size: 24px;">⬆️</div>
-                </button>
-            </div>
-            <script>
-                const btn = document.querySelector('.scroll-top button');
-                btn.onclick = () => {{
-                    document.querySelector('.payment-container').scrollTo({{
-                        top: 0,
-                        behavior: 'smooth'
-                    }});
-                }};
-            </script>
-            """,
-            unsafe_allow_html=True
-        )
-    
-    # Load more button at bottom
+    # Load more data if we're near the bottom
     if len(st.session_state.payment_data) < total_payments:
-        st.markdown('<div class="load-more">', unsafe_allow_html=True)
-        col1, col2, col3 = st.columns([1, 1, 1])
-        with col2:
-            if st.button("Load More", use_container_width=True):
-                st.session_state.payment_offset = len(st.session_state.payment_data)
-                st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True) 
+        if len(st.session_state.payment_data) % 25 == 0:  # Load next batch when we've displayed all current rows
+            st.session_state.payment_offset = len(st.session_state.payment_data)
+            new_payments = get_paginated_payment_history(
+                client_id,
+                offset=st.session_state.payment_offset,
+                limit=25,  # Load 25 rows at a time
+                years=year_filters,
+                quarters=quarter_filters
+            )
+            if new_payments:
+                table_data = format_payment_data(new_payments)
+                st.session_state.payment_data.extend(table_data)
+    
