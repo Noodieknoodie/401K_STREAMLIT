@@ -124,56 +124,61 @@ def show_payment_history(client_id):
     total_payments = get_total_payment_count(client_id)
     year_quarters = get_payment_year_quarters(client_id)
     
-    # Then create filter bar directly with columns
-    cols = st.columns([1.5, 1.5, 3])
+    # Get available years
+    years = sorted(list(set(yq[0] for yq in year_quarters)), reverse=True)
+    if not years:
+        st.info("No payment history available.")
+        return
     
-    with cols[0]:
-        years = sorted(list(set(yq[0] for yq in year_quarters)), reverse=True)
-        selected_years = st.multiselect(
-            "Year",
-            options=years,
-            default=None,
-            key="year_filter",
-            label_visibility="hidden",
-            placeholder="Select years..."
+    # Create a row with the same width as the table
+    left_col, right_col = st.columns([6, 3])
+    
+    with left_col:
+        time_filter = st.radio(
+            "",
+            options=["All Time", "This Year", "Custom"],
+            horizontal=True,
+            label_visibility="collapsed"
         )
+        
+        if time_filter == "Custom":
+            col1, col2, _ = st.columns([1, 1, 2])
+            with col1:
+                year = st.selectbox("Year", options=years, index=0, label_visibility="collapsed")
+            with col2:
+                quarter = st.selectbox(
+                    "Quarter",
+                    options=["All Quarters", "Q1", "Q2", "Q3", "Q4"],
+                    index=0,
+                    label_visibility="collapsed"
+                )
     
-    with cols[1]:
-        quarters = [1, 2, 3, 4]  # All possible quarters
-        quarter_options = {
-            1: "Q1 (Jan-Mar)",
-            2: "Q2 (Apr-Jun)",
-            3: "Q3 (Jul-Sep)",
-            4: "Q4 (Oct-Dec)"
-        }
-        selected_quarters = st.multiselect(
-            "Quarter",
-            options=list(quarter_options.values()),
-            default=None,
-            key="quarter_filter",
-            label_visibility="hidden",
-            placeholder="Select quarters..."
+    with right_col:
+        status_text = (
+            f"Viewing all {total_payments} payments" if time_filter == "All Time" else
+            f"Viewing payments from {datetime.now().year}" if time_filter == "This Year" else
+            f"Viewing payments from {year}" + (f" Q{quarter[1]}" if quarter != "All Quarters" else "")
         )
+        st.markdown(f"<div style='text-align: right'>*{status_text}*</div>", unsafe_allow_html=True)
     
-    with cols[2]:
-        st.write(f"Showing {len(st.session_state.payment_data)} of {total_payments} payments")
-    
-    # Update filter handling
-    year_filters = None if not selected_years else selected_years
-    quarter_filters = None
-    if selected_quarters:
-        # Convert quarter labels back to numbers
-        quarter_filters = [int(q[1]) for q in selected_quarters]
+    # Determine filters based on selection
+    if time_filter == "All Time":
+        year_filters = None
+        quarter_filters = None
+    elif time_filter == "This Year":
+        year_filters = [datetime.now().year]
+        quarter_filters = None
+    else:  # Custom
+        year_filters = [year]
+        quarter_filters = None if quarter == "All Quarters" else [int(quarter[1])]
     
     # Check if filters changed
-    if ('current_years' not in st.session_state or 
-        'current_quarters' not in st.session_state or
-        st.session_state.get('current_years') != year_filters or
-        st.session_state.get('current_quarters') != quarter_filters):
+    current_filters = (year_filters, quarter_filters)
+    if ('current_filters' not in st.session_state or 
+        st.session_state.current_filters != current_filters):
         st.session_state.payment_data = []
         st.session_state.payment_offset = 0
-        st.session_state.current_years = year_filters
-        st.session_state.current_quarters = quarter_filters
+        st.session_state.current_filters = current_filters
     
     # Get viewport size and records per page
     records_per_page = get_viewport_record_count()
