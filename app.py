@@ -1,10 +1,10 @@
 # app.py
 import streamlit as st
 from sidebar import render_sidebar
-from quarterly_summary import show_quarterly_summary
-from client_dashboard import show_client_dashboard
-from manage_clients import show_manage_clients
-from bulk_payment_entry import show_bulk_payment_entry
+from pages.quarterly_summary.summary import show_quarterly_summary
+from pages.client_dashboard.dashboard import show_client_dashboard
+from pages.manage_clients.client_management import show_manage_clients
+from pages.bulk_payment.bulk_entry import show_bulk_payment_entry
 
 # Set page config
 st.set_page_config(
