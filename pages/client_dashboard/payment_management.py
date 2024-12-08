@@ -114,6 +114,34 @@ def render_note_cell(payment_id, note):
 def show_payment_history(client_id):
     """Display payment history with efficient layout and smart navigation."""
     
+    # Initialize payment form state
+    if 'payment_form' not in st.session_state:
+        current_quarter = (datetime.now().month - 1) // 3 + 1
+        current_year = datetime.now().year
+        prev_quarter = current_quarter - 1 if current_quarter > 1 else 4
+        prev_year = current_year if current_quarter > 1 else current_year - 1
+        
+        st.session_state.payment_form = {
+            'is_open': False,
+            'mode': 'add',
+            'has_validation_error': False,
+            'show_cancel_confirm': False,
+            'modal_lock': False,
+            'form_data': {
+                'received_date': datetime.now().strftime('%Y-%m-%d'),
+                'applied_start_quarter': prev_quarter,  # Previous quarter for arrears
+                'applied_start_year': prev_year,       # Previous quarter's year
+                'applied_end_quarter': None,
+                'applied_end_year': None,
+                'total_assets': '',
+                'actual_fee': '',
+                'expected_fee': None,
+                'method': 'None Specified',
+                'other_method': '',
+                'notes': ''
+            }
+        }
+    
     # Initialize payment state
     if 'payment_data' not in st.session_state:
         st.session_state.payment_data = []
@@ -131,7 +159,7 @@ def show_payment_history(client_id):
         return
     
     # Create a row with the same width as the table
-    left_col, right_col = st.columns([6, 3])
+    left_col, middle_col, right_col = st.columns([4, 2, 4])
     
     with left_col:
         time_filter = st.radio(
@@ -152,6 +180,11 @@ def show_payment_history(client_id):
                     index=0,
                     label_visibility="collapsed"
                 )
+    
+    with middle_col:
+        if st.button("Add Payment", type="primary", use_container_width=True):
+            st.session_state.payment_form['is_open'] = True
+            st.rerun()
     
     with right_col:
         status_text = (

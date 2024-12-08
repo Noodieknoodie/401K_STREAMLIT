@@ -25,8 +25,15 @@ def get_active_contract(client_id):
     try:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT contract_number, provider_name, num_people, payment_type, 
-                   payment_schedule, fee_type, percent_rate, flat_rate
+            SELECT 
+                contract_id,
+                provider_name,
+                contract_number,
+                payment_schedule,
+                fee_type,
+                percent_rate,
+                flat_rate,
+                num_people
             FROM contracts 
             WHERE client_id = ? AND active = 'TRUE'
             LIMIT 1
@@ -358,5 +365,206 @@ def get_paginated_payment_history(client_id, offset=0, limit=None, years=None, q
         cursor = conn.cursor()
         cursor.execute(base_query, params)
         return cursor.fetchall()
+    finally:
+        conn.close()
+
+def format_payment_data(payments):
+    """Format payment data for display with consistent formatting."""
+    table_data = []
+    
+    for payment in payments:
+        provider_name = payment[0] or "N/A"
+        
+        # Format payment period with Q prefix
+        if payment[1] == payment[3] and payment[2] == payment[4]:
+            period = f"Q{payment[1]} {payment[2]}"
+        else:
+            period = f"Q{payment[1]} {payment[2]} - Q{payment[3]} {payment[4]}"
+        
+        frequency = payment[5].title() if payment[5] else "N/A"
+        
+        # Format date
+        received_date = "N/A"
+        if payment[6]:
+            try:
+                date_obj = datetime.strptime(payment[6], '%Y-%m-%d')
+                received_date = date_obj.strftime('%b %d, %Y')
+            except:
+                received_date = payment[6]
+        
+        # Format currency values
+        def format_currency(value):
+            try:
+                if value is None or value == "":
+                    return "N/A"
+                return f"${float(value):,.2f}"
+            except (ValueError, TypeError):
+                return "N/A"
+        
+        total_assets = format_currency(payment[7])
+        expected_fee = format_currency(payment[8])
+        actual_fee = format_currency(payment[9])
+        
+        # Calculate fee discrepancy
+        try:
+            if payment[8] is not None and payment[9] is not None and payment[8] != "" and payment[9] != "":
+                discrepancy = float(payment[9]) - float(payment[8])
+                discrepancy_str = f"${discrepancy:,.2f}" if discrepancy >= 0 else f"-${abs(discrepancy):,.2f}"
+            else:
+                discrepancy_str = "N/A"
+        except (ValueError, TypeError):
+            discrepancy_str = "N/A"
+        
+        method = payment[11] or "N/A"  # Add method to display
+        notes = payment[10] or ""
+        payment_id = payment[12]
+        
+        table_data.append({
+            "Provider": provider_name,
+            "Period": period,
+            "Frequency": frequency,
+            "Received": received_date,
+            "Total Assets": total_assets,
+            "Expected Fee": expected_fee,
+            "Actual Fee": actual_fee,
+            "Discrepancy": discrepancy_str,
+            "Method": method,  # Add method to returned data
+            "Notes": notes,
+            "payment_id": payment_id
+        })
+    
+    return table_data
+
+def get_active_contracts_for_client(client_id):
+    """Get all active contracts for a client for payment provider selection"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT 
+                contract_id,
+                provider_name,
+                contract_number,
+                payment_schedule,
+                fee_type,
+                percent_rate,
+                flat_rate
+            FROM contracts 
+            WHERE client_id = ? AND active = 'TRUE'
+            ORDER BY contract_start_date DESC
+        """, (client_id,))
+        return cursor.fetchall()
+    finally:
+        conn.close()
+
+def format_currency_db(amount):
+    """Format currency for database storage: Convert UI format to decimal"""
+    if not amount:
+        return None
+    try:
+        # Remove any non-numeric characters except decimal point
+        cleaned = ''.join(c for c in str(amount) if c.isdigit() or c == '.')
+        # Convert to float
+        return float(cleaned)
+    except (ValueError, TypeError):
+        return None
+
+def format_currency_ui(amount):
+    """Format currency for UI display: $X,XXX.XX"""
+    if amount is None or amount == "":
+        return ""
+    try:
+        # Remove any non-numeric characters except decimal point
+        cleaned = ''.join(c for c in str(amount) if c.isdigit() or c == '.')
+        # Convert to float and format
+        value = float(cleaned)
+        return f"${value:,.2f}"
+    except (ValueError, TypeError):
+        return str(amount)
+
+def validate_payment_data(data):
+    """Validate payment data before saving to database"""
+    errors = []
+    
+    # Check required fields with friendly messages
+    if not data.get('received_date'):
+        errors.append("Please enter when the payment was received")
+    
+    # Validate payment amount
+    actual_fee = data.get('actual_fee', '')
+    if not actual_fee:
+        errors.append("Please enter the payment amount")
+    elif actual_fee == "$0.00":  # Check for default value
+        errors.append("Please enter a payment amount")
+    
+    # Validate quarters are in arrears
+    current_quarter = (datetime.now().month - 1) // 3 + 1
+    current_year = datetime.now().year
+    
+    start_quarter = data.get('applied_start_quarter')
+    start_year = data.get('applied_start_year')
+    end_quarter = data.get('applied_end_quarter', start_quarter)
+    end_year = data.get('applied_end_year', start_year)
+    
+    # Convert to absolute quarters for comparison
+    start_absolute = start_year * 4 + start_quarter
+    end_absolute = end_year * 4 + end_quarter
+    current_absolute = current_year * 4 + current_quarter
+    
+    if start_absolute >= current_absolute:
+        errors.append("Payment must be for a previous quarter (in arrears)")
+    
+    if end_absolute >= current_absolute:
+        errors.append("Payment end quarter must be a previous quarter (in arrears)")
+    
+    if end_absolute < start_absolute:
+        errors.append("End quarter cannot be before start quarter")
+    
+    return errors
+
+def add_payment(client_id, payment_data):
+    """Add a new payment to the database"""
+    # Get active contract
+    contract = get_active_contract(client_id)
+    if not contract:
+        return None
+        
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO payments (
+                client_id,
+                contract_id,
+                received_date,
+                applied_start_quarter,
+                applied_start_year,
+                applied_end_quarter,
+                applied_end_year,
+                total_assets,
+                expected_fee,
+                actual_fee,
+                method,
+                notes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            client_id,
+            contract[0],  # contract_id from active contract
+            payment_data['received_date'],
+            payment_data['applied_start_quarter'],
+            payment_data['applied_start_year'],
+            payment_data.get('applied_end_quarter', payment_data['applied_start_quarter']),
+            payment_data.get('applied_end_year', payment_data['applied_start_year']),
+            format_currency_db(payment_data.get('total_assets')),
+            format_currency_db(payment_data.get('expected_fee')),
+            format_currency_db(payment_data.get('actual_fee')),
+            payment_data.get('method'),  # Can be NULL if "None Specified" or skipped
+            payment_data.get('notes', '')
+        ))
+        conn.commit()
+        return cursor.lastrowid
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return None
     finally:
         conn.close()

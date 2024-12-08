@@ -4,6 +4,7 @@ from .payment_management import show_payment_history
 from .dashboard_metrics import show_client_metrics
 from .client_selection import get_selected_client
 from .contact_layout import show_contact_sections
+from pages.quarterly_summary.payment_form import show_payment_form
 
 def show_client_dashboard():
     """Main dashboard view with modular components."""
@@ -12,12 +13,16 @@ def show_client_dashboard():
     # Initialize contact form state
     init_contact_form_state()
     
+    # Get selected client first
+    client_id, selected_client_name = get_selected_client()
+    
     # Show contact form dialog if open
     if 'contact_form' in st.session_state and st.session_state.contact_form['is_open']:
         show_contact_form()
     
-    # Get selected client
-    client_id, selected_client_name = get_selected_client()
+    # Show payment form dialog if open
+    if 'payment_form' in st.session_state and st.session_state.payment_form['is_open']:
+        show_payment_form(client_id)
     
     if client_id:
         # Show client metrics

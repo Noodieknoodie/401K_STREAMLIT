@@ -118,7 +118,6 @@ CREATE TABLE "contracts" (
 	"percent_rate"	REAL,
 	"flat_rate"	REAL,
 	"payment_schedule"	TEXT,
-	"payment_type"	TEXT,
 	"num_people"	INTEGER,
 	"notes"	TEXT,
 	PRIMARY KEY("contract_id" AUTOINCREMENT),
@@ -126,25 +125,25 @@ CREATE TABLE "contracts" (
 )
 
 SAMPLE:
-(1, 1, 'TRUE', '134565', 'John Hancock', '2018-03-22', 'percentage', 0.0007, None, 'monthly', 'Auto - Check', 18, 'Phone: 800-333-0963 Option 1 with Contract # or Option 2, ext 154617\r\nFax: General Info 866-377-9577  Enrollment Forms 866-377-8846 \r\n')
-(2, 2, 'TRUE', None, 'Voya', '2019-04-19', 'percentage', 0.041667, None, 'monthly', 'Auto - ACH', 35, '')
-(3, 3, 'TRUE', '551296', 'Voya', None, 'flat', '', 666.66, 'monthly', 'Auto - Check', None, None)
-(4, 4, 'FALSE', '684021', 'ADP', None, 'percentage', 0.00125, None, 'quarterly', 'Auto - Check', 139, None)
-(5, 5, 'TRUE', '231393', 'Ascensus Trust Company', '2019-05-2019', 'flat', '', 3000.0, 'quarterly', 'Auto - Check', 93, None)
-(6, 6, 'TRUE', '29366', 'John Hancock', None, 'percentage', 0.00125, None, 'monthly', 'Auto - Check', 289, None)
+(1, 1, 'TRUE', '134565', 'John Hancock', '2018-03-22', 'percentage', 0.0007, None, 'monthly',  18, 'Phone: 800-333-0963 Option 1 with Contract # or Option 2, ext 154617\r\nFax: General Info 866-377-9577  Enrollment Forms 866-377-8846 \r\n')
+(2, 2, 'TRUE', None, 'Voya', '2019-04-19', 'percentage', 0.041667, None, 'monthly',  35, '')
+(3, 3, 'TRUE', '551296', 'Voya', None, 'flat', '', 666.66, 'monthly',  None, None)
+(4, 4, 'FALSE', '684021', 'ADP', None, 'percentage', 0.00125, None, 'quarterly',  139, None)
+(5, 5, 'TRUE', '231393', 'Ascensus Trust Company', '2019-05-2019', 'flat', '', 3000.0, 'quarterly',  93, None)
+(6, 6, 'TRUE', '29366', 'John Hancock', None, 'percentage', 0.00125, None, 'monthly',  289, None)
 (7, 7, 'FALSE', '15880157', 'Nationwide', None, 'percentage', 0.041667, None, 'monthly', '', 15, None)
 (8, 8, 'TRUE', '273504', 'Ascensus', None, 'percentage', 0.003446, None, 'quarterly', '', 177, None)
 (9, 9, 'TRUE', '134019', 'Direct from CG Engineering', None, 'flat', '', 2500.0, 'quarterly', 'Invoice - Check', 42, None)
 (10, 10, 'TRUE', None, 'Empower', None, 'percentage', 0.000667, None, 'monthly', '', 208, None)
 (11, 11, 'TRUE', '147266', 'John Hancock', None, 'percentage', 0.000208, None, 'monthly', '', 531, None)
-(12, 12, 'TRUE', '222908', 'Ascensus Trust Company', None, 'flat', '', 2500.0, 'quarterly', 'Auto - Check', 80, None)
-(13, 13, 'TRUE', '41909', 'Fidelity', None, 'flat', '', 1250.0, 'monthly', 'Auto - Check', 80, None)
-(14, 14, 'TRUE', '34283', 'Fidelity', None, 'flat', '', 3750.0, 'quarterly', 'Auto - ACH', 24, None)
-(15, 15, 'TRUE', '809872', 'Transamerica', None, 'percentage', 0.000417, None, 'monthly', 'Auto - Check', None, None)
+(12, 12, 'TRUE', '222908', 'Ascensus Trust Company', None, 'flat', '', 2500.0, 'quarterly',  80, None)
+(13, 13, 'TRUE', '41909', 'Fidelity', None, 'flat', '', 1250.0, 'monthly',  80, None)
+(14, 14, 'TRUE', '34283', 'Fidelity', None, 'flat', '', 3750.0, 'quarterly',  24, None)
+(15, 15, 'TRUE', '809872', 'Transamerica', None, 'percentage', 0.000417, None, 'monthly',  None, None)
 //truncated...
 (32, 7, 'TRUE', '', 'Voya', None, 'percentage', 0.041667, None, 'monthly', '', 15, None)
-(33, 16, 'TRUE', '', 'Empower', None, 'flat', '', 3500.0, 'quarterly', 'Auto - Check', None, None)
-(34, 28, 'TRUE', None, 'Empower', None, 'percentage', 0.000667, None, 'monthly', 'Auto-ACH', 43, None)
+(33, 16, 'TRUE', '', 'Empower', None, 'flat', '', 3500.0, 'quarterly',  None, None)
+(34, 28, 'TRUE', None, 'Empower', None, 'percentage', 0.000667, None, 'monthly',  43, None)
 (35, 29, 'TRUE', None, 'Principal', None, 'percentage', 0.001875, None, 'quarterly', '', 15, None)
 
 
@@ -427,12 +426,6 @@ Table: contracts
     Diverse: No
     Average Length: 8.06 characters
     Length Range: {'min': 7, 'max': 9}
-  Column: payment_type
-    % Nulls: 0.00%
-    Unique Values: 6
-    Diverse: No
-    Average Length: 7.06 characters
-    Length Range: {'min': 0, 'max': 15}
   Column: num_people
     % Nulls: 14.29%
     Unique Values: 20
@@ -515,7 +508,7 @@ Table: payments
     Length Range: {'min': 4, 'max': 8}
   Column: method
     % Nulls: 0.00%
-    Unique Values: 6
+    Unique Values: 4
     Diverse: No
     Average Length: 8.10 characters
     Length Range: {'min': 0, 'max': 15}
