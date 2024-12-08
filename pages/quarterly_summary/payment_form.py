@@ -8,14 +8,23 @@ from utils.utils import (
     add_payment
 )
 from .payment_utils import (
-    get_current_quarter,
-    get_quarter_range,
-    validate_quarter_range,
-    format_quarter_display,
+    get_current_period,
+    get_period_options,
+    validate_period_range,
+    format_period_display,
     calculate_expected_fee,
-    parse_quarter_option
+    parse_period_option,
+    get_current_quarter,
+    get_previous_quarter,
+    get_quarter_month_range
 )
 from utils.utils import get_database_connection
+
+# Add caching for contract data
+@st.cache_data(ttl=300)  # Cache for 5 minutes
+def get_cached_contract(client_id):
+    """Get contract data with caching for better performance."""
+    return get_active_contract(client_id)
 
 # Payment method options
 METHOD_OPTIONS = [
@@ -28,10 +37,6 @@ METHOD_OPTIONS = [
 
 def init_payment_form_state():
     """Initialize the payment form state"""
-    current_quarter = get_current_quarter()
-    current_year = datetime.now().year
-    prev_quarter, prev_year = get_previous_quarter(current_quarter, current_year)
-    
     if 'payment_form' not in st.session_state:
         st.session_state.payment_form = {
             'is_open': False,
@@ -40,9 +45,9 @@ def init_payment_form_state():
             'show_cancel_confirm': False,
             'form_data': {
                 'received_date': datetime.now().strftime('%Y-%m-%d'),
-                'applied_start_quarter': prev_quarter,  # Default to previous quarter
-                'applied_start_year': prev_year,
-                'applied_end_quarter': None,
+                'applied_start_period': None,  # Will be set based on schedule
+                'applied_start_year': None,
+                'applied_end_period': None,
                 'applied_end_year': None,
                 'total_assets': '',
                 'actual_fee': '',
@@ -155,32 +160,43 @@ def format_amount_on_change(field_key):
                 # If conversion fails, keep original value
                 pass
 
-def get_quarter_from_date(date_str):
-    """Get quarter from date string (for arrears payments)"""
+def get_period_from_date(date_str, schedule):
+    """Get period from date string (for arrears payments)"""
     try:
         date = datetime.strptime(date_str, '%Y-%m-%d')
-        current_quarter = (date.month - 1) // 3 + 1
+        current_month = date.month
         current_year = date.year
-        # Get previous quarter since payments are in arrears
+        
+        # Handle monthly schedule
+        if schedule and schedule.lower() == 'monthly':
+            if current_month == 1:
+                return 12, current_year - 1
+            return current_month - 1, current_year
+            
+        # Handle quarterly schedule
+        current_quarter = (current_month - 1) // 3 + 1
         if current_quarter == 1:
             return 4, current_year - 1
         return current_quarter - 1, current_year
     except ValueError:
-        # Default to previous quarter of current date
-        current_quarter = get_current_quarter()
+        # Default to previous period of current date
+        current_period = get_current_period(schedule)
         current_year = datetime.now().year
-        if current_quarter == 1:
-            return 4, current_year - 1
-        return current_quarter - 1, current_year
+        if (schedule and schedule.lower() == 'monthly' and current_period == 1) or \
+           (schedule and schedule.lower() == 'quarterly' and current_period == 1):
+            return 12 if schedule.lower() == 'monthly' else 4, current_year - 1
+        return current_period - 1, current_year
 
 def on_date_change():
     """Handle date change events"""
-    if 'received_date' in st.session_state:
-        date_str = st.session_state.received_date.strftime('%Y-%m-%d')
-        quarter, year = get_quarter_from_date(date_str)
-        st.session_state.payment_form['form_data']['applied_start_quarter'] = quarter
-        st.session_state.payment_form['form_data']['applied_start_year'] = year
-        clear_validation_error()
+    if 'received_date' in st.session_state and 'payment_form' in st.session_state:
+        contract = st.session_state.payment_form.get('active_contract')
+        if contract:
+            date_str = st.session_state.received_date.strftime('%Y-%m-%d')
+            period, year = get_period_from_date(date_str, contract[3])  # contract[3] is payment_schedule
+            st.session_state.payment_form['form_data']['applied_start_period'] = period
+            st.session_state.payment_form['form_data']['applied_start_year'] = year
+            clear_validation_error()
 
 def get_previous_quarter(quarter, year):
     """Get the previous quarter and year"""
@@ -248,12 +264,11 @@ def show_payment_form(client_id):
     if not st.session_state.payment_form['is_open']:
         return
     
-    st.session_state.client_id = client_id  # Store client_id for contract loading
-    
+    st.session_state.client_id = client_id
     st.subheader("Add Payment")
     
     # Get active contract
-    contract = get_active_contract(client_id)
+    contract = get_cached_contract(client_id)
     if not contract:
         st.error("No active contract found for this client. Please add a contract first.")
         if st.button("Close"):
@@ -289,72 +304,78 @@ def show_payment_form(client_id):
         on_change=on_date_change
     )
     
-    # Quarter selection - simple and clear
-    st.markdown("Quarter Payment is For<span style='color: red'>*</span>", unsafe_allow_html=True)
-    quarter_options = get_quarter_options()  # Now excludes current quarter
+    # Period selection - schedule aware
+    period_label = "Month" if contract[3] and contract[3].lower() == 'monthly' else "Quarter"
+    st.markdown(f"Payment {period_label}<span style='color: red'>*</span>", unsafe_allow_html=True)
     
-    if not quarter_options:
-        st.error("No valid quarters available for payment")
+    if not contract[3]:
+        st.warning("Please set the payment schedule in the contract before adding payments.")
         return
         
-    selected_quarter = st.selectbox(
-        label="Quarter Payment is For",
-        options=quarter_options,
-        index=0,  # First option is always previous quarter
-        key="applied_quarter",
+    period_options = get_period_options(contract[3])
+    if not period_options:
+        st.error(f"No valid {period_label.lower()}s available for payment")
+        return
+        
+    selected_period = st.selectbox(
+        label=f"Payment {period_label}",
+        options=period_options,
+        index=0,  # First option is always previous period
+        key="applied_period",
         label_visibility="collapsed"
     )
     
-    # Parse selected quarter
-    start_quarter, start_year = parse_quarter_option(selected_quarter)
+    # Parse selected period
+    start_period, start_year = parse_period_option(selected_period, contract[3])
     
     is_custom_range = st.checkbox(
-        "Payment covers multiple quarters",
+        f"Payment covers multiple {period_label.lower()}s",
         value=False,
         key="is_custom_range"
     )
     
     # Show custom range fields if enabled
-    end_quarter = start_quarter
+    end_period = start_period
     end_year = start_year
     
     if is_custom_range:
-        st.markdown("##### Select Quarter Range")
+        st.markdown(f"##### Select {period_label} Range")
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("From")
-            start_quarter_option = st.selectbox(
-                label="Start Quarter",
-                options=quarter_options,
-                index=quarter_options.index(selected_quarter),
-                key="custom_start_quarter",
+            start_period_option = st.selectbox(
+                label=f"Start {period_label}",
+                options=period_options,
+                index=period_options.index(selected_period),
+                key="custom_start_period",
                 label_visibility="collapsed"
             )
-            start_quarter, start_year = parse_quarter_option(start_quarter_option)
+            start_period, start_year = parse_period_option(start_period_option, contract[3])
             
         with col2:
             st.markdown("To")
-            # Filter end quarter options to only show quarters after start
+            # Filter end period options to only show periods after start
             valid_end_options = [
-                opt for opt in quarter_options
-                if validate_quarter_range(
-                    start_quarter, start_year,
-                    *parse_quarter_option(opt)
+                opt for opt in period_options
+                if validate_period_range(
+                    start_period, start_year,
+                    *parse_period_option(opt, contract[3]),
+                    contract[3]
                 )
             ]
             
             if not valid_end_options:
-                st.error("No valid end quarters available")
+                st.error(f"No valid end {period_label.lower()}s available")
                 return
                 
-            end_quarter_option = st.selectbox(
-                label="End Quarter",
+            end_period_option = st.selectbox(
+                label=f"End {period_label}",
                 options=valid_end_options,
                 index=0,
-                key="custom_end_quarter",
+                key="custom_end_period",
                 label_visibility="collapsed"
             )
-            end_quarter, end_year = parse_quarter_option(end_quarter_option)
+            end_period, end_year = parse_period_option(end_period_option, contract[3])
     
     # Get defaults from previous payment
     previous_defaults = get_previous_payment_defaults(client_id)
@@ -392,6 +413,10 @@ def show_payment_form(client_id):
             contract_start = datetime.strptime(contract[2], '%Y-%m-%d')
             contract_quarter = (contract_start.month - 1) // 3 + 1
             contract_year = contract_start.year
+            
+            # Get start quarter and year from form state
+            start_quarter = st.session_state.payment_form['form_data']['applied_start_quarter']
+            start_year = st.session_state.payment_form['form_data']['applied_start_year']
             
             payment_start = datetime(start_year, ((start_quarter - 1) * 3) + 1, 1)
             if payment_start < contract_start:
@@ -437,15 +462,16 @@ def show_payment_form(client_id):
     # Capture form data
     form_data = {
         'received_date': received_date.strftime('%Y-%m-%d') if received_date else None,
-        'applied_start_quarter': start_quarter,
+        'applied_start_period': start_period,
         'applied_start_year': start_year,
-        'applied_end_quarter': end_quarter if is_custom_range else start_quarter,
+        'applied_end_period': end_period if is_custom_range else start_period,
         'applied_end_year': end_year if is_custom_range else start_year,
         'total_assets': total_assets_input,
         'actual_fee': actual_fee_input,
         'expected_fee': st.session_state.payment_form['form_data'].get('expected_fee'),
         'method': other_method if method == "Other" else (None if method == "None Specified" else method),
-        'notes': notes
+        'notes': notes,
+        'payment_schedule': contract[3]  # Add schedule to form data for validation
     }
     
     # Show validation error if present
@@ -473,6 +499,7 @@ def show_payment_form(client_id):
             if st.button("Save", type="primary", use_container_width=True):
                 validation_errors = validate_payment_data(form_data)
                 if not validation_errors:
+                    # Add period type info to form data
                     payment_id = add_payment(client_id, form_data)
                     if payment_id:
                         st.success("Payment added successfully!")

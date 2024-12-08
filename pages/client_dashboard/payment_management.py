@@ -22,13 +22,31 @@ def format_payment_data(payments):
             except (ValueError, TypeError):
                 return "N/A"
         
-        # Format payment period with Q prefix
-        if payment[1] == payment[3] and payment[2] == payment[4]:
-            period = f"Q{payment[1]} {payment[2]}"
-        else:
-            period = f"Q{payment[1]} {payment[2]} - Q{payment[3]} {payment[4]}"
-        
+        # Format payment period based on frequency
         frequency = payment[5].title() if payment[5] else "N/A"
+        
+        if frequency.lower() == "monthly":
+            # For monthly payments, convert quarter to month range
+            start_month = ((payment[1] - 1) * 3) + 1
+            end_month = ((payment[3] - 1) * 3) + 3
+            
+            if payment[2] == payment[4] and start_month == end_month:
+                # Single month
+                period = f"{datetime.strptime(f'2000-{start_month}-1', '%Y-%m-%d').strftime('%b')} {payment[2]}"
+            else:
+                # Month range
+                start_date = datetime.strptime(f'2000-{start_month}-1', '%Y-%m-%d')
+                end_date = datetime.strptime(f'2000-{end_month}-1', '%Y-%m-%d')
+                if payment[2] == payment[4]:
+                    period = f"{start_date.strftime('%b')} - {end_date.strftime('%b')} {payment[2]}"
+                else:
+                    period = f"{start_date.strftime('%b')} {payment[2]} - {end_date.strftime('%b')} {payment[4]}"
+        else:
+            # Quarterly payments
+            if payment[1] == payment[3] and payment[2] == payment[4]:
+                period = f"Q{payment[1]} {payment[2]}"
+            else:
+                period = f"Q{payment[1]} {payment[2]} - Q{payment[3]} {payment[4]}"
         
         # Format date
         received_date = "N/A"
@@ -75,41 +93,75 @@ def format_payment_data(payments):
 def handle_note_edit(payment_id, new_note):
     """Handle updating a payment note."""
     update_payment_note(payment_id, new_note)
-    if 'active_note_payment_id' in st.session_state:
-        del st.session_state.active_note_payment_id
+    if 'notes_state' in st.session_state:
+        st.session_state.notes_state['active_note'] = None
     st.rerun()
 
-def render_note_cell(payment_id, note):
-    """Render a note cell with edit functionality."""
-    # Initialize session state for this note's popup if not exists
-    if f"show_note_popup_{payment_id}" not in st.session_state:
-        st.session_state[f"show_note_popup_{payment_id}"] = False
+@st.cache_data(ttl=60)  # Cache note formatting for 1 minute
+def format_note_display(note):
+    """Format note for display with caching."""
+    return bool(note), "🟢" if note else "◯", note if note else "Add note"
+
+def initialize_notes_state():
+    """Initialize centralized note state management."""
+    if 'notes_state' not in st.session_state:
+        st.session_state.notes_state = {
+            'active_note': None,
+            'edited_notes': {}
+        }
+
+def render_note_cell(payment_id, note, provider=None, period=None):
+    """Render a note cell with edit functionality using centralized state."""
+    initialize_notes_state()
     
-    has_note = bool(note)
-    icon_content = "🟢" if has_note else "◯"
+    # Get cached note display format
+    has_note, icon_content, tooltip = format_note_display(note)
     
     # Create the note button with tooltip
     if st.button(
         icon_content, 
         key=f"note_button_{payment_id}",
-        help=note if has_note else "Add note",
+        help=tooltip,
         use_container_width=False
     ):
-        # Auto-save if there's an active note and we're switching to a different one
-        if 'active_note_payment_id' in st.session_state:
-            active_id = st.session_state.active_note_payment_id
-            if active_id != payment_id and f"note_textarea_{active_id}" in st.session_state:
-                handle_note_edit(active_id, st.session_state[f"note_textarea_{active_id}"])
+        notes_state = st.session_state.notes_state
         
-        # Toggle the note form
-        if 'active_note_payment_id' in st.session_state and st.session_state.active_note_payment_id == payment_id:
-            # Auto-save on toggle off
-            if f"note_textarea_{payment_id}" in st.session_state:
-                handle_note_edit(payment_id, st.session_state[f"note_textarea_{payment_id}"])
-            del st.session_state.active_note_payment_id
+        # Auto-save previous note if exists
+        if notes_state['active_note'] and notes_state['active_note'] != payment_id:
+            prev_id = notes_state['active_note']
+            if prev_id in notes_state['edited_notes']:
+                handle_note_edit(prev_id, notes_state['edited_notes'][prev_id])
+                notes_state['edited_notes'].pop(prev_id)
+        
+        # Toggle note state
+        if notes_state['active_note'] == payment_id:
+            if payment_id in notes_state['edited_notes']:
+                handle_note_edit(payment_id, notes_state['edited_notes'][payment_id])
+                notes_state['edited_notes'].pop(payment_id)
+            notes_state['active_note'] = None
         else:
-            st.session_state.active_note_payment_id = payment_id
+            notes_state['active_note'] = payment_id
+        
         st.rerun()
+    
+    # Note editing form
+    if (
+        'notes_state' in st.session_state 
+        and st.session_state.notes_state['active_note'] == payment_id
+    ):
+        with st.container():
+            note_cols = st.columns([7, 9])
+            with note_cols[1]:
+                st.markdown(f"""<div style="border-top: 1px solid #eee; padding-top: 0.5rem;"></div>""", unsafe_allow_html=True)
+                edited_note = st.text_area(
+                    f"Note for {provider or 'Payment'} - {period or 'Period'}",
+                    value=note or "",
+                    key=f"note_textarea_{payment_id}",
+                    height=100,
+                    placeholder="Enter note here..."
+                )
+                if edited_note != note:
+                    st.session_state.notes_state['edited_notes'][payment_id] = edited_note
 
 def show_payment_history(client_id):
     """Display payment history with efficient layout and smart navigation."""
@@ -255,6 +307,30 @@ def show_payment_history(client_id):
     """, unsafe_allow_html=True)
     
     # Display rows
+    # Add headers first
+    header_cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1])
+    with header_cols[0]:
+        st.markdown("**Provider**")
+    with header_cols[1]:
+        st.markdown("**Period**")
+    with header_cols[2]:
+        st.markdown("**Frequency**")
+    with header_cols[3]:
+        st.markdown("**Received**")
+    with header_cols[4]:
+        st.markdown("**Total Assets**")
+    with header_cols[5]:
+        st.markdown("**Expected Fee**")
+    with header_cols[6]:
+        st.markdown("**Actual Fee**")
+    with header_cols[7]:
+        st.markdown("**Discrepancy**")
+    with header_cols[8]:
+        st.markdown("**Notes**")
+    
+    st.markdown("<hr style='margin: 0.5rem 0; border-color: #eee;'>", unsafe_allow_html=True)
+    
+    # Display data rows
     for index, row in df.iterrows():
         cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1])
         
@@ -275,24 +351,7 @@ def show_payment_history(client_id):
         with cols[7]:
             st.write(row["Discrepancy"])
         with cols[8]:
-            render_note_cell(row["payment_id"], row["Notes"])
-        
-        # Note editing form
-        if (
-            'active_note_payment_id' in st.session_state 
-            and st.session_state.active_note_payment_id == row["payment_id"]
-        ):
-            with st.container():
-                note_cols = st.columns([7, 9])
-                with note_cols[1]:
-                    st.markdown(f"""<div style="border-top: 1px solid #eee; padding-top: 0.5rem;"></div>""", unsafe_allow_html=True)
-                    st.text_area(
-                        f"Note for {row['Provider']} - {row['Period']}",
-                        value=row["Notes"] or "",
-                        key=f"note_textarea_{row['payment_id']}",
-                        height=100,
-                        placeholder="Enter note here..."
-                    )
+            render_note_cell(row["payment_id"], row["Notes"], row["Provider"], row["Period"])
     
     # Load more data if we're near the bottom
     if len(st.session_state.payment_data) < total_payments:

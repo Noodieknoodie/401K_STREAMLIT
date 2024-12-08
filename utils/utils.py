@@ -497,28 +497,38 @@ def validate_payment_data(data):
     elif actual_fee == "$0.00":  # Check for default value
         errors.append("Please enter a payment amount")
     
-    # Validate quarters are in arrears
-    current_quarter = (datetime.now().month - 1) // 3 + 1
-    current_year = datetime.now().year
+    # Get schedule-specific terms for error messages
+    schedule = data.get('payment_schedule', '').lower()
+    period_term = "month" if schedule == 'monthly' else "quarter"
     
-    start_quarter = data.get('applied_start_quarter')
+    # Validate periods are in arrears
+    current_month = datetime.now().month
+    current_year = datetime.now().year
+    current_period = current_month if schedule == 'monthly' else (current_month - 1) // 3 + 1
+    periods_per_year = 12 if schedule == 'monthly' else 4
+    
+    start_period = data.get('applied_start_period')
     start_year = data.get('applied_start_year')
-    end_quarter = data.get('applied_end_quarter', start_quarter)
+    end_period = data.get('applied_end_period', start_period)
     end_year = data.get('applied_end_year', start_year)
     
-    # Convert to absolute quarters for comparison
-    start_absolute = start_year * 4 + start_quarter
-    end_absolute = end_year * 4 + end_quarter
-    current_absolute = current_year * 4 + current_quarter
+    if not schedule:
+        errors.append("Payment schedule must be set in the contract before adding payments")
+        return errors
+    
+    # Convert to absolute periods for comparison
+    start_absolute = start_year * periods_per_year + start_period
+    end_absolute = end_year * periods_per_year + end_period
+    current_absolute = current_year * periods_per_year + current_period
     
     if start_absolute >= current_absolute:
-        errors.append("Payment must be for a previous quarter (in arrears)")
+        errors.append(f"Payment must be for a previous {period_term} (in arrears)")
     
     if end_absolute >= current_absolute:
-        errors.append("Payment end quarter must be a previous quarter (in arrears)")
+        errors.append(f"Payment end {period_term} must be a previous {period_term} (in arrears)")
     
     if end_absolute < start_absolute:
-        errors.append("End quarter cannot be before start quarter")
+        errors.append(f"End {period_term} cannot be before start {period_term}")
     
     return errors
 
@@ -532,6 +542,18 @@ def add_payment(client_id, payment_data):
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
+        
+        # Convert period fields to quarter fields for database storage
+        schedule = payment_data.get('payment_schedule', '').lower()
+        if schedule == 'monthly':
+            # Convert months to quarters
+            start_quarter = (payment_data['applied_start_period'] - 1) // 3 + 1
+            end_quarter = (payment_data['applied_end_period'] - 1) // 3 + 1
+        else:
+            # Already in quarters
+            start_quarter = payment_data['applied_start_period']
+            end_quarter = payment_data['applied_end_period']
+        
         cursor.execute("""
             INSERT INTO payments (
                 client_id,
@@ -551,14 +573,14 @@ def add_payment(client_id, payment_data):
             client_id,
             contract[0],  # contract_id from active contract
             payment_data['received_date'],
-            payment_data['applied_start_quarter'],
+            start_quarter,
             payment_data['applied_start_year'],
-            payment_data.get('applied_end_quarter', payment_data['applied_start_quarter']),
-            payment_data.get('applied_end_year', payment_data['applied_start_year']),
+            end_quarter,
+            payment_data['applied_end_year'],
             format_currency_db(payment_data.get('total_assets')),
             format_currency_db(payment_data.get('expected_fee')),
             format_currency_db(payment_data.get('actual_fee')),
-            payment_data.get('method'),  # Can be NULL if "None Specified" or skipped
+            payment_data.get('method'),
             payment_data.get('notes', '')
         ))
         conn.commit()

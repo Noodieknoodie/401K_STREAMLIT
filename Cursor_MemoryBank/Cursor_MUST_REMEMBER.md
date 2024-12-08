@@ -42,3 +42,12 @@ How: Write entries as concise bullet points using `-` (dash) syntax. Keep them c
   - Always provide a meaningful label that describes the input
   - If you want to hide the label, use label_visibility="collapsed"
   - This prevents accessibility warnings and future compatibility issues
+- Payment schedules are a FIXED CONTRACT PROPERTY, not a user input:
+  - Can be 'monthly', 'quarterly', or NULL
+  - Affects period selection, validation, and display
+  - Must be handled gracefully when NULL (grey out period selection)
+  - Period calculations must respect the schedule type
+- Period selection must ALWAYS be in arrears regardless of schedule:
+  - Monthly: Can't select current or future months
+  - Quarterly: Can't select current or future quarters
+  - Multi-period selections must also be in arrears
