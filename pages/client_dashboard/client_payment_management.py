@@ -152,7 +152,7 @@ def render_note_cell(payment_id, note, provider=None, period=None):
         with st.container():
             note_cols = st.columns([7, 9])
             with note_cols[1]:
-                st.markdown(f"""<div style="border-top: 1px solid #eee; padding-top: 0.5rem;"></div>""", unsafe_allow_html=True)
+                st.markdown("""<div style="border-top: 1px solid #eee; padding-top: 0.5rem;"></div>""", unsafe_allow_html=True)
                 edited_note = st.text_area(
                     f"Note for {provider or 'Payment'} - {period or 'Period'}",
                     value=note or "",
@@ -165,34 +165,6 @@ def render_note_cell(payment_id, note, provider=None, period=None):
 
 def show_payment_history(client_id):
     """Display payment history with efficient layout and smart navigation."""
-    
-    # Initialize payment form state
-    if 'payment_form' not in st.session_state:
-        current_quarter = (datetime.now().month - 1) // 3 + 1
-        current_year = datetime.now().year
-        prev_quarter = current_quarter - 1 if current_quarter > 1 else 4
-        prev_year = current_year if current_quarter > 1 else current_year - 1
-        
-        st.session_state.payment_form = {
-            'is_open': False,
-            'mode': 'add',
-            'has_validation_error': False,
-            'show_cancel_confirm': False,
-            'modal_lock': False,
-            'form_data': {
-                'received_date': datetime.now().strftime('%Y-%m-%d'),
-                'applied_start_quarter': prev_quarter,  # Previous quarter for arrears
-                'applied_start_year': prev_year,       # Previous quarter's year
-                'applied_end_quarter': None,
-                'applied_end_year': None,
-                'total_assets': '',
-                'actual_fee': '',
-                'expected_fee': None,
-                'method': 'None Specified',
-                'other_method': '',
-                'notes': ''
-            }
-        }
     
     # Initialize payment state
     if 'payment_data' not in st.session_state:
@@ -332,26 +304,66 @@ def show_payment_history(client_id):
     
     # Display data rows
     for index, row in df.iterrows():
-        cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1])
+        # First render the row with all columns
+        row_cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1])
         
-        with cols[0]:
+        with row_cols[0]:
             st.write(row["Provider"])
-        with cols[1]:
+        with row_cols[1]:
             st.write(row["Period"])
-        with cols[2]:
+        with row_cols[2]:
             st.write(row["Frequency"])
-        with cols[3]:
+        with row_cols[3]:
             st.write(row["Received"])
-        with cols[4]:
+        with row_cols[4]:
             st.write(row["Total Assets"])
-        with cols[5]:
+        with row_cols[5]:
             st.write(row["Expected Fee"])
-        with cols[6]:
+        with row_cols[6]:
             st.write(row["Actual Fee"])
-        with cols[7]:
+        with row_cols[7]:
             st.write(row["Discrepancy"])
-        with cols[8]:
-            render_note_cell(row["payment_id"], row["Notes"], row["Provider"], row["Period"])
+        with row_cols[8]:
+            # Just render the note button here
+            has_note = bool(row["Notes"])
+            icon_content = "🟢" if has_note else "◯"
+            tooltip = row["Notes"] if has_note else "Add note"
+            
+            if st.button(
+                icon_content,
+                key=f"note_button_{row['payment_id']}",
+                help=tooltip,
+                use_container_width=False
+            ):
+                if 'active_note_id' in st.session_state and st.session_state.active_note_id == row['payment_id']:
+                    st.session_state.active_note_id = None
+                else:
+                    st.session_state.active_note_id = row['payment_id']
+                st.rerun()
+        
+        # After the row columns are closed, check if this row's note should be displayed
+        if (
+            'active_note_id' in st.session_state 
+            and st.session_state.active_note_id == row['payment_id']
+        ):
+            # Create a fresh container outside the row structure
+            with st.container():
+                # Create columns for the note area using full page width
+                note_cols = st.columns([7, 9])
+                with note_cols[1]:
+                    st.markdown("""<div style="border-top: 1px solid #eee; padding-top: 0.5rem;"></div>""", unsafe_allow_html=True)
+                    edited_note = st.text_area(
+                        f"Note for {row['Provider']} - {row['Period']}",
+                        value=row["Notes"] or "",
+                        key=f"note_textarea_{row['payment_id']}",
+                        height=100,
+                        placeholder="Enter note here..."
+                    )
+                    
+                    # Handle note changes
+                    if edited_note != row["Notes"]:
+                        update_payment_note(row['payment_id'], edited_note)
+                        st.rerun()
     
     # Load more data if we're near the bottom
     if len(st.session_state.payment_data) < total_payments:
