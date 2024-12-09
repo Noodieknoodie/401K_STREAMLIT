@@ -7,6 +7,7 @@ from utils import (
     get_payment_year_quarters
 )
 
+@st.cache_data(ttl=300)  # Cache formatted data for 5 minutes
 def format_payment_data(payments):
     """Format payment data for display with consistent formatting."""
     table_data = []
@@ -72,44 +73,47 @@ def format_payment_data(payments):
     
     return table_data
 
-def handle_note_edit(payment_id, new_note):
-    """Handle updating a payment note."""
-    update_payment_note(payment_id, new_note)
-    if 'active_note_payment_id' in st.session_state:
-        del st.session_state.active_note_payment_id
-    st.rerun()
-
-def render_note_cell(payment_id, note):
+def render_note_cell(payment_id, note, provider, period):
     """Render a note cell with edit functionality."""
-    # Initialize session state for this note's popup if not exists
-    if f"show_note_popup_{payment_id}" not in st.session_state:
-        st.session_state[f"show_note_popup_{payment_id}"] = False
+    # Initialize state for this note if not exists
+    state_key = f"note_state_{payment_id}"
+    if state_key not in st.session_state:
+        st.session_state[state_key] = {
+            "is_editing": False,
+            "current_note": note,
+            "has_changes": False
+        }
     
-    has_note = bool(note)
+    note_state = st.session_state[state_key]
+    has_note = bool(note_state["current_note"])
     icon_content = "🟢" if has_note else "◯"
     
     # Create the note button with tooltip
     if st.button(
         icon_content, 
         key=f"note_button_{payment_id}",
-        help=note if has_note else "Add note",
+        help=note_state["current_note"] if has_note else "Add note",
         use_container_width=False
     ):
-        # Auto-save if there's an active note and we're switching to a different one
-        if 'active_note_payment_id' in st.session_state:
-            active_id = st.session_state.active_note_payment_id
-            if active_id != payment_id and f"note_textarea_{active_id}" in st.session_state:
-                handle_note_edit(active_id, st.session_state[f"note_textarea_{active_id}"])
-        
-        # Toggle the note form
-        if 'active_note_payment_id' in st.session_state and st.session_state.active_note_payment_id == payment_id:
-            # Auto-save on toggle off
-            if f"note_textarea_{payment_id}" in st.session_state:
-                handle_note_edit(payment_id, st.session_state[f"note_textarea_{payment_id}"])
-            del st.session_state.active_note_payment_id
-        else:
-            st.session_state.active_note_payment_id = payment_id
-        st.rerun()
+        # Toggle editing state
+        note_state["is_editing"] = not note_state["is_editing"]
+    
+    return note_state["is_editing"]  # Return if we should show the edit form
+
+def initialize_filter_state():
+    """Initialize or get filter state"""
+    if 'filter_state' not in st.session_state:
+        st.session_state.filter_state = {
+            'time_filter': "All Time",
+            'year': None,
+            'quarter': None,
+            'needs_reload': False
+        }
+    return st.session_state.filter_state
+
+def handle_filter_change():
+    """Mark that data needs to be reloaded due to filter change"""
+    st.session_state.filter_state['needs_reload'] = True
 
 def show_payment_history(client_id):
     """Display payment history with efficient layout and smart navigation."""
@@ -130,6 +134,9 @@ def show_payment_history(client_id):
         st.info("No payment history available.")
         return
     
+    # Initialize filter state
+    filter_state = initialize_filter_state()
+    
     # Create a row with the same width as the table
     left_col, right_col = st.columns([6, 3])
     
@@ -138,28 +145,31 @@ def show_payment_history(client_id):
             "Time Filter",
             options=["All Time", "This Year", "Custom"],
             horizontal=True,
-            label_visibility="collapsed"
+            label_visibility="collapsed",
+            key="time_filter_radio",
+            on_change=handle_filter_change
         )
         
         if time_filter == "Custom":
             col1, col2, _ = st.columns([1, 1, 2])
             with col1:
-                year = st.selectbox("Select Year", options=years, index=0, label_visibility="collapsed")
+                year = st.selectbox(
+                    "Select Year",
+                    options=years,
+                    index=0,
+                    label_visibility="collapsed",
+                    key="year_select",
+                    on_change=handle_filter_change
+                )
             with col2:
                 quarter = st.selectbox(
                     "Select Quarter",
                     options=["All Quarters", "Q1", "Q2", "Q3", "Q4"],
                     index=0,
-                    label_visibility="collapsed"
+                    label_visibility="collapsed",
+                    key="quarter_select",
+                    on_change=handle_filter_change
                 )
-    
-    with right_col:
-        status_text = (
-            f"Viewing all {total_payments} payments" if time_filter == "All Time" else
-            f"Viewing payments from {datetime.now().year}" if time_filter == "This Year" else
-            f"Viewing payments from {year}" + (f" Q{quarter[1]}" if quarter != "All Quarters" else "")
-        )
-        st.markdown(f"<div style='text-align: right'>{status_text}</div>", unsafe_allow_html=True)
     
     # Determine filters based on selection
     if time_filter == "All Time":
@@ -172,13 +182,29 @@ def show_payment_history(client_id):
         year_filters = [year]
         quarter_filters = None if quarter == "All Quarters" else [int(quarter[1])]
     
-    # Check if filters changed
+    with right_col:
+        status_text = (
+            f"Viewing all {total_payments} payments" if time_filter == "All Time" else
+            f"Viewing payments from {datetime.now().year}" if time_filter == "This Year" else
+            f"Viewing payments from {year}" + (f" Q{quarter[1]}" if quarter != "All Quarters" else "")
+        )
+        st.markdown(f"<div style='text-align: right'>{status_text}</div>", unsafe_allow_html=True)
+    
+    # Check if filters actually changed
     current_filters = (year_filters, quarter_filters)
-    if ('current_filters' not in st.session_state or 
-        st.session_state.current_filters != current_filters):
+    if filter_state['needs_reload'] or (
+        'current_filters' not in st.session_state or 
+        st.session_state.current_filters != current_filters
+    ):
         st.session_state.payment_data = []
         st.session_state.payment_offset = 0
         st.session_state.current_filters = current_filters
+        filter_state['needs_reload'] = False
+        
+        # Only clear note states if filters actually changed
+        for key in list(st.session_state.keys()):
+            if key.startswith('note_state_'):
+                del st.session_state[key]
     
     # Load initial data if needed
     if len(st.session_state.payment_data) == 0:
@@ -242,24 +268,27 @@ def show_payment_history(client_id):
         with cols[7]:
             st.write(row["Discrepancy"])
         with cols[8]:
-            render_note_cell(row["payment_id"], row["Notes"])
+            is_editing = render_note_cell(row["payment_id"], row["Notes"], row["Provider"], row["Period"])
         
-        # Note editing form
-        if (
-            'active_note_payment_id' in st.session_state 
-            and st.session_state.active_note_payment_id == row["payment_id"]
-        ):
-            with st.container():
-                note_cols = st.columns([7, 9])
-                with note_cols[1]:
-                    st.markdown(f"""<div style="border-top: 1px solid #eee; padding-top: 0.5rem;"></div>""", unsafe_allow_html=True)
-                    st.text_area(
-                        f"Note for {row['Provider']} - {row['Period']}",
-                        value=row["Notes"] or "",
-                        key=f"note_textarea_{row['payment_id']}",
-                        height=100,
-                        placeholder="Enter note here..."
-                    )
+        # Note editing form - now properly spans the full width
+        if is_editing:
+            st.markdown(f"""<div style="border-top: 1px solid #eee; padding-top: 0.5rem;"></div>""", unsafe_allow_html=True)
+            note_cols = st.columns([7, 9])  # Same ratio as original
+            with note_cols[1]:
+                state_key = f"note_state_{row['payment_id']}"
+                new_note = st.text_area(
+                    f"Note for {row['Provider']} - {row['Period']}",
+                    value=st.session_state[state_key]["current_note"] or "",
+                    key=f"note_textarea_{row['payment_id']}",
+                    height=100,
+                    placeholder="Enter note here..."
+                )
+                
+                # Only update if note content changed
+                if new_note != st.session_state[state_key]["current_note"]:
+                    update_payment_note(row["payment_id"], new_note)
+                    st.session_state[state_key]["current_note"] = new_note
+                    st.session_state[state_key]["has_changes"] = True
     
     # Load more data if we're near the bottom
     if len(st.session_state.payment_data) < total_payments:
