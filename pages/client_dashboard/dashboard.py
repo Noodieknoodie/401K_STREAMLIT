@@ -4,7 +4,7 @@ from .payment_management import show_payment_history
 from .dashboard_metrics import show_client_metrics
 from .client_selection import get_selected_client
 from .contact_layout import show_contact_sections
-from pages.quarterly_summary.payment_form import show_payment_form
+from .payment_form import show_payment_form
 
 def show_client_dashboard():
     """Main dashboard view with modular components."""

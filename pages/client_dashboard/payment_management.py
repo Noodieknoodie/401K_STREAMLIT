@@ -143,25 +143,6 @@ def render_note_cell(payment_id, note, provider=None, period=None):
             notes_state['active_note'] = payment_id
         
         st.rerun()
-    
-    # Note editing form
-    if (
-        'notes_state' in st.session_state 
-        and st.session_state.notes_state['active_note'] == payment_id
-    ):
-        with st.container():
-            note_cols = st.columns([7, 9])
-            with note_cols[1]:
-                st.markdown(f"""<div style="border-top: 1px solid #eee; padding-top: 0.5rem;"></div>""", unsafe_allow_html=True)
-                edited_note = st.text_area(
-                    f"Note for {provider or 'Payment'} - {period or 'Period'}",
-                    value=note or "",
-                    key=f"note_textarea_{payment_id}",
-                    height=100,
-                    placeholder="Enter note here..."
-                )
-                if edited_note != note:
-                    st.session_state.notes_state['edited_notes'][payment_id] = edited_note
 
 def show_payment_history(client_id):
     """Display payment history with efficient layout and smart navigation."""
@@ -332,26 +313,47 @@ def show_payment_history(client_id):
     
     # Display data rows
     for index, row in df.iterrows():
-        cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1])
-        
-        with cols[0]:
-            st.write(row["Provider"])
-        with cols[1]:
-            st.write(row["Period"])
-        with cols[2]:
-            st.write(row["Frequency"])
-        with cols[3]:
-            st.write(row["Received"])
-        with cols[4]:
-            st.write(row["Total Assets"])
-        with cols[5]:
-            st.write(row["Expected Fee"])
-        with cols[6]:
-            st.write(row["Actual Fee"])
-        with cols[7]:
-            st.write(row["Discrepancy"])
-        with cols[8]:
-            render_note_cell(row["payment_id"], row["Notes"], row["Provider"], row["Period"])
+        row_container = st.container()
+        with row_container:
+            cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1])
+            
+            with cols[0]:
+                st.write(row["Provider"])
+            with cols[1]:
+                st.write(row["Period"])
+            with cols[2]:
+                st.write(row["Frequency"])
+            with cols[3]:
+                st.write(row["Received"])
+            with cols[4]:
+                st.write(row["Total Assets"])
+            with cols[5]:
+                st.write(row["Expected Fee"])
+            with cols[6]:
+                st.write(row["Actual Fee"])
+            with cols[7]:
+                st.write(row["Discrepancy"])
+            with cols[8]:
+                render_note_cell(row["payment_id"], row["Notes"], row["Provider"], row["Period"])
+            
+            # Note editing form - moved outside the columns but inside the row container
+            if (
+                'notes_state' in st.session_state 
+                and st.session_state.notes_state['active_note'] == row["payment_id"]
+            ):
+                with st.container():
+                    note_cols = st.columns([7, 9])
+                    with note_cols[1]:
+                        st.markdown(f"""<div style="border-top: 1px solid #eee; padding-top: 0.5rem;"></div>""", unsafe_allow_html=True)
+                        edited_note = st.text_area(
+                            f"Note for {row['Provider']} - {row['Period']}",
+                            value=row["Notes"] or "",
+                            key=f"note_textarea_{row['payment_id']}",
+                            height=100,
+                            placeholder="Enter note here..."
+                        )
+                        if edited_note != row["Notes"]:
+                            st.session_state.notes_state['edited_notes'][row["payment_id"]] = edited_note
     
     # Load more data if we're near the bottom
     if len(st.session_state.payment_data) < total_payments:
