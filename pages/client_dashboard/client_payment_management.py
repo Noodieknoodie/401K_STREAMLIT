@@ -185,6 +185,7 @@ def init_payment_form_state():
         
         st.session_state.payment_form = {
             'is_visible': False,  # Dedicated state for visibility
+            'client_id': None,    # Track which client the form belongs to
             'mode': 'add',
             'has_validation_error': False,
             'show_cancel_confirm': False,
@@ -203,6 +204,9 @@ def init_payment_form_state():
                 'notes': ''
             }
         }
+    elif 'client_id' not in st.session_state.payment_form:
+        # Add client_id to existing payment form states
+        st.session_state.payment_form['client_id'] = None
 
 def init_notes_state():
     """Initialize centralized notes state management.
@@ -253,9 +257,10 @@ def clear_client_specific_states():
             'temp_notes': {}
         }
     
-    # Reset payment form
+    # Reset payment form - Updated to include client_id reset
     if 'payment_form' in st.session_state:
-        st.session_state.payment_form['is_visible'] = False  # Reset visibility state
+        st.session_state.payment_form['is_visible'] = False
+        st.session_state.payment_form['client_id'] = None  # Reset client association
         st.session_state.payment_form['mode'] = 'add'
         st.session_state.payment_form['has_validation_error'] = False
         st.session_state.payment_form['show_cancel_confirm'] = False
