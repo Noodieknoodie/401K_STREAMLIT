@@ -19,6 +19,7 @@ from pages.client_dashboard.payment_utils import (
     get_quarter_month_range
 )
 from utils.utils import get_database_connection
+from .state_management import PaymentFormState
 
 # Add caching for contract data
 @st.cache_data(ttl=300)  # Cache for 5 minutes
@@ -35,64 +36,6 @@ METHOD_OPTIONS = [
     "Other"
 ]
 
-def init_payment_form_state():
-    """Initialize the payment form state"""
-    if 'payment_form' not in st.session_state:
-        st.session_state.payment_form = {
-            'is_open': False,
-            'mode': 'add',  # 'add' or 'edit'
-            'has_validation_error': False,
-            'show_cancel_confirm': False,
-            'form_data': {
-                'received_date': datetime.now().strftime('%Y-%m-%d'),
-                'applied_start_period': None,  # Will be set based on schedule
-                'applied_start_year': None,
-                'applied_end_period': None,
-                'applied_end_year': None,
-                'total_assets': '',
-                'actual_fee': '',
-                'expected_fee': None,
-                'method': 'None Specified',
-                'other_method': '',
-                'notes': ''
-            }
-        }
-
-def clear_form():
-    """Reset the payment form state"""
-    if 'payment_form' in st.session_state:
-        # Get previous quarter for arrears payment
-        current_quarter = get_current_quarter()
-        current_year = datetime.now().year
-        prev_quarter, prev_year = get_previous_quarter(current_quarter, current_year)
-        
-        # Clear form data
-        st.session_state.payment_form['form_data'] = {
-            'received_date': datetime.now().strftime('%Y-%m-%d'),
-            'applied_start_quarter': prev_quarter,  # Now using previous quarter consistently
-            'applied_start_year': prev_year,       # And its corresponding year
-            'applied_end_quarter': None,
-            'applied_end_year': None,
-            'total_assets': '',
-            'actual_fee': '',
-            'expected_fee': None,
-            'method': 'None Specified',
-            'other_method': '',
-            'notes': ''
-        }
-        # Reset form state
-        st.session_state.payment_form['is_open'] = False
-        st.session_state.payment_form['has_validation_error'] = False
-        st.session_state.payment_form['show_cancel_confirm'] = False
-        
-        # Clear payment data to force refresh
-        if 'payment_data' in st.session_state:
-            st.session_state.payment_data = []
-        if 'payment_offset' in st.session_state:
-            st.session_state.payment_offset = 0
-        if 'current_filters' in st.session_state:
-            del st.session_state.current_filters
-
 def has_unsaved_changes(form_data):
     """Check if the form has unsaved changes"""
     current_quarter = get_current_quarter()
@@ -101,7 +44,7 @@ def has_unsaved_changes(form_data):
     
     initial_data = {
         'received_date': datetime.now().strftime('%Y-%m-%d'),
-        'applied_start_quarter': prev_quarter,  # Compare with previous quarter
+        'applied_start_quarter': prev_quarter,
         'applied_start_year': prev_year,
         'applied_end_quarter': None,
         'applied_end_year': None,
@@ -118,14 +61,9 @@ def has_unsaved_changes(form_data):
         for key in initial_data
     )
 
-def clear_validation_error():
-    """Clear the validation error state"""
-    if 'payment_form' in st.session_state:
-        st.session_state.payment_form['has_validation_error'] = False
-
 def format_amount_on_change(field_key):
     """Format currency amount on input change"""
-    clear_validation_error()
+    PaymentFormState.set_validation_error(False)
     
     if field_key in st.session_state:
         value = st.session_state[field_key]
@@ -145,17 +83,17 @@ def format_amount_on_change(field_key):
                 st.session_state[field_key] = formatted
                 
                 # Update expected fee when total assets changes
-                if field_key == 'total_assets' and st.session_state.payment_form.get('active_contract'):
-                    expected_fee = calculate_expected_fee(
-                        st.session_state.payment_form['active_contract'],
-                        formatted
-                    )
-                    if expected_fee is not None:
-                        formatted_fee = f"${expected_fee:,.2f}"
-                        st.session_state.payment_form['form_data']['expected_fee'] = formatted_fee
-                        # Update the actual fee to match expected if it's empty
-                        if not st.session_state.payment_form['form_data'].get('actual_fee'):
-                            st.session_state.payment_form['form_data']['actual_fee'] = formatted_fee
+                if field_key == 'total_assets':
+                    contract = PaymentFormState.get_contract()
+                    if contract:
+                        expected_fee = calculate_expected_fee(contract, formatted)
+                        if expected_fee is not None:
+                            formatted_fee = f"${expected_fee:,.2f}"
+                            PaymentFormState.update_form_data('expected_fee', formatted_fee)
+                            # Update the actual fee to match expected if it's empty
+                            form_data = PaymentFormState.get_form_data()
+                            if not form_data.get('actual_fee'):
+                                PaymentFormState.update_form_data('actual_fee', formatted_fee)
             except ValueError:
                 # If conversion fails, keep original value
                 pass
@@ -189,55 +127,14 @@ def get_period_from_date(date_str, schedule):
 
 def on_date_change():
     """Handle date change events"""
-    if 'received_date' in st.session_state and 'payment_form' in st.session_state:
-        contract = st.session_state.payment_form.get('active_contract')
+    if 'received_date' in st.session_state:
+        contract = PaymentFormState.get_contract()
         if contract:
             date_str = st.session_state.received_date.strftime('%Y-%m-%d')
             period, year = get_period_from_date(date_str, contract[3])  # contract[3] is payment_schedule
-            st.session_state.payment_form['form_data']['applied_start_period'] = period
-            st.session_state.payment_form['form_data']['applied_start_year'] = year
-            clear_validation_error()
-
-def get_previous_quarter(quarter, year):
-    """Get the previous quarter and year"""
-    if quarter == 1:
-        return 4, year - 1
-    return quarter - 1, year
-
-def get_quarter_options():
-    """Generate quarter options for past 5 years, excluding current quarter"""
-    options = []
-    current_quarter = get_current_quarter()
-    current_year = datetime.now().year
-    
-    # Start with previous quarter
-    if current_quarter == 1:
-        start_year = current_year - 1
-        start_quarter = 4
-    else:
-        start_year = current_year
-        start_quarter = current_quarter - 1
-    
-    # Generate options starting from previous quarter
-    for year in range(start_year, start_year - 5, -1):
-        for quarter in range(4, 0, -1):
-            # Skip quarters after the previous quarter
-            if year == start_year and quarter > start_quarter:
-                continue
-            options.append(f"Q{quarter} {year}")
-    return options
-
-def validate_quarter_range(start_quarter, start_year, end_quarter=None, end_year=None):
-    """Validate that the quarter range is valid and chronological"""
-    if end_quarter is None or end_year is None:
-        return True
-    
-    # Convert to comparable values (e.g., 2023Q4 -> 20234)
-    start_val = start_year * 10 + start_quarter
-    end_val = end_year * 10 + end_quarter
-    
-    # End must be chronologically after start
-    return end_val >= start_val
+            PaymentFormState.update_form_data('applied_start_period', period)
+            PaymentFormState.update_form_data('applied_start_year', year)
+            PaymentFormState.set_validation_error(False)
 
 def get_previous_payment_defaults(client_id):
     """Get default values from client's most recent payment"""
@@ -261,9 +158,10 @@ def get_previous_payment_defaults(client_id):
 @st.dialog('Add Payment')
 def show_payment_form(client_id):
     """Display the payment form dialog"""
-    if not st.session_state.payment_form['is_open']:
+    if not PaymentFormState.is_open():
         return
     
+    PaymentFormState.set_open(True)
     st.session_state.client_id = client_id
     st.subheader("Add Payment")
     
@@ -272,12 +170,12 @@ def show_payment_form(client_id):
     if not contract:
         st.error("No active contract found for this client. Please add a contract first.")
         if st.button("Close"):
-            clear_form()
+            PaymentFormState.clear()
             st.rerun()
         return
     
-    # Store active contract in session state
-    st.session_state.payment_form['active_contract'] = contract
+    # Store active contract
+    PaymentFormState.set_contract(contract)
     
     # Show contract details
     fee_type = contract[4].title() if contract[4] else "N/A"
@@ -296,9 +194,10 @@ def show_payment_form(client_id):
     
     # Required field labels with asterisk
     st.markdown("Payment Date<span style='color: red'>*</span>", unsafe_allow_html=True)
+    form_data = PaymentFormState.get_form_data()
     received_date = st.date_input(
         label="Payment Date",
-        value=datetime.strptime(st.session_state.payment_form['form_data']['received_date'], '%Y-%m-%d'),
+        value=datetime.strptime(form_data['received_date'], '%Y-%m-%d'),
         key="received_date",
         label_visibility="collapsed",
         on_change=on_date_change
@@ -357,10 +256,10 @@ def show_payment_form(client_id):
             # Filter end period options to only show periods after start
             valid_end_options = [
                 opt for opt in period_options
-                if validate_period_range(
-                    start_period, start_year,
+                if PaymentFormState.validate_period_range(
                     *parse_period_option(opt, contract[3]),
-                    contract[3]
+                    start_period,
+                    start_year
                 )
             ]
             
@@ -387,7 +286,7 @@ def show_payment_form(client_id):
     with col1:
         total_assets_input = st.text_input(
             "Assets Under Management",
-            value=st.session_state.payment_form['form_data'].get('total_assets') or default_assets,
+            value=form_data.get('total_assets') or default_assets,
             key="total_assets",
             on_change=lambda: format_amount_on_change("total_assets"),
             placeholder="Enter amount (e.g. 1234.56)"
@@ -396,7 +295,7 @@ def show_payment_form(client_id):
         st.markdown("Payment Amount<span style='color: red'>*</span>", unsafe_allow_html=True)
         actual_fee_input = st.text_input(
             label="Payment Amount",
-            value=st.session_state.payment_form['form_data'].get('actual_fee', ''),
+            value=form_data.get('actual_fee', ''),
             key="actual_fee",
             on_change=lambda: format_amount_on_change("actual_fee"),
             placeholder="Enter amount (e.g. 1234.56)",
@@ -404,19 +303,18 @@ def show_payment_form(client_id):
         )
     
     # Show expected fee if calculated
-    if st.session_state.payment_form['form_data'].get('expected_fee'):
-        st.info(f"Expected Fee: {st.session_state.payment_form['form_data']['expected_fee']}")
+    if form_data.get('expected_fee'):
+        st.info(f"Expected Fee: {form_data['expected_fee']}")
         
         # Check if payment quarter matches contract dates
-        contract = st.session_state.payment_form.get('active_contract')
-        if contract and contract[2]:  # contract_start_date exists
+        if contract[2]:  # contract_start_date exists
             contract_start = datetime.strptime(contract[2], '%Y-%m-%d')
             contract_quarter = (contract_start.month - 1) // 3 + 1
             contract_year = contract_start.year
             
             # Get start quarter and year from form state
-            start_quarter = st.session_state.payment_form['form_data']['applied_start_quarter']
-            start_year = st.session_state.payment_form['form_data']['applied_start_year']
+            start_quarter = form_data['applied_start_quarter']
+            start_year = form_data['applied_start_year']
             
             payment_start = datetime(start_year, ((start_quarter - 1) * 3) + 1, 1)
             if payment_start < contract_start:
@@ -429,7 +327,7 @@ def show_payment_form(client_id):
             "Payment Method",
             options=METHOD_OPTIONS,
             index=METHOD_OPTIONS.index(
-                st.session_state.payment_form['form_data'].get('method', default_method)
+                form_data.get('method', default_method)
             ),
             key="method"
         )
@@ -440,7 +338,7 @@ def show_payment_form(client_id):
         with col2:
             other_method = st.text_input(
                 "Specify Method",
-                value=st.session_state.payment_form['form_data'].get('other_method', ''),
+                value=form_data.get('other_method', ''),
                 key="other_method"
             )
     
@@ -453,7 +351,7 @@ def show_payment_form(client_id):
     
     notes = st.text_area(
         "Notes",
-        value=st.session_state.payment_form['form_data']['notes'],
+        value=form_data['notes'],
         key="notes",
         height=100,
         placeholder=notes_placeholder
@@ -468,29 +366,29 @@ def show_payment_form(client_id):
         'applied_end_year': end_year if is_custom_range else start_year,
         'total_assets': total_assets_input,
         'actual_fee': actual_fee_input,
-        'expected_fee': st.session_state.payment_form['form_data'].get('expected_fee'),
+        'expected_fee': PaymentFormState.get_form_data().get('expected_fee'),
         'method': other_method if method == "Other" else (None if method == "None Specified" else method),
         'notes': notes,
         'payment_schedule': contract[3]  # Add schedule to form data for validation
     }
     
     # Show validation error if present
-    if st.session_state.payment_form['has_validation_error']:
+    if PaymentFormState.has_validation_error():
         validation_errors = validate_payment_data(form_data)
         for error in validation_errors:
             st.error(error)
     
     # Show cancel confirmation if needed
-    if st.session_state.payment_form['show_cancel_confirm']:
+    if st.session_state.payment_form.get('show_cancel_confirm', False):
         st.warning("You have unsaved changes. Are you sure you want to cancel?")
         col1, col2 = st.columns(2)
         with col1:
             if st.button("Yes, Discard Changes", type="primary", use_container_width=True):
-                clear_form()
+                PaymentFormState.clear()
                 st.rerun()
         with col2:
             if st.button("No, Keep Editing", use_container_width=True):
-                st.session_state.payment_form['show_cancel_confirm'] = False
+                PaymentFormState.toggle_cancel_confirm()
                 st.rerun()
     else:
         # Normal save/cancel buttons
@@ -503,19 +401,19 @@ def show_payment_form(client_id):
                     payment_id = add_payment(client_id, form_data)
                     if payment_id:
                         st.success("Payment added successfully!")
-                        clear_form()
+                        PaymentFormState.clear()
                         st.rerun()
                     else:
                         st.error("Failed to add payment. Please try again.")
                 else:
-                    st.session_state.payment_form['has_validation_error'] = True
+                    PaymentFormState.set_validation_error(True)
                     st.rerun()
         
         with col2:
             if st.button("Cancel", use_container_width=True):
-                if has_unsaved_changes(form_data):
-                    st.session_state.payment_form['show_cancel_confirm'] = True
+                if has_unsaved_changes(PaymentFormState.get_form_data()):
+                    PaymentFormState.toggle_cancel_confirm()
                     st.rerun()
                 else:
-                    clear_form()
+                    PaymentFormState.clear()
                     st.rerun() 

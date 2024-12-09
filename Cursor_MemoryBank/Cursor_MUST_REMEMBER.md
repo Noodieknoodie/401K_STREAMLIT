@@ -51,3 +51,12 @@ How: Write entries as concise bullet points using `-` (dash) syntax. Keep them c
   - Monthly: Can't select current or future months
   - Quarterly: Can't select current or future quarters
   - Multi-period selections must also be in arrears
+
+CRITICAL WARNING - State Management:
+- Each module (client_dashboard, quarterly_summary, etc.) has its own state management
+- NEVER create root-level state management
+- NEVER mix state management between modules
+- Use the module's own state_management.py for all state handling
+- Example: client_dashboard uses pages/client_dashboard/state_management.py
+
+---

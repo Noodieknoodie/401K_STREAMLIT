@@ -1,27 +1,28 @@
 import streamlit as st
-from .contact_management import init_contact_form_state, show_contact_form
+from .contact_management import show_contact_form
 from .payment_management import show_payment_history
 from .dashboard_metrics import show_client_metrics
 from .client_selection import get_selected_client
 from .contact_layout import show_contact_sections
 from .payment_form import show_payment_form
+from .state_management import DashboardState, PaymentFormState, ContactFormState
 
 def show_client_dashboard():
     """Main dashboard view with modular components."""
     st.write("👥 Client Dashboard")
     
-    # Initialize contact form state
-    init_contact_form_state()
+    # Initialize all dashboard states
+    DashboardState.initialize()
     
     # Get selected client first
     client_id, selected_client_name = get_selected_client()
     
     # Show contact form dialog if open
-    if 'contact_form' in st.session_state and st.session_state.contact_form['is_open']:
+    if ContactFormState.is_open():
         show_contact_form()
     
     # Show payment form dialog if open
-    if 'payment_form' in st.session_state and st.session_state.payment_form['is_open']:
+    if PaymentFormState.is_open():
         show_payment_form(client_id)
     
     if client_id:

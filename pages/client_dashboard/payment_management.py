@@ -6,6 +6,7 @@ from utils.utils import (
     get_paginated_payment_history, get_total_payment_count,
     get_payment_year_quarters
 )
+from .state_management import PaymentFormState, PaymentHistoryState, NotesState
 
 def format_payment_data(payments):
     """Format payment data for display with consistent formatting."""
@@ -90,30 +91,19 @@ def format_payment_data(payments):
     
     return table_data
 
-def handle_note_edit(payment_id, new_note):
+def handle_note_edit(payment_id: str, new_note: str) -> None:
     """Handle updating a payment note."""
     update_payment_note(payment_id, new_note)
-    if 'notes_state' in st.session_state:
-        st.session_state.notes_state['active_note'] = None
+    NotesState.set_active_note(None)
     st.rerun()
 
 @st.cache_data(ttl=60)  # Cache note formatting for 1 minute
-def format_note_display(note):
+def format_note_display(note: str) -> tuple[bool, str, str]:
     """Format note for display with caching."""
     return bool(note), "🟢" if note else "◯", note if note else "Add note"
 
-def initialize_notes_state():
-    """Initialize centralized note state management."""
-    if 'notes_state' not in st.session_state:
-        st.session_state.notes_state = {
-            'active_note': None,
-            'edited_notes': {}
-        }
-
-def render_note_cell(payment_id, note, provider=None, period=None):
+def render_note_cell(payment_id: str, note: str, provider: str = None, period: str = None) -> None:
     """Render a note cell with edit functionality using centralized state."""
-    initialize_notes_state()
-    
     # Get cached note display format
     has_note, icon_content, tooltip = format_note_display(note)
     
@@ -124,62 +114,18 @@ def render_note_cell(payment_id, note, provider=None, period=None):
         help=tooltip,
         use_container_width=False
     ):
-        notes_state = st.session_state.notes_state
-        
-        # Auto-save previous note if exists
-        if notes_state['active_note'] and notes_state['active_note'] != payment_id:
-            prev_id = notes_state['active_note']
-            if prev_id in notes_state['edited_notes']:
-                handle_note_edit(prev_id, notes_state['edited_notes'][prev_id])
-                notes_state['edited_notes'].pop(prev_id)
-        
-        # Toggle note state
-        if notes_state['active_note'] == payment_id:
-            if payment_id in notes_state['edited_notes']:
-                handle_note_edit(payment_id, notes_state['edited_notes'][payment_id])
-                notes_state['edited_notes'].pop(payment_id)
-            notes_state['active_note'] = None
-        else:
-            notes_state['active_note'] = payment_id
-        
+        NotesState.set_active_note(
+            payment_id if NotesState.get_active_note() != payment_id else None,
+            handle_note_edit
+        )
         st.rerun()
 
-def show_payment_history(client_id):
+def show_payment_history(client_id: str) -> None:
     """Display payment history with efficient layout and smart navigation."""
     
-    # Initialize payment form state
-    if 'payment_form' not in st.session_state:
-        current_quarter = (datetime.now().month - 1) // 3 + 1
-        current_year = datetime.now().year
-        prev_quarter = current_quarter - 1 if current_quarter > 1 else 4
-        prev_year = current_year if current_quarter > 1 else current_year - 1
-        
-        st.session_state.payment_form = {
-            'is_open': False,
-            'mode': 'add',
-            'has_validation_error': False,
-            'show_cancel_confirm': False,
-            'modal_lock': False,
-            'form_data': {
-                'received_date': datetime.now().strftime('%Y-%m-%d'),
-                'applied_start_quarter': prev_quarter,  # Previous quarter for arrears
-                'applied_start_year': prev_year,       # Previous quarter's year
-                'applied_end_quarter': None,
-                'applied_end_year': None,
-                'total_assets': '',
-                'actual_fee': '',
-                'expected_fee': None,
-                'method': 'None Specified',
-                'other_method': '',
-                'notes': ''
-            }
-        }
-    
-    # Initialize payment state
-    if 'payment_data' not in st.session_state:
-        st.session_state.payment_data = []
-    if 'payment_offset' not in st.session_state:
-        st.session_state.payment_offset = 0
+    # Initialize states
+    PaymentFormState.initialize()
+    PaymentHistoryState.initialize()
     
     # Get data first
     total_payments = get_total_payment_count(client_id)
@@ -216,7 +162,7 @@ def show_payment_history(client_id):
     
     with middle_col:
         if st.button("Add Payment", type="primary", use_container_width=True):
-            st.session_state.payment_form['is_open'] = True
+            PaymentFormState.set_open(True)
             st.rerun()
     
     with right_col:
@@ -238,16 +184,12 @@ def show_payment_history(client_id):
         year_filters = [year]
         quarter_filters = None if quarter == "All Quarters" else [int(quarter[1])]
     
-    # Check if filters changed
-    current_filters = (year_filters, quarter_filters)
-    if ('current_filters' not in st.session_state or 
-        st.session_state.current_filters != current_filters):
-        st.session_state.payment_data = []
-        st.session_state.payment_offset = 0
-        st.session_state.current_filters = current_filters
+    # Update filters and handle state reset if needed
+    PaymentHistoryState.set_filters((year_filters, quarter_filters))
     
     # Load initial data if needed
-    if len(st.session_state.payment_data) == 0:
+    payment_data = PaymentHistoryState.get_payment_data()
+    if not payment_data:
         new_payments = get_paginated_payment_history(
             client_id,
             offset=0,
@@ -257,15 +199,16 @@ def show_payment_history(client_id):
         )
         if new_payments:
             table_data = format_payment_data(new_payments)
-            st.session_state.payment_data.extend(table_data)
+            PaymentHistoryState.append_data(table_data)
+            payment_data = PaymentHistoryState.get_payment_data()
     
     # Now check if we have any data to display
-    if not st.session_state.payment_data:
+    if not payment_data:
         st.info("No payment history available for this client.", icon="ℹ️")
         return
     
     # Create DataFrame for display
-    df = pd.DataFrame(st.session_state.payment_data)
+    df = pd.DataFrame(payment_data)
     
     # Create scrollable container with fixed height
     st.markdown("""
@@ -287,8 +230,7 @@ def show_payment_history(client_id):
         </style>
     """, unsafe_allow_html=True)
     
-    # Display rows
-    # Add headers first
+    # Display headers
     header_cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1])
     with header_cols[0]:
         st.markdown("**Provider**")
@@ -337,10 +279,7 @@ def show_payment_history(client_id):
                 render_note_cell(row["payment_id"], row["Notes"], row["Provider"], row["Period"])
             
             # Note editing form - moved outside the columns but inside the row container
-            if (
-                'notes_state' in st.session_state 
-                and st.session_state.notes_state['active_note'] == row["payment_id"]
-            ):
+            if NotesState.get_active_note() == row["payment_id"]:
                 with st.container():
                     note_cols = st.columns([7, 9])
                     with note_cols[1]:
@@ -353,20 +292,20 @@ def show_payment_history(client_id):
                             placeholder="Enter note here..."
                         )
                         if edited_note != row["Notes"]:
-                            st.session_state.notes_state['edited_notes'][row["payment_id"]] = edited_note
+                            NotesState.set_edited_note(row["payment_id"], edited_note)
     
     # Load more data if we're near the bottom
-    if len(st.session_state.payment_data) < total_payments:
-        if len(st.session_state.payment_data) % 25 == 0:  # Load next batch when we've displayed all current rows
-            st.session_state.payment_offset = len(st.session_state.payment_data)
+    if len(payment_data) < total_payments:
+        if len(payment_data) % 25 == 0:  # Load next batch when we've displayed all current rows
+            offset = PaymentHistoryState.get_offset()
             new_payments = get_paginated_payment_history(
                 client_id,
-                offset=st.session_state.payment_offset,
-                limit=25,  # Load 25 rows at a time
+                offset=offset,
+                limit=25,
                 years=year_filters,
                 quarters=quarter_filters
             )
             if new_payments:
                 table_data = format_payment_data(new_payments)
-                st.session_state.payment_data.extend(table_data)
+                PaymentHistoryState.append_data(table_data)
     
