@@ -1,10 +1,10 @@
 import streamlit as st
-from client_dashboard.client_contact_management import init_contact_form_state, show_contact_form
-from client_dashboard.client_payment_management import show_payment_history
-from client_dashboard.client_dashboard_metrics import show_client_metrics
-from client_dashboard.client_selection import get_selected_client
-from client_dashboard.client_contact_layout import show_contact_sections
-from client_dashboard.client_payment_form import show_payment_form
+from .client_contact_management import init_contact_form_state, show_contact_form
+from .client_payment_management import show_payment_history
+from .client_dashboard_metrics import show_client_metrics
+from .client_selection import get_selected_client
+from .client_contact_layout import show_contact_sections
+from .client_payment_form import show_payment_form
 
 def show_client_dashboard():
     """Main dashboard view with modular components."""

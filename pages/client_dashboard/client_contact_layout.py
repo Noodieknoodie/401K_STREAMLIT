@@ -1,6 +1,6 @@
 import streamlit as st
 from utils.utils import get_contacts
-from client_dashboard.client_contact_management import render_contact_section, render_contact_card
+from .client_contact_management import render_contact_section, render_contact_card
 
 def show_contact_sections(client_id):
     """Display the contact sections in a three-column layout."""
