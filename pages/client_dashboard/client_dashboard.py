@@ -21,7 +21,7 @@ def show_client_dashboard():
         show_contact_form()
     
     # Show payment form dialog if open
-    if 'payment_form' in st.session_state and st.session_state.payment_form['is_open']:
+    if 'payment_form' in st.session_state and st.session_state.payment_form['is_visible']:
         show_payment_form(client_id)
     
     if client_id:

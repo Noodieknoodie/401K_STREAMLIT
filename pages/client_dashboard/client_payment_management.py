@@ -4,8 +4,275 @@ from datetime import datetime
 from utils.utils import (
     get_payment_history, update_payment_note,
     get_paginated_payment_history, get_total_payment_count,
-    get_payment_year_quarters
+    get_payment_year_quarters, get_clients, get_contacts,
+    get_client_details, add_contact, update_contact,
+    delete_contact
 )
+
+# ============================================================================
+# CONTACT FORM STATE MANAGEMENT
+# ============================================================================
+
+def init_contact_form_state():
+    """Initialize contact form state management."""
+    if 'contact_form' not in st.session_state:
+        st.session_state.contact_form = {
+            'is_open': False,
+            'mode': 'add',  # 'add' or 'edit'
+            'contact_type': None,
+            'contact_id': None,  # Used for edit mode
+            'has_validation_error': False,
+            'show_cancel_confirm': False,
+            'form_data': {
+                'contact_name': '',
+                'phone': '',
+                'fax': '',
+                'email': '',
+                'physical_address': '',
+                'mailing_address': ''
+            }
+        }
+    if 'delete_contact_id' not in st.session_state:
+        st.session_state.delete_contact_id = None
+    if 'show_delete_confirm' not in st.session_state:
+        st.session_state.show_delete_confirm = False
+
+def clear_contact_form():
+    """Clear the contact form state."""
+    if 'contact_form' in st.session_state:
+        st.session_state.contact_form['form_data'] = {
+            'contact_name': '',
+            'phone': '',
+            'fax': '',
+            'email': '',
+            'physical_address': '',
+            'mailing_address': ''
+        }
+        st.session_state.contact_form['is_open'] = False
+        st.session_state.contact_form['has_validation_error'] = False
+        st.session_state.contact_form['show_cancel_confirm'] = False
+        get_contacts.clear()  # Clear the contacts cache
+
+@st.dialog('Contact Form')
+def show_contact_form():
+    """Display and handle the contact form dialog."""
+    if not st.session_state.contact_form['is_open']:
+        return
+    
+    mode = st.session_state.contact_form['mode']
+    action = "Edit" if mode == "edit" else "Add"
+    
+    st.subheader(f"{action} {st.session_state.contact_form['contact_type']} Contact")
+    
+    # Contact form fields
+    contact_name = st.text_input(
+        "Name",
+        key=f"contact_name_{st.session_state.contact_form['contact_type']}",
+        value=st.session_state.contact_form['form_data']['contact_name']
+    )
+    
+    phone = st.text_input(
+        "Phone",
+        key=f"phone_{st.session_state.contact_form['contact_type']}",
+        value=st.session_state.contact_form['form_data']['phone'],
+        placeholder="5555555555"
+    )
+    
+    fax = st.text_input(
+        "Fax",
+        key=f"fax_{st.session_state.contact_form['contact_type']}",
+        value=st.session_state.contact_form['form_data']['fax'],
+        placeholder="5555555555"
+    )
+    
+    email = st.text_input(
+        "Email",
+        key=f"email_{st.session_state.contact_form['contact_type']}",
+        value=st.session_state.contact_form['form_data']['email']
+    )
+    
+    physical_address = st.text_area(
+        "Physical Address",
+        key=f"physical_address_{st.session_state.contact_form['contact_type']}",
+        value=st.session_state.contact_form['form_data']['physical_address']
+    )
+    
+    mailing_address = st.text_area(
+        "Mailing Address",
+        key=f"mailing_address_{st.session_state.contact_form['contact_type']}",
+        value=st.session_state.contact_form['form_data']['mailing_address']
+    )
+    
+    # Form validation and submission
+    form_data = {
+        'contact_name': contact_name,
+        'phone': phone,
+        'fax': fax,
+        'email': email,
+        'physical_address': physical_address,
+        'mailing_address': mailing_address
+    }
+    
+    # Show validation error if present
+    if st.session_state.contact_form['has_validation_error']:
+        st.error("Please fill in at least one field.")
+    
+    # Show cancel confirmation if needed
+    if st.session_state.contact_form['show_cancel_confirm']:
+        st.warning("You have unsaved changes. Are you sure you want to cancel?")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Yes, Discard Changes", type="primary", use_container_width=True):
+                clear_contact_form()
+                st.rerun()
+        with col2:
+            if st.button("No, Go Back", use_container_width=True):
+                st.session_state.contact_form['show_cancel_confirm'] = False
+                st.rerun()
+    else:
+        # Normal save/cancel buttons
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Save", use_container_width=True):
+                if any(value.strip() for value in form_data.values()):
+                    # Get client_id from session state
+                    client_id = next(
+                        client[0] for client in get_clients()
+                        if client[1] == st.session_state.client_selector_dashboard
+                    )
+                    
+                    if mode == "edit":
+                        if update_contact(st.session_state.contact_form['contact_id'], form_data):
+                            clear_contact_form()
+                            get_contacts.clear()
+                            st.rerun()
+                    else:
+                        if add_contact(
+                            client_id,
+                            st.session_state.contact_form['contact_type'],
+                            form_data
+                        ):
+                            clear_contact_form()
+                            get_contacts.clear()
+                            st.rerun()
+                else:
+                    st.session_state.contact_form['has_validation_error'] = True
+                    st.rerun()
+        
+        with col2:
+            if st.button("Cancel", use_container_width=True):
+                if any(value.strip() for value in form_data.values()):
+                    st.session_state.contact_form['show_cancel_confirm'] = True
+                    st.rerun()
+                else:
+                    clear_contact_form()
+                    st.rerun()
+
+# ============================================================================
+# STATE MANAGEMENT INITIALIZATION FUNCTIONS
+# ============================================================================
+
+def init_payment_form_state():
+    """Initialize payment form state management.
+    BEFORE: State was initialized in main flow, causing reset on every reload
+    AFTER: Centralized initialization function, only runs when state doesn't exist
+    """
+    if 'payment_form' not in st.session_state:
+        current_quarter = (datetime.now().month - 1) // 3 + 1
+        current_year = datetime.now().year
+        prev_quarter = current_quarter - 1 if current_quarter > 1 else 4
+        prev_year = current_year if current_quarter > 1 else current_year - 1
+        
+        st.session_state.payment_form = {
+            'is_visible': False,  # Dedicated state for visibility
+            'mode': 'add',
+            'has_validation_error': False,
+            'show_cancel_confirm': False,
+            'modal_lock': False,
+            'form_data': {
+                'received_date': datetime.now().strftime('%Y-%m-%d'),
+                'applied_start_quarter': prev_quarter,
+                'applied_start_year': prev_year,
+                'applied_end_quarter': None,
+                'applied_end_year': None,
+                'total_assets': '',
+                'actual_fee': '',
+                'expected_fee': None,
+                'method': 'None Specified',
+                'other_method': '',
+                'notes': ''
+            }
+        }
+
+def init_notes_state():
+    """Initialize centralized notes state management.
+    BEFORE: Multiple scattered state keys for notes
+    AFTER: Single consolidated notes state object
+    """
+    if 'notes_state' not in st.session_state:
+        st.session_state.notes_state = {
+            'active_note': None,
+            'edited_notes': {},
+            'temp_notes': {}  # For storing unsaved changes
+        }
+
+def init_filter_state():
+    """Initialize payment filter state management.
+    BEFORE: Individual state keys for filters
+    AFTER: Bundled filter state in single object
+    """
+    if 'filter_state' not in st.session_state:
+        st.session_state.filter_state = {
+            'year': None,
+            'quarter': None,
+            'current_filters': None  # Tuple of (year_filters, quarter_filters)
+        }
+
+def clear_client_specific_states():
+    """Clear all client-specific states when switching clients.
+    BEFORE: Incomplete state cleanup on client switch
+    AFTER: Comprehensive cleanup of all client-related states
+    """
+    # Clear payment data
+    st.session_state.payment_data = []
+    st.session_state.payment_offset = 0
+    
+    # Clear filter state
+    if 'filter_state' in st.session_state:
+        st.session_state.filter_state = {
+            'year': None,
+            'quarter': None,
+            'current_filters': None
+        }
+    
+    # Clear notes state
+    if 'notes_state' in st.session_state:
+        st.session_state.notes_state = {
+            'active_note': None,
+            'edited_notes': {},
+            'temp_notes': {}
+        }
+    
+    # Reset payment form
+    if 'payment_form' in st.session_state:
+        st.session_state.payment_form['is_visible'] = False  # Reset visibility state
+        st.session_state.payment_form['mode'] = 'add'
+        st.session_state.payment_form['has_validation_error'] = False
+        st.session_state.payment_form['show_cancel_confirm'] = False
+        st.session_state.payment_form['modal_lock'] = False
+        st.session_state.payment_form['form_data'] = {
+            'received_date': datetime.now().strftime('%Y-%m-%d'),
+            'applied_start_quarter': (datetime.now().month - 1) // 3 + 1,
+            'applied_start_year': datetime.now().year,
+            'applied_end_quarter': None,
+            'applied_end_year': None,
+            'total_assets': '',
+            'actual_fee': '',
+            'expected_fee': None,
+            'method': 'None Specified',
+            'other_method': '',
+            'notes': ''
+        }
 
 def format_payment_data(payments):
     """Format payment data for display with consistent formatting."""
@@ -166,6 +433,11 @@ def render_note_cell(payment_id, note, provider=None, period=None):
 def show_payment_history(client_id):
     """Display payment history with efficient layout and smart navigation."""
     
+    # Initialize all required states
+    init_payment_form_state()
+    init_notes_state()
+    init_filter_state()
+    
     # Initialize payment state
     if 'payment_data' not in st.session_state:
         st.session_state.payment_data = []
@@ -196,25 +468,29 @@ def show_payment_history(client_id):
         if time_filter == "Custom":
             col1, col2, _ = st.columns([1, 1, 2])
             with col1:
-                year = st.selectbox("Year", options=years, index=0, label_visibility="collapsed")
+                selected_year = st.selectbox("Year", options=years, index=0, label_visibility="collapsed")
+                st.session_state.filter_state['year'] = selected_year
             with col2:
-                quarter = st.selectbox(
+                selected_quarter = st.selectbox(
                     "Quarter",
                     options=["All Quarters", "Q1", "Q2", "Q3", "Q4"],
                     index=0,
                     label_visibility="collapsed"
                 )
+                st.session_state.filter_state['quarter'] = selected_quarter
     
     with middle_col:
         if st.button("Add Payment", type="primary", use_container_width=True):
-            st.session_state.payment_form['is_open'] = True
+            st.session_state.payment_form['is_visible'] = True  # Use dedicated visibility state
             st.rerun()
     
     with right_col:
         status_text = (
             f"Viewing all {total_payments} payments" if time_filter == "All Time" else
             f"Viewing payments from {datetime.now().year}" if time_filter == "This Year" else
-            f"Viewing payments from {year}" + (f" Q{quarter[1]}" if quarter != "All Quarters" else "")
+            f"Viewing payments from {st.session_state.filter_state['year']}" + 
+            (f" Q{st.session_state.filter_state['quarter'][1]}" 
+             if st.session_state.filter_state['quarter'] != "All Quarters" else "")
         )
         st.markdown(f"<div style='text-align: right'>{status_text}</div>", unsafe_allow_html=True)
     
@@ -226,16 +502,15 @@ def show_payment_history(client_id):
         year_filters = [datetime.now().year]
         quarter_filters = None
     else:  # Custom
-        year_filters = [year]
-        quarter_filters = None if quarter == "All Quarters" else [int(quarter[1])]
+        year_filters = [st.session_state.filter_state['year']]
+        quarter_filters = None if st.session_state.filter_state['quarter'] == "All Quarters" else [int(st.session_state.filter_state['quarter'][1])]
     
     # Check if filters changed
     current_filters = (year_filters, quarter_filters)
-    if ('current_filters' not in st.session_state or 
-        st.session_state.current_filters != current_filters):
+    if st.session_state.filter_state['current_filters'] != current_filters:
         st.session_state.payment_data = []
         st.session_state.payment_offset = 0
-        st.session_state.current_filters = current_filters
+        st.session_state.filter_state['current_filters'] = current_filters
     
     # Load initial data if needed
     if len(st.session_state.payment_data) == 0:
@@ -379,4 +654,187 @@ def show_payment_history(client_id):
             if new_payments:
                 table_data = format_payment_data(new_payments)
                 st.session_state.payment_data.extend(table_data)
+    
+def show_client_dashboard():
+    """Display the client dashboard with proper state management."""
+    st.write("👥 Client Dashboard")
+    
+    # Initialize all required states
+    init_contact_form_state()
+    init_payment_form_state()
+    init_notes_state()
+    init_filter_state()
+    
+    # Show contact form dialog if open
+    if st.session_state.contact_form['is_open']:
+        show_contact_form()
+    
+    # Reset state when changing clients
+    if 'previous_client' not in st.session_state:
+        st.session_state.previous_client = None
+    
+    # Client selector
+    clients = get_clients()
+    client_options = ["Select a client..."] + [client[1] for client in clients]
+    selected_client_name = st.selectbox(
+        "🔍 Search or select a client",
+        options=client_options,
+        key="client_selector_dashboard",
+        label_visibility="collapsed"
+    )
+    
+    if selected_client_name != "Select a client...":
+        # Clear all client-specific states when client changes
+        if st.session_state.previous_client != selected_client_name:
+            clear_client_specific_states()
+            st.session_state.previous_client = selected_client_name
+        
+        client_id = next(
+            client[0] for client in clients if client[1] == selected_client_name
+        )
+        
+        # Get all required data
+        client_details = get_client_details(client_id)
+        contacts = get_contacts(client_id)
+        
+        # Create three equal-width columns for contact cards
+        c1, c2, c3 = st.columns(3)
+        
+        contact_types = {'Primary': [], 'Authorized': [], 'Provider': []}
+        
+        if contacts:
+            for contact in contacts:
+                if contact[0] in contact_types:
+                    contact_types[contact[0]].append(contact)
+        
+        # Primary Contacts Card
+        with c1:
+            with st.expander(f"Primary Contact ({len(contact_types['Primary'])})", expanded=False):
+                if contact_types['Primary']:
+                    for contact in contact_types['Primary']:
+                        render_contact_card(contact)
+                    if st.button("Add Primary Contact", key="add_primary", use_container_width=True):
+                        st.session_state.contact_form['is_open'] = True
+                        st.session_state.contact_form['contact_type'] = 'Primary'
+                        st.rerun()
+                else:
+                    st.caption("No primary contacts")
+                    if st.button("Add Primary Contact", key="add_primary", use_container_width=True):
+                        st.session_state.contact_form['is_open'] = True
+                        st.session_state.contact_form['contact_type'] = 'Primary'
+                        st.rerun()
+        
+        # Authorized Contacts Card
+        with c2:
+            with st.expander(f"Authorized Contact ({len(contact_types['Authorized'])})", expanded=False):
+                if contact_types['Authorized']:
+                    for contact in contact_types['Authorized']:
+                        render_contact_card(contact)
+                    if st.button("Add Authorized Contact", key="add_authorized", use_container_width=True):
+                        st.session_state.contact_form['is_open'] = True
+                        st.session_state.contact_form['contact_type'] = 'Authorized'
+                        st.rerun()
+                else:
+                    st.caption("No authorized contacts")
+                    if st.button("Add Authorized Contact", key="add_authorized", use_container_width=True):
+                        st.session_state.contact_form['is_open'] = True
+                        st.session_state.contact_form['contact_type'] = 'Authorized'
+                        st.rerun()
+        
+        # Provider Contacts Card
+        with c3:
+            with st.expander(f"Provider Contact ({len(contact_types['Provider'])})", expanded=False):
+                if contact_types['Provider']:
+                    for contact in contact_types['Provider']:
+                        render_contact_card(contact)
+                    if st.button("Add Provider Contact", key="add_provider", use_container_width=True):
+                        st.session_state.contact_form['is_open'] = True
+                        st.session_state.contact_form['contact_type'] = 'Provider'
+                        st.rerun()
+                else:
+                    st.caption("No provider contacts")
+                    if st.button("Add Provider Contact", key="add_provider", use_container_width=True):
+                        st.session_state.contact_form['is_open'] = True
+                        st.session_state.contact_form['contact_type'] = 'Provider'
+                        st.rerun()
+        
+        # Payments History Section
+        st.markdown("<div style='margin: 2rem 0 1rem 0;'></div>", unsafe_allow_html=True)
+        st.markdown("### Payment History")
+        
+        show_payment_history(client_id)
+    
+# ============================================================================
+# CONTACT CARD RENDERING
+# ============================================================================
+
+def render_contact_card(contact):
+    """Render a single contact card with strict grid layout.
+    
+    Args:
+        contact (tuple): Contact data tuple from database
+            (contact_type, name, phone, email, fax, physical_address, mailing_address, contact_id)
+    """
+    # Main container for each contact
+    with st.container():
+        # Show delete confirmation if this is the contact being deleted
+        if st.session_state.show_delete_confirm and st.session_state.delete_contact_id == contact[7]:
+            confirm_col1, confirm_col2, confirm_col3 = st.columns([2,1,1])
+            with confirm_col1:
+                st.warning("Delete this contact?")
+            with confirm_col2:
+                if st.button("Yes", key=f"confirm_delete_{contact[7]}", type="primary"):
+                    if delete_contact(contact[7]):
+                        st.session_state.delete_contact_id = None
+                        st.session_state.show_delete_confirm = False
+                        get_contacts.clear()
+                        st.rerun()
+            with confirm_col3:
+                if st.button("No", key=f"cancel_delete_{contact[7]}"):
+                    st.session_state.delete_contact_id = None
+                    st.session_state.show_delete_confirm = False
+                    st.rerun()
+            return  # Skip showing the contact while confirming delete
+
+        # Two-column layout: Info | Actions
+        info_col, action_col = st.columns([6, 1])
+        
+        with info_col:
+            # Name - using text() for smaller size
+            if contact[1]:
+                st.text(contact[1])
+            # Contact details - all using text() for consistency
+            if contact[2]:
+                st.text(f"📞 {contact[2]}")
+            if contact[3]:
+                st.text(f"✉️ {contact[3]}")
+            if contact[4]:
+                st.text(f"📠 {contact[4]}")
+            if contact[5] or contact[6]:
+                st.text(f"📍 {contact[5] or contact[6]}")
+        
+        with action_col:
+            # Action buttons stacked vertically, right-aligned
+            if st.button("✏️", key=f"edit_{contact[7]}", help="Edit contact"):
+                # Set up edit mode
+                st.session_state.contact_form['mode'] = 'edit'
+                st.session_state.contact_form['is_open'] = True
+                st.session_state.contact_form['contact_type'] = contact[0]
+                st.session_state.contact_form['contact_id'] = contact[7]
+                st.session_state.contact_form['form_data'] = {
+                    'contact_name': contact[1] or '',
+                    'phone': contact[2] or '',
+                    'email': contact[3] or '',
+                    'fax': contact[4] or '',
+                    'physical_address': contact[5] or '',
+                    'mailing_address': contact[6] or ''
+                }
+                st.rerun()
+            if st.button("🗑️", key=f"delete_{contact[7]}", help="Delete contact"):
+                st.session_state.delete_contact_id = contact[7]
+                st.session_state.show_delete_confirm = True
+                st.rerun()
+        
+        # Minimal separator
+        st.divider()
     

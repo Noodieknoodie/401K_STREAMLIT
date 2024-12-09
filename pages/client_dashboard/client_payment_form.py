@@ -35,19 +35,25 @@ METHOD_OPTIONS = [
     "Other"
 ]
 
-def init_payment_form_state():
-    """Initialize the payment form state"""
+def init_payment_form():
+    """Initialize the payment form state if it doesn't exist."""
     if 'payment_form' not in st.session_state:
+        current_quarter = (datetime.now().month - 1) // 3 + 1
+        current_year = datetime.now().year
+        prev_quarter = current_quarter - 1 if current_quarter > 1 else 4
+        prev_year = current_year if current_quarter > 1 else current_year - 1
+        
         st.session_state.payment_form = {
-            'is_open': False,
-            'mode': 'add',  # 'add' or 'edit'
+            'is_visible': False,  # Changed from is_open to is_visible
+            'mode': 'add',
             'has_validation_error': False,
             'show_cancel_confirm': False,
+            'modal_lock': False,
             'form_data': {
                 'received_date': datetime.now().strftime('%Y-%m-%d'),
-                'applied_start_period': None,  # Will be set based on schedule
-                'applied_start_year': None,
-                'applied_end_period': None,
+                'applied_start_quarter': prev_quarter,
+                'applied_start_year': prev_year,
+                'applied_end_quarter': None,
                 'applied_end_year': None,
                 'total_assets': '',
                 'actual_fee': '',
@@ -58,19 +64,16 @@ def init_payment_form_state():
             }
         }
 
-def clear_form():
-    """Reset the payment form state"""
+def clear_payment_form():
+    """Reset the payment form state."""
     if 'payment_form' in st.session_state:
-        # Get previous quarter for arrears payment
-        current_quarter = get_current_quarter()
-        current_year = datetime.now().year
-        prev_quarter, prev_year = get_previous_quarter(current_quarter, current_year)
-        
-        # Clear form data
+        st.session_state.payment_form['is_visible'] = False  # Changed from is_open to is_visible
+        st.session_state.payment_form['has_validation_error'] = False
+        st.session_state.payment_form['show_cancel_confirm'] = False
         st.session_state.payment_form['form_data'] = {
             'received_date': datetime.now().strftime('%Y-%m-%d'),
-            'applied_start_quarter': prev_quarter,  # Now using previous quarter consistently
-            'applied_start_year': prev_year,       # And its corresponding year
+            'applied_start_quarter': None,
+            'applied_start_year': None,
             'applied_end_quarter': None,
             'applied_end_year': None,
             'total_assets': '',
@@ -80,18 +83,6 @@ def clear_form():
             'other_method': '',
             'notes': ''
         }
-        # Reset form state
-        st.session_state.payment_form['is_open'] = False
-        st.session_state.payment_form['has_validation_error'] = False
-        st.session_state.payment_form['show_cancel_confirm'] = False
-        
-        # Clear payment data to force refresh
-        if 'payment_data' in st.session_state:
-            st.session_state.payment_data = []
-        if 'payment_offset' in st.session_state:
-            st.session_state.payment_offset = 0
-        if 'current_filters' in st.session_state:
-            del st.session_state.current_filters
 
 def has_unsaved_changes(form_data):
     """Check if the form has unsaved changes"""
@@ -261,7 +252,7 @@ def get_previous_payment_defaults(client_id):
 @st.dialog('Add Payment')
 def show_payment_form(client_id):
     """Display the payment form dialog"""
-    if not st.session_state.payment_form['is_open']:
+    if not st.session_state.payment_form['is_visible']:  # Changed from is_open to is_visible
         return
     
     st.session_state.client_id = client_id
@@ -272,7 +263,7 @@ def show_payment_form(client_id):
     if not contract:
         st.error("No active contract found for this client. Please add a contract first.")
         if st.button("Close"):
-            clear_form()
+            clear_payment_form()
             st.rerun()
         return
     
@@ -486,7 +477,7 @@ def show_payment_form(client_id):
         col1, col2 = st.columns(2)
         with col1:
             if st.button("Yes, Discard Changes", type="primary", use_container_width=True):
-                clear_form()
+                clear_payment_form()
                 st.rerun()
         with col2:
             if st.button("No, Keep Editing", use_container_width=True):
@@ -503,7 +494,7 @@ def show_payment_form(client_id):
                     payment_id = add_payment(client_id, form_data)
                     if payment_id:
                         st.success("Payment added successfully!")
-                        clear_form()
+                        clear_payment_form()
                         st.rerun()
                     else:
                         st.error("Failed to add payment. Please try again.")
@@ -517,5 +508,5 @@ def show_payment_form(client_id):
                     st.session_state.payment_form['show_cancel_confirm'] = True
                     st.rerun()
                 else:
-                    clear_form()
+                    clear_payment_form()
                     st.rerun() 
