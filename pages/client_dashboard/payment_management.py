@@ -201,25 +201,39 @@ def show_payment_history(client_id):
     # Create DataFrame for display
     df = pd.DataFrame(st.session_state.payment_data)
     
-    # Create scrollable container with fixed height
+    # Create scrollable container style
     st.markdown("""
         <style>
-        div[data-testid="stVerticalBlock"] > div:has(div.stDataFrame) {
+        .scrollable-container {
             height: 600px;
             overflow-y: auto;
-            padding-right: 1rem;
-        }
-        div.stDataFrame {
-            height: 100%;
-        }
-        div.stDataFrame thead th {
-            position: sticky;
-            top: 0;
-            background: white;
-            z-index: 1;
         }
         </style>
     """, unsafe_allow_html=True)
+    
+    # Start scrollable section
+    st.markdown('<div class="scrollable-container">', unsafe_allow_html=True)
+    
+    # Headers
+    header_cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1])
+    with header_cols[0]:
+        st.markdown("**Provider**")
+    with header_cols[1]:
+        st.markdown("**Period**")
+    with header_cols[2]:
+        st.markdown("**Frequency**")
+    with header_cols[3]:
+        st.markdown("**Received**")
+    with header_cols[4]:
+        st.markdown("**Total Assets**")
+    with header_cols[5]:
+        st.markdown("**Expected Fee**")
+    with header_cols[6]:
+        st.markdown("**Actual Fee**")
+    with header_cols[7]:
+        st.markdown("**Discrepancy**")
+    with header_cols[8]:
+        st.markdown("**Notes**")
     
     # Display rows
     for index, row in df.iterrows():
@@ -261,14 +275,17 @@ def show_payment_history(client_id):
                         placeholder="Enter note here..."
                     )
     
+    # End scrollable section
+    st.markdown('</div>', unsafe_allow_html=True)
+    
     # Load more data if we're near the bottom
     if len(st.session_state.payment_data) < total_payments:
-        if len(st.session_state.payment_data) % 25 == 0:  # Load next batch when we've displayed all current rows
+        if len(st.session_state.payment_data) % 25 == 0:
             st.session_state.payment_offset = len(st.session_state.payment_data)
             new_payments = get_paginated_payment_history(
                 client_id,
                 offset=st.session_state.payment_offset,
-                limit=25,  # Load 25 rows at a time
+                limit=25,
                 years=year_filters,
                 quarters=quarter_filters
             )
