@@ -1,0 +1,138 @@
+[33mcommit 7ef697e4d0fffda0bc391abe719a60f2d6d295ce[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: Noodieknoodie <eriklars08@gmail.com>
+Date:   Sun Dec 8 16:00:22 2024 -0800
+
+    Establishing full_refractor as the new main branch
+
+[1mdiff --git a/DATABASE/401kDATABASE.db b/DATABASE/401kDATABASE.db[m
+[1mindex 2e56dcf..0e4b3f7 100644[m
+Binary files a/DATABASE/401kDATABASE.db and b/DATABASE/401kDATABASE.db differ
+[1mdiff --git a/DATABASE/IGNORE/401kDATABASEOLD.db b/DATABASE/IGNORE/401kDATABASEOLD.db[m
+[1mnew file mode 100644[m
+[1mindex 0000000..2e56dcf[m
+Binary files /dev/null and b/DATABASE/IGNORE/401kDATABASEOLD.db differ
+[1mdiff --git a/README/README.md b/README/README.md[m
+[1mnew file mode 100644[m
+[1mindex 0000000..e69de29[m
+[1mdiff --git a/README/ReadMe_Database.md b/README/ReadMe_Database.md[m
+[1mindex 94999b3..50d6473 100644[m
+[1m--- a/README/ReadMe_Database.md[m
+[1m+++ b/README/ReadMe_Database.md[m
+[36m@@ -1,16 +1,20 @@[m
+[31m-# 401K_STREAMLIT[m
+[31m-[m
+[31m-[m
+[32m+[m[32m# 401K_STREAMLIT.db[m
+ ## THIS DATABASE ALREADY EXISTS: "DATABASE\401kDATABASE.db"[m
+ ## THE INFORMATION BELOW IS ONLY SO YOU CAN UNDERSTAND HOW IT IS SETUP.[m
+ ## YOU DO NOT NEED TO CREATE THE DATABASE [m
+ ## THIS IS FOR YOUR LEARNING [m
+ [m
+ [m
+[32m+[m[32m---[m
+ [m
+[32m+[m[32m# TABLE NAME: table: sqlite_sequence[m
+ [m
+[31m-TABLE NAME:[m
+[31m-clients[m
+[32m+[m[32mSCHEMA (CREATE STATEMENT):[m
+[32m+[m[32mCREATE TABLE sqlite_sequence(name,seq)[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m# TABLE NAME: clients[m
+ [m
+ SCHEMA (CREATE STATEMENT):[m
+ CREATE TABLE "clients" ([m
+[36m@@ -24,40 +28,52 @@[m [mCREATE TABLE "clients" ([m
+ 	PRIMARY KEY("client_id" AUTOINCREMENT)[m
+ )[m
+ [m
+[31m-SAMPLE:[m
+[31m-(1, 'AirSea America', 'THE TRUSTEES OF AIRSEA AMERICA INC 401K PLAN AND TRUST', '2020-07-31', None, None, None)[m
+[31m-(2, 'Bumgardner Architects (ABC)', 'THE BUMGARDNER ARCHITECTS A WASHINGTON CORPORATION PROFIT', '2020-08-02', None, None, None)[m
+[31m-(3, 'Amplero', 'AMPLERO INC 401K', '2019-03-15', None, None, None)[m
+[31m-(4, 'Auction Edge', 'AUCTION EDGE Inc 401k Profit Sharing Plan', '2019-03-07', None, None, None)[m
+[31m-(5, 'BDR Interactive', 'BUSINESS DEVELOPMENT RESOURCES & OPPORTUNITIES INTERACTIVE', '2021-02-23', None, None, None)[m
+[31m-(6, 'Bellmont Cabinets', 'BELLMONT CABINETS', None, None, None, None)[m
+[31m-(7, 'Corina Bakery', 'CORINA BAKERY', '2020-07-28', None, None, None)[m
+[31m-(8, 'Dakota Creek', 'DAKOTA CREEK INDUSTRIES', None, None, None, None)[m
+[31m-(9, 'CG Engineering', 'CG ENGINEERING PLLC', '2020-07-28', None, None, None)[m
+[31m-(10, 'Fast Water Heater', 'FAST WATER HEATER CO', '2019-10-14', None, None, None)[m
+[31m-(11, 'Floform', 'FLOFORM COUNTERTOPS', None, None, None, None)[m
+[31m-(12, 'Hansen Bros', 'HANSEN BROS TRANSFER & STORAGE CO', '2019-03-18', None, None, None)[m
+[31m-(13, 'Harper Engineering', 'HARPER ENGINEERING 401K PROFIT SHARING PLAN', '2020-08-06', None, None, None)[m
+[31m-(14, 'Hos Bros', 'HOS BROS CONSTRUCTION INC', '2019-05-08', None, None, None)[m
+[31m-(15, 'Lavle USA', 'LAVLE USA INC 401K', '2019-03-22', None, None, None)[m
+[31m-(16, 'Lynnwood Honda', 'LYNNWOOD ENTERPRISES INC 401K', '2020-02-06', None, None, None)[m
+[31m-(17, 'Nordic Museum', 'NATIONAL NORDIC MUSEUM', None, None, None, None)[m
+[31m-(18, 'Marten Law', 'MARTEN LAW GROUP PLLC', '2019-03-26', None, None, None)[m
+[31m-(19, 'Opportunity Interactive', 'OPPORTUNITY INTERACTIVE', '2021-01-29', None, None, None)[m
+[31m-(20, 'MoxiWorks', 'MOXIWORKS', '2020-08-05', None, None, None)[m
+[31m-(21, 'Mobile Focused', 'MOBILE FOCUSED MEDIA', None, None, None, None)[m
+[31m-(22, 'PSWM Inc', 'PSWM INC 401K PLAN AND TRUST', '2019-03-18', None, None, None)[m
+[31m-(23, 'Three Sigma', 'THREE SIGMA', '2020-09-22', None, None, None)[m
+[31m-(24, "Tony's Coffee", 'TONYS COFFEE', None, None, None, None)[m
+[31m-(25, 'United Way', 'UWKC', None, None, None, None)[m
+[31m-(26, 'Urban Renaissance', 'URBAN RENAISSANCE 401K AND TRUST', '2020-07-29', None, None, None)[m
+[31m-(27, 'XFire', 'XFIRE INDUSTRIES INC 401K PLAN', None, None, None, None)[m
+[31m-(28, 'Younker Motors', 'YOUNKER MOTORS', '2020-07-30', None, None, None)[m
+[31m-(29, 'Youth Dynamics', 'YOUTH DYNAMICS', None, None, None, None)[m
+[31m-[m
+[31m-[m
+[31m-TABLE NAME:[m
+[31m-contacts[m
+[32m+[m[32m# METIRCS: table: clients[m
+[32m+[m
+[32m+[m[32mColumn,Null %,Unique,Is Diverse,Avg Length,Min Length,Max Length[m
+[32m+[m[32mclient_id,0.0%,29,Yes,1.69,1,2[m
+[32m+[m[32mdisplay_name,0.0%,29,Yes,12.966,5,27[m
+[32m+[m[32mfull_name,0.0%,29,Yes,25.0,4,58[m
+[32m+[m[32mima_signed_date,31.034%,19,Yes,10.0,10,10[m
+[32m+[m[32mfile_path_account_documentation,100.0%,1,No,nan,nan,nan[m
+[32m+[m[32mfile_path_consulting_fees,100.0%,1,No,nan,nan,nan[m
+[32m+[m[32mfile_path_meetings,100.0%,1,No,nan,nan,nan[m
+[32m+[m
+[32m+[m[32m# SAMPLE: table: clients[m[41m [m
+[32m+[m
+[32m+[m[32m(1, 'AirSea America', 'THE TRUSTEES OF AIRSEA AMERICA INC 401K PLAN AND TRUST', '2020-07-31', NULL, NULL, NULL)[m
+[32m+[m[32m(2, 'Bumgardner Architects (ABC)', 'THE BUMGARDNER ARCHITECTS A WASHINGTON CORPORATION PROFIT', '2020-08-02', NULL, NULL, NULL)[m
+[32m+[m[32m(3, 'Amplero', 'AMPLERO INC 401K', '2019-03-15', NULL, NULL, NULL)[m
+[32m+[m[32m(4, 'Auction Edge', 'AUCTION EDGE Inc 401k Profit Sharing Plan', '2019-03-07', NULL, NULL, NULL)[m
+[32m+[m[32m(5, 'BDR Interactive', 'BUSINESS DEVELOPMENT RESOURCES & OPPORTUNITIES INTERACTIVE', '2021-02-23', NULL, NULL, NULL)[m
+[32m+[m[32m(6, 'Bellmont Cabinets', 'BELLMONT CABINETS', NULL, NULL, NULL, NULL)[m
+[32m+[m[32m(7, 'Corina Bakery', 'CORINA BAKERY', '2020-07-28', NULL, NULL, NULL)[m
+[32m+[m[32m(8, 'Dakota Creek', 'DAKOTA CREEK INDUSTRIES', NULL, NULL, NULL, NULL)[m
+[32m+[m[32m(9, 'CG Engineering', 'CG ENGINEERING PLLC', '2020-07-28', NULL, NULL, NULL)[m
+[32m+[m[32m(10, 'Fast Water Heater', 'FAST WATER HEATER CO', '2019-10-14', NULL, NULL, NULL)[m
+[32m+[m[32m(11, 'Floform', 'FLOFORM COUNTERTOPS', NULL, NULL, NULL, NULL)[m
+[32m+[m[32m(12, 'Hansen Bros', 'HANSEN BROS TRANSFER & STORAGE CO', '2019-03-18', NULL, NULL, NULL)[m
+[32m+[m[32m(13, 'Harper Engineering', 'HARPER ENGINEERING 401K PROFIT SHARING PLAN', '2020-08-06', NULL, NULL, NULL)[m
+[32m+[m[32m(14, 'Hos Bros', 'HOS BROS CONSTRUCTION INC', '2019-05-08', NULL, NULL, NULL)[m
+[32m+[m[32m(15, 'Lavle USA', 'LAVLE USA INC 401K', '2019-03-22', NULL, NULL, NULL)[m
+[32m+[m[32m(16, 'Lynnwood Honda', 'LYNNWOOD ENTERPRISES INC 401K', '2020-02-06', NULL, NULL, NULL)[m
+[32m+[m[32m(17, 'Nordic Museum', 'NATIONAL NORDIC MUSEUM', NULL, NULL, NULL, NULL)[m
+[32m+[m[32m(18, 'Marten Law', 'MARTEN LAW GROUP PLLC', '2019-03-26', NULL, NULL, NULL)[m
+[32m+[m[32m(19, 'Opportunity Interactive', 'OPPORTUNITY INTERACTIVE', '2021-01-29', NULL, NULL, NULL)[m
+[32m+[m[32m(20, 'MoxiWorks', 'MOXIWORKS', '2020-08-05', NULL, NULL, NULL)[m
+[32m+[m[32m(21, 'Mobile Focused', 'MOBILE FOCUSED MEDIA', NULL, NULL, NULL, NULL)[m
+[32m+[m[32m(22, 'PSWM Inc', 'PSWM INC 401K PLAN AND TRUST', '2019-03-18', NULL, NULL, NULL)[m
+[32m+[m[32m(23, 'Three Sigma', 'THREE SIGMA', '2020-09-22', NULL, NULL, NULL)[m
+[32m+[m[32m(24, "Tony's Coffee", 'TONYS COFFEE', NULL, NULL, NULL, NULL)[m
+[32m+[m[32m(25, 'United Way', 'UWKC', NULL, NULL, NULL, NULL)[m
+[32m+[m[32m(26, 'Urban Renaissance', 'URBAN RENAISSANCE 401K AND TRUST', '2020-07-29', NULL, NULL, NULL)[m
+[32m+[m[32m(27, 'XFire', 'XFIRE INDUSTRIES INC 401K PLAN', NULL, NULL, NULL, NULL)[m
+[32m+[m[32m(28, 'Younker Motors', 'YOUNKER MOTORS', '2020-07-30', NULL, NULL, NULL)[m
+[32m+[m[32m(29, 'Youth Dynamics', 'YOUTH DYNAMICS', NULL, NULL, NULL, NULL)[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m# TABLE NAME: contacts[m
+ [m
+ SCHEMA (CREATE STATEMENT):[m
+ CREATE TABLE "contacts" ([m
+[36m@@ -74,82 +90,52 @@[m [mCREATE TABLE "contacts" ([m
+ 	FOREIGN KEY("client_id") REFERENCES "clients"("client_id")[m
+ )[m
+ [m
+[3
