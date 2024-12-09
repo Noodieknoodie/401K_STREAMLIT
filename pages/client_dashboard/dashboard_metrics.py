@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.utils import (
+from utils import (
     get_client_details, get_active_contract, get_latest_payment,
     calculate_rate_conversions
 )
@@ -31,20 +31,20 @@ def show_client_metrics(client_id):
             rate_type = None
             rate_conversions = None
             
-            if active_contract and active_contract[5]:
-                if active_contract[5] == 'percentage':
-                    if active_contract[6]:
-                        rate_value = f"{active_contract[6]*100:.3f}%"
+            if active_contract and active_contract[4]:
+                if active_contract[4] == 'percentage':
+                    if active_contract[5]:
+                        rate_value = f"{active_contract[5]*100:.3f}%"
                 else:
-                    if active_contract[7]:
-                        rate_value = f"${active_contract[7]:,.2f}"
+                    if active_contract[6]:
+                        rate_value = f"${active_contract[6]:,.2f}"
                 
                 if rate_value != 'N/A':
-                    rate_type = active_contract[5].title()
-                    schedule = active_contract[4] if active_contract[4] else None
+                    rate_type = active_contract[4].title()
+                    schedule = active_contract[3] if active_contract[3] else None
                     rate_value, rate_conversions = calculate_rate_conversions(
                         rate_value, 
-                        active_contract[5],
+                        active_contract[4],
                         schedule
                     )
             
@@ -55,7 +55,7 @@ def show_client_metrics(client_id):
             )
         
         with col2:
-            st.metric("Payment Schedule", active_contract[4].title() if active_contract and active_contract[4] else "N/A")
+            st.metric("Payment Schedule", active_contract[3].title() if active_contract and active_contract[3] else "N/A")
         
         with col3:
             last_payment = 'No payments'

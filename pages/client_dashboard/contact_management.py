@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.utils import (
+from utils import (
     get_contacts, add_contact, format_phone_number_ui, format_phone_number_db,
     validate_phone_number, delete_contact, update_contact, get_clients
 )

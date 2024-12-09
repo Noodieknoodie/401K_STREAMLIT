@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.utils import get_clients
+from utils import get_clients
 
 def reset_client_state():
     """Reset client-related state when client changes."""
@@ -19,7 +19,7 @@ def get_selected_client():
     clients = get_clients()
     client_options = ["Select a client..."] + [client[1] for client in clients]
     selected_client_name = st.selectbox(
-        "🔍 Search or select a client",
+        "🔍 Client Selection",
         options=client_options,
         key="client_selector_dashboard",
         label_visibility="collapsed"

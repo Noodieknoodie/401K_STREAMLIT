@@ -1,16 +1,20 @@
-# 401K_STREAMLIT
-
-
+# 401K_STREAMLIT.db
 ## THIS DATABASE ALREADY EXISTS: "DATABASE\401kDATABASE.db"
 ## THE INFORMATION BELOW IS ONLY SO YOU CAN UNDERSTAND HOW IT IS SETUP.
 ## YOU DO NOT NEED TO CREATE THE DATABASE 
 ## THIS IS FOR YOUR LEARNING 
 
 
+---
 
+# TABLE NAME: table: sqlite_sequence
 
-TABLE NAME:
-clients
+SCHEMA (CREATE STATEMENT):
+CREATE TABLE sqlite_sequence(name,seq)
+
+---
+
+# TABLE NAME: clients
 
 SCHEMA (CREATE STATEMENT):
 CREATE TABLE "clients" (
@@ -24,40 +28,52 @@ CREATE TABLE "clients" (
 	PRIMARY KEY("client_id" AUTOINCREMENT)
 )
 
-SAMPLE:
-(1, 'AirSea America', 'THE TRUSTEES OF AIRSEA AMERICA INC 401K PLAN AND TRUST', '2020-07-31', None, None, None)
-(2, 'Bumgardner Architects (ABC)', 'THE BUMGARDNER ARCHITECTS A WASHINGTON CORPORATION PROFIT', '2020-08-02', None, None, None)
-(3, 'Amplero', 'AMPLERO INC 401K', '2019-03-15', None, None, None)
-(4, 'Auction Edge', 'AUCTION EDGE Inc 401k Profit Sharing Plan', '2019-03-07', None, None, None)
-(5, 'BDR Interactive', 'BUSINESS DEVELOPMENT RESOURCES & OPPORTUNITIES INTERACTIVE', '2021-02-23', None, None, None)
-(6, 'Bellmont Cabinets', 'BELLMONT CABINETS', None, None, None, None)
-(7, 'Corina Bakery', 'CORINA BAKERY', '2020-07-28', None, None, None)
-(8, 'Dakota Creek', 'DAKOTA CREEK INDUSTRIES', None, None, None, None)
-(9, 'CG Engineering', 'CG ENGINEERING PLLC', '2020-07-28', None, None, None)
-(10, 'Fast Water Heater', 'FAST WATER HEATER CO', '2019-10-14', None, None, None)
-(11, 'Floform', 'FLOFORM COUNTERTOPS', None, None, None, None)
-(12, 'Hansen Bros', 'HANSEN BROS TRANSFER & STORAGE CO', '2019-03-18', None, None, None)
-(13, 'Harper Engineering', 'HARPER ENGINEERING 401K PROFIT SHARING PLAN', '2020-08-06', None, None, None)
-(14, 'Hos Bros', 'HOS BROS CONSTRUCTION INC', '2019-05-08', None, None, None)
-(15, 'Lavle USA', 'LAVLE USA INC 401K', '2019-03-22', None, None, None)
-(16, 'Lynnwood Honda', 'LYNNWOOD ENTERPRISES INC 401K', '2020-02-06', None, None, None)
-(17, 'Nordic Museum', 'NATIONAL NORDIC MUSEUM', None, None, None, None)
-(18, 'Marten Law', 'MARTEN LAW GROUP PLLC', '2019-03-26', None, None, None)
-(19, 'Opportunity Interactive', 'OPPORTUNITY INTERACTIVE', '2021-01-29', None, None, None)
-(20, 'MoxiWorks', 'MOXIWORKS', '2020-08-05', None, None, None)
-(21, 'Mobile Focused', 'MOBILE FOCUSED MEDIA', None, None, None, None)
-(22, 'PSWM Inc', 'PSWM INC 401K PLAN AND TRUST', '2019-03-18', None, None, None)
-(23, 'Three Sigma', 'THREE SIGMA', '2020-09-22', None, None, None)
-(24, "Tony's Coffee", 'TONYS COFFEE', None, None, None, None)
-(25, 'United Way', 'UWKC', None, None, None, None)
-(26, 'Urban Renaissance', 'URBAN RENAISSANCE 401K AND TRUST', '2020-07-29', None, None, None)
-(27, 'XFire', 'XFIRE INDUSTRIES INC 401K PLAN', None, None, None, None)
-(28, 'Younker Motors', 'YOUNKER MOTORS', '2020-07-30', None, None, None)
-(29, 'Youth Dynamics', 'YOUTH DYNAMICS', None, None, None, None)
+# METIRCS: table: clients
 
+Column,Null %,Unique,Is Diverse,Avg Length,Min Length,Max Length
+client_id,0.0%,29,Yes,1.69,1,2
+display_name,0.0%,29,Yes,12.966,5,27
+full_name,0.0%,29,Yes,25.0,4,58
+ima_signed_date,31.034%,19,Yes,10.0,10,10
+file_path_account_documentation,100.0%,1,No,nan,nan,nan
+file_path_consulting_fees,100.0%,1,No,nan,nan,nan
+file_path_meetings,100.0%,1,No,nan,nan,nan
 
-TABLE NAME:
-contacts
+# SAMPLE: table: clients 
+
+(1, 'AirSea America', 'THE TRUSTEES OF AIRSEA AMERICA INC 401K PLAN AND TRUST', '2020-07-31', NULL, NULL, NULL)
+(2, 'Bumgardner Architects (ABC)', 'THE BUMGARDNER ARCHITECTS A WASHINGTON CORPORATION PROFIT', '2020-08-02', NULL, NULL, NULL)
+(3, 'Amplero', 'AMPLERO INC 401K', '2019-03-15', NULL, NULL, NULL)
+(4, 'Auction Edge', 'AUCTION EDGE Inc 401k Profit Sharing Plan', '2019-03-07', NULL, NULL, NULL)
+(5, 'BDR Interactive', 'BUSINESS DEVELOPMENT RESOURCES & OPPORTUNITIES INTERACTIVE', '2021-02-23', NULL, NULL, NULL)
+(6, 'Bellmont Cabinets', 'BELLMONT CABINETS', NULL, NULL, NULL, NULL)
+(7, 'Corina Bakery', 'CORINA BAKERY', '2020-07-28', NULL, NULL, NULL)
+(8, 'Dakota Creek', 'DAKOTA CREEK INDUSTRIES', NULL, NULL, NULL, NULL)
+(9, 'CG Engineering', 'CG ENGINEERING PLLC', '2020-07-28', NULL, NULL, NULL)
+(10, 'Fast Water Heater', 'FAST WATER HEATER CO', '2019-10-14', NULL, NULL, NULL)
+(11, 'Floform', 'FLOFORM COUNTERTOPS', NULL, NULL, NULL, NULL)
+(12, 'Hansen Bros', 'HANSEN BROS TRANSFER & STORAGE CO', '2019-03-18', NULL, NULL, NULL)
+(13, 'Harper Engineering', 'HARPER ENGINEERING 401K PROFIT SHARING PLAN', '2020-08-06', NULL, NULL, NULL)
+(14, 'Hos Bros', 'HOS BROS CONSTRUCTION INC', '2019-05-08', NULL, NULL, NULL)
+(15, 'Lavle USA', 'LAVLE USA INC 401K', '2019-03-22', NULL, NULL, NULL)
+(16, 'Lynnwood Honda', 'LYNNWOOD ENTERPRISES INC 401K', '2020-02-06', NULL, NULL, NULL)
+(17, 'Nordic Museum', 'NATIONAL NORDIC MUSEUM', NULL, NULL, NULL, NULL)
+(18, 'Marten Law', 'MARTEN LAW GROUP PLLC', '2019-03-26', NULL, NULL, NULL)
+(19, 'Opportunity Interactive', 'OPPORTUNITY INTERACTIVE', '2021-01-29', NULL, NULL, NULL)
+(20, 'MoxiWorks', 'MOXIWORKS', '2020-08-05', NULL, NULL, NULL)
+(21, 'Mobile Focused', 'MOBILE FOCUSED MEDIA', NULL, NULL, NULL, NULL)
+(22, 'PSWM Inc', 'PSWM INC 401K PLAN AND TRUST', '2019-03-18', NULL, NULL, NULL)
+(23, 'Three Sigma', 'THREE SIGMA', '2020-09-22', NULL, NULL, NULL)
+(24, "Tony's Coffee", 'TONYS COFFEE', NULL, NULL, NULL, NULL)
+(25, 'United Way', 'UWKC', NULL, NULL, NULL, NULL)
+(26, 'Urban Renaissance', 'URBAN RENAISSANCE 401K AND TRUST', '2020-07-29', NULL, NULL, NULL)
+(27, 'XFire', 'XFIRE INDUSTRIES INC 401K PLAN', NULL, NULL, NULL, NULL)
+(28, 'Younker Motors', 'YOUNKER MOTORS', '2020-07-30', NULL, NULL, NULL)
+(29, 'Youth Dynamics', 'YOUTH DYNAMICS', NULL, NULL, NULL, NULL)
+
+---
+
+# TABLE NAME: contacts
 
 SCHEMA (CREATE STATEMENT):
 CREATE TABLE "contacts" (
@@ -74,82 +90,52 @@ CREATE TABLE "contacts" (
 	FOREIGN KEY("client_id") REFERENCES "clients"("client_id")
 )
 
-SAMPLE:
-(1, 1, 'Primary', 'Donald Jay', '253-395-9551', 'djay@asamerica.com', None, '3500 West Vally HWY, Ste B-106, Auburn, WA 98001', '3500 West Vally HWY, Ste B-106, Auburn, WA 98001')
-(2, 2, 'Primary', 'Mark Simpson', '206-223-1361', 'marks@bumgardner.biz', None, '2111 Third Ave, Seattle, WA 98121', '2111 Third Ave, Seattle, WA 98121')
-(3, 3, 'Primary', 'Doug Gelfand', '206-816-3700', 'dgelfand@amplero.com', None, '1218 3rd Ave #900, Seattle, WA 98101', None)
-(4, 4, 'Primary', 'Robert Copeland', '206-858-4800', 'robertc@auctionedge.com', None, '1424 4th Ave Suite 920, Seattle, WA 98101', '1424 4th Ave Suite 920, Seattle, WA 98101')
-(5, 5, 'Primary', 'Bruce Wiseman', '206-870-1880', 'brucewiseman@bdrco.com', None, '19604 International Blvd Ste 200, SeaTac, WA 98188', None)
-(6, 6, 'Primary', None, None, None, None, None, None)
-(7, 7, 'Primary', 'Mike Ott', '253-839-4968', 'mott56@aol.com', None, '602 Fawcett Ave, Tacoma, WA 98402', '602 Fawcett Ave, Tacoma, WA 98402')
-(8, 8, 'Primary', None, '360-293-9575', None, None, '820 4th St, Anacortes WA 98221', None)
+# METIRCS: Table: contacts
+
+Column,Null %,Unique,Is Diverse,Avg Length,Min Length,Max Length
+contact_id,0.0%,71,Yes,1.873,1,2
+client_id,0.0%,29,Yes,1.62,1,2
+contact_type,0.0%,3,Yes,8.352,7,10
+contact_name,7.042%,61,Yes,12.242,4,20
+phone,42.254%,34,Yes,12.0,12,12
+email,25.352%,50,Yes,22.132,13,35
+fax,94.366%,6,Yes,12.25,12,13
+physical_address,52.113%,32,Yes,37.294,20,52
+mailing_address,73.239%,21,Yes,37.842,30,52
+
+
+# SAMPLE: table: contacts
+
+(1, 1, 'Primary', 'Donald Jay', '253-395-9551', 'djay@asamerica.com', NULL, '3500 West Vally HWY, Ste B-106, Auburn, WA 98001', '3500 West Vally HWY, Ste B-106, Auburn, WA 98001')
+(2, 2, 'Primary', 'Mark Simpson', '206-223-1361', 'marks@bumgardner.biz', NULL, '2111 Third Ave, Seattle, WA 98121', '2111 Third Ave, Seattle, WA 98121')
+(3, 3, 'Primary', 'Doug Gelfand', '206-816-3700', 'dgelfand@amplero.com', NULL, '1218 3rd Ave #900, Seattle, WA 98101', NULL)
+(4, 4, 'Primary', 'Robert Copeland', '206-858-4800', 'robertc@auctionedge.com', NULL, '1424 4th Ave Suite 920, Seattle, WA 98101', '1424 4th Ave Suite 920, Seattle, WA 98101')
+(5, 5, 'Primary', 'Bruce Wiseman', '206-870-1880', 'brucewiseman@bdrco.com', NULL, '19604 International Blvd Ste 200, SeaTac, WA 98188', NULL)
+(6, 6, 'Primary', NULL, NULL, NULL, NULL, NULL, NULL)
+(7, 7, 'Primary', 'Mike Ott', '253-839-4968', 'mott56@aol.com', NULL, '602 Fawcett Ave, Tacoma, WA 98402', '602 Fawcett Ave, Tacoma, WA 98402')
+(8, 8, 'Primary', NULL, '360-293-9575', NULL, NULL, '820 4th St, Anacortes WA 98221', NULL)
 //truncated...
-(31, 2, 'Authorized', 'Nick Simpson', None, 'nicks@bumgardner.biz', None, None, None)
-(32, 5, 'Authorized', 'Aaron Schuh', None, None, None, None, None)
-(33, 5, 'Authorized', 'Sarwesh Kumar', None, 'sarweshkumar@bdrco.com', None, None, None)
-(34, 8, 'Authorized', 'Katie Duran', None, 'kdurantnuno@dakotacreek.com', None, None, None)
-(35, 8, 'Authorized', 'Nancy Loftis', None, 'nancyl@dakotacreek.com', None, None, None)
-(36, 8, 'Authorized', 'Mike Nelson', None, 'mike@dakotacreek.com', None, None, None)
-(37, 9, 'Authorized', 'Beth Campbell', '425-778-8500', 'beth@cgengineering.com', None, None, None)
-(38, 9, 'Authorized', 'Greg Guillen', '425-778-8500', None, None, None, None)
+(32, 5, 'Authorized', 'Aaron Schuh', NULL, NULL, NULL, NULL, NULL)
+(33, 5, 'Authorized', 'Sarwesh Kumar', NULL, 'sarweshkumar@bdrco.com', NULL, NULL, NULL)
+(34, 8, 'Authorized', 'Katie Duran', NULL, 'kdurantnuno@dakotacreek.com', NULL, NULL, NULL)
+(35, 8, 'Authorized', 'Nancy Loftis', NULL, 'nancyl@dakotacreek.com', NULL, NULL, NULL)
+(36, 8, 'Authorized', 'Mike Nelson', NULL, 'mike@dakotacreek.com', NULL, NULL, NULL)
+(37, 9, 'Authorized', 'Beth Campbell', '425-778-8500', 'beth@cgengineering.com', NULL, NULL, NULL)
+(38, 9, 'Authorized', 'Greg Guillen', '425-778-8500', NULL, NULL, NULL, NULL)
+(39, 13, 'Authorized', 'Sarina Perera', NULL, 's.perera@harperengineering.com', NULL, NULL, NULL)
 //truncated...
-(61, 15, 'Provider', 'Paul Brachvogel', '866-498-4557', None, None, '15809 Preston Place, Burlington, WA 98233', None)
-(62, 17, 'Provider', 'Brett Lundgren', '866-421-4137', 'Brett.Lundgren@capgroup.com', None, None, None)
-(63, 20, 'Provider', 'Chris Gledhill', '800-333-0963', None, None, None, None)
-(64, 21, 'Provider', 'Austin Del Prado', '800-333-0963', 'delprau@jhancock.com', None, '601 Congress St, Boston, MA 02210', None)
-(65, 25, 'Provider', 'Jeff Harvey', '206-624-3790', None, None, '520 Pike Street Suite 1450 Seattle WA 98101', None)
-(66, 26, 'Provider', 'Austin Del Prado', '800-333-0963', 'delprau@jhancock.com', None, '601 Congress St, Boston, MA 02210', None)
-(67, 27, 'Provider', 'Brett Lundgren', '866-421-2137', 'Brett.Lundgren@capgroup.com', None, None, None)
-(68, 29, 'Provider', 'Maria Viala-Wood', None, 'maria.vialawood@transamerica.com', None, None, None)
+(64, 21, 'Provider', 'Austin Del Prado', '800-333-0963', 'delprau@jhancock.com', NULL, '601 Congress St, Boston, MA 02210', NULL)
+(65, 25, 'Provider', 'Jeff Harvey', '206-624-3790', NULL, NULL, '520 Pike Street Suite 1450 Seattle WA 98101', NULL)
+(66, 26, 'Provider', 'Austin Del Prado', '800-333-0963', 'delprau@jhancock.com', NULL, '601 Congress St, Boston, MA 02210', NULL)
+(67, 27, 'Provider', 'Brett Lundgren', '866-421-2137', 'Brett.Lundgren@capgroup.com', NULL, NULL, NULL)
+(68, 29, 'Provider', 'Maria Viala-Wood', NULL, 'maria.vialawood@transamerica.com', NULL, NULL, NULL)
+(70, 5, 'Authorized', 'ERIK TEST', '', '', '', '', '')
+(72, 1, 'Primary', 'Joe Dirt', '425-985-1184', 'joedirttheman@gmail.com', '488-299-2929', '402 Windor Dr SE, Sammamish WA 98004', '929 203th ave E, Welmington TX 91020')
+(73, 1, 'Primary', 'Cunky Boy', '293-299-2932', 'chunkythemonkey@monkey.com', '102-932-3223', '123 123th st E, 3333', '92832 19th ct, Massive MA 01929')
 
+---
 
-TABLE NAME:
-contracts
-
-SCHEMA (CREATE STATEMENT):
-CREATE TABLE "contracts" (
-	"contract_id"	INTEGER NOT NULL,
-	"client_id"	INTEGER NOT NULL,
-	"active"	TEXT,
-	"contract_number"	TEXT,
-	"provider_name"	TEXT,
-	"contract_start_date"	TEXT,
-	"fee_type"	TEXT,
-	"percent_rate"	REAL,
-	"flat_rate"	REAL,
-	"payment_schedule"	TEXT,
-	"payment_type"	TEXT,
-	"num_people"	INTEGER,
-	"notes"	TEXT,
-	PRIMARY KEY("contract_id" AUTOINCREMENT),
-	FOREIGN KEY("client_id") REFERENCES "clients"("client_id")
-)
-
-SAMPLE:
-(1, 1, 'TRUE', '134565', 'John Hancock', '2018-03-22', 'percentage', 0.0007, None, 'monthly', 'Auto - Check', 18, 'Phone: 800-333-0963 Option 1 with Contract # or Option 2, ext 154617\r\nFax: General Info 866-377-9577  Enrollment Forms 866-377-8846 \r\n')
-(2, 2, 'TRUE', None, 'Voya', '2019-04-19', 'percentage', 0.041667, None, 'monthly', 'Auto - ACH', 35, '')
-(3, 3, 'TRUE', '551296', 'Voya', None, 'flat', '', 666.66, 'monthly', 'Auto - Check', None, None)
-(4, 4, 'FALSE', '684021', 'ADP', None, 'percentage', 0.00125, None, 'quarterly', 'Auto - Check', 139, None)
-(5, 5, 'TRUE', '231393', 'Ascensus Trust Company', '2019-05-2019', 'flat', '', 3000.0, 'quarterly', 'Auto - Check', 93, None)
-(6, 6, 'TRUE', '29366', 'John Hancock', None, 'percentage', 0.00125, None, 'monthly', 'Auto - Check', 289, None)
-(7, 7, 'FALSE', '15880157', 'Nationwide', None, 'percentage', 0.041667, None, 'monthly', '', 15, None)
-(8, 8, 'TRUE', '273504', 'Ascensus', None, 'percentage', 0.003446, None, 'quarterly', '', 177, None)
-(9, 9, 'TRUE', '134019', 'Direct from CG Engineering', None, 'flat', '', 2500.0, 'quarterly', 'Invoice - Check', 42, None)
-(10, 10, 'TRUE', None, 'Empower', None, 'percentage', 0.000667, None, 'monthly', '', 208, None)
-(11, 11, 'TRUE', '147266', 'John Hancock', None, 'percentage', 0.000208, None, 'monthly', '', 531, None)
-(12, 12, 'TRUE', '222908', 'Ascensus Trust Company', None, 'flat', '', 2500.0, 'quarterly', 'Auto - Check', 80, None)
-(13, 13, 'TRUE', '41909', 'Fidelity', None, 'flat', '', 1250.0, 'monthly', 'Auto - Check', 80, None)
-(14, 14, 'TRUE', '34283', 'Fidelity', None, 'flat', '', 3750.0, 'quarterly', 'Auto - ACH', 24, None)
-(15, 15, 'TRUE', '809872', 'Transamerica', None, 'percentage', 0.000417, None, 'monthly', 'Auto - Check', None, None)
-//truncated...
-(32, 7, 'TRUE', '', 'Voya', None, 'percentage', 0.041667, None, 'monthly', '', 15, None)
-(33, 16, 'TRUE', '', 'Empower', None, 'flat', '', 3500.0, 'quarterly', 'Auto - Check', None, None)
-(34, 28, 'TRUE', None, 'Empower', None, 'percentage', 0.000667, None, 'monthly', 'Auto-ACH', 43, None)
-(35, 29, 'TRUE', None, 'Principal', None, 'percentage', 0.001875, None, 'quarterly', '', 15, None)
-
-
-TABLE NAME:
-payments
+# TABLE NAME: payments
 
 SCHEMA (CREATE STATEMENT):
 CREATE TABLE "payments" (
@@ -171,357 +157,144 @@ CREATE TABLE "payments" (
 	FOREIGN KEY("contract_id") REFERENCES "contracts"("contract_id")
 )
 
-SAMPLE:
+
+# METIRCS: table: payments
+
+Column,Null %,Unique,Is Diverse,Avg Length,Min Length,Max Length
+payment_id,0.0%,924,Yes,2.883,1,3
+contract_id,0.0%,35,Yes,1.692,1,2
+client_id,0.0%,29,Yes,1.641,1,2
+received_date,0.0%,360,Yes,10.0,10,10
+applied_start_quarter,0.0%,4,Yes,1.0,1,1
+applied_start_year,0.0%,8,Yes,4.0,4,4
+applied_end_quarter,0.0%,4,Yes,1.0,1,1
+applied_end_year,0.0%,8,Yes,4.0,4,4
+total_assets,51.299%,444,Yes,6.527,1,8
+expected_fee,73.485%,149,Yes,6.082,3,7
+actual_fee,0.108%,675,Yes,6.151,4,8
+method,27.922%,4,Yes,11.476,10,15
+notes,82.468%,114,Yes,42.951,3,138
+
+# SAMPLE: table: payments 
+
 (1, 1, 1, '2019-05-03', 2, 2019, 2, 2019, 824305, 542.01, 547.51, 'Auto - Check', 'waiting on how John Hancock calculates fee payments')
-(2, 1, 1, '2019-06-07', 1, 2019, 1, 2019, 805477, 547.28, 535.03, 'Auto - Check', None)
-(3, 1, 1, '2019-07-05', 3, 2019, 3, 2019, 839288, 551.86, 557.54, 'Auto - Check', None)
-(4, 1, 1, '2019-08-02', 3, 2019, 3, 2019, 842294, 572.3, 559.45, 'Auto - Check', None)
-(5, 1, 1, '2019-09-06', 3, 2019, 3, 2019, 842118, 572.18, 559.37, 'Auto - Check', None)
-(6, 1, 1, '2019-10-04', 3, 2019, 3, 2019, 849739, 0.0, 564.44, 'Auto - Check', None)
-(7, 1, 1, '2019-10-31', 4, 2019, 4, 2019, 863024, None, 573.23, 'Auto - Check', None)
-(8, 1, 1, '2019-11-12', 4, 2019, 4, 2019, 863024, 573.23, 573.23, 'Auto - Check', None)
-(9, 1, 1, '2019-12-16', 4, 2019, 4, 2019, 876458, None, 582.15, 'Auto - Check', None)
-(10, 1, 1, '2020-01-13', 1, 2020, 1, 2020, None, 609.54, 609.54, 'Auto - Check', None)
-(11, 1, 1, '2020-02-19', 1, 2020, 1, 2020, 919435, 610.73, 610.73, 'Auto - Check', None)
-(12, 1, 1, '2020-03-17', 1, 2020, 1, 2020, 889926, 591.11, 591.11, 'Auto - Check', None)
-(13, 1, 1, '2020-04-13', 1, 2020, 1, 2020, None, 544.01, 544.01, 'Auto - Check', None)
-(14, 1, 1, '2020-05-13', 1, 2020, 1, 2020, 872685, 592.95, 579.66, 'Auto - Check', None)
-(15, 1, 1, '2020-06-22', 2, 2020, 2, 2020, 898969, 610.81, 597.14, 'Auto - Check', None)
+(2, 1, 1, '2019-06-07', 1, 2019, 1, 2019, 805477, 547.28, 535.03, 'Auto - Check', NULL)
+(3, 1, 1, '2019-07-05', 3, 2019, 3, 2019, 839288, 551.86, 557.54, 'Auto - Check', NULL)
+(4, 1, 1, '2019-08-02', 3, 2019, 3, 2019, 842294, 572.3, 559.45, 'Auto - Check', NULL)
 //truncated...
-(456, 13, 13, '2022-10-10', 3, 2022, 3, 2022, None, None, 5000.01, 'Auto - Check', 'Per fee statement payment (July, August, September)')
-(457, 13, 13, '2023-01-24', 4, 2022, 4, 2022, None, None, 4999.97, 'Auto - Check', 'Per fee statement payment (October, November December )')
-(458, 13, 13, '2023-04-13', 1, 2023, 1, 2023, None, None, 4999.97, 'Auto - Check', 'Per fee statement payment (January, February March )')
-(459, 13, 13, '2023-07-15', 2, 2023, 2, 2023, None, None, 5000.0, 'Auto - Check', 'Per fee statement payment (April, May, June )')
-(460, 13, 13, '2023-10-15', 3, 2023, 3, 2023, None, None, 5000.01, 'Auto - Check', 'Per fee statement payment (July, August, September)')
-(461, 13, 13, '2024-01-09', 4, 2023, 4, 2023, None, None, 5000.01, 'Auto - Check', 'Per fee statement payment (October, November December )')
-(462, 13, 13, '2024-04-08', 1, 2024, 1, 2024, None, None, 5000.01, 'Auto - Check', 'Per fee statement payment (January, February March )')
-(463, 13, 13, '2024-07-18', 2, 2024, 2, 2024, None, None, 5000.01, 'Auto - Check', 'Per fee statement payment (April, May, June )')
-(464, 13, 13, '2024-10-16', 3, 2024, 3, 2024, None, None, 5000.01, 'Auto - Check', 'Per fee statement payment (July, Aug, Sept )')
-(465, 14, 14, '2019-07-09', 2, 2019, 2, 2019, None, 2500.0, 2500.0, 'Auto - ACH', 'For May and June only. No Partial April')
-(466, 14, 14, '2019-10-08', 3, 2019, 3, 2019, None, 3750.0, 3750.0, 'Auto - ACH', None)
-(467, 14, 14, '2020-01-13', 4, 2019, 4, 2019, None, 3750.0, 3750.0, 'Auto - ACH', 'Emailed received from Tom RE: this fee payment 1/15/2020 (Oct. Nov. Dec.)')
-(468, 14, 14, '2020-04-13', 1, 2020, 1, 2020, None, 3750.0, 3750.0, 'Auto - ACH', 'Per statement received 4/13/2020')
-(469, 14, 14, '2020-07-13', 2, 2020, 2, 2020, None, 3750.0, 3750.0, 'Auto - ACH', 'Per email 7/13/2020 from DH/TB')
-(470, 14, 14, '2020-10-15', 3, 2020, 3, 2020, None, 3750.0, 3750.0, 'Auto - ACH', None)
+(83, 2, 2, '2020-09-21', 3, 2020, 3, 2020, 2902855, NULL, 1209.52, 'Auto - ACH', NULL)
+(84, 2, 2, '2020-10-20', 3, 2020, 3, 2020, 2849170, 1187.15, 1187.15, 'Auto - ACH', NULL)
+(85, 2, 2, '2020-11-20', 4, 2020, 4, 2020, NULL, NULL, 1174.52, 'Auto - ACH', NULL)
+(86, 2, 2, '2020-12-18', 4, 2020, 4, 2020, NULL, NULL, 1295.02, 'Auto - ACH', NULL)
+(87, 2, 2, '2021-01-15', 4, 2020, 4, 2020, 3247119, 1352.96, 1352.96, 'Auto - ACH', NULL)
+(88, 2, 2, '2021-02-19', 1, 2021, 1, 2021, NULL, 1357.24, 1357.24, 'Auto - ACH', NULL)
+(89, 2, 2, '2021-03-19', 1, 2021, 1, 2021, NULL, 1388.36, 1388.36, 'Auto - ACH', NULL)
+(90, 2, 2, '2021-04-16', 1, 2021, 1, 2021, NULL, 1417.82, 1417.82, 'Auto - ACH', NULL)
 //truncated...
-(910, 29, 29, '2022-09-13', 3, 2022, 3, 2022, 151793, None, 94.87, '', None)
-(911, 29, 29, '2022-10-12', 3, 2022, 3, 2022, 150139, None, 93.84, '', None)
-(912, 29, 29, '2022-11-15', 4, 2022, 4, 2022, 150139, None, 107.25, '', None)
-(913, 29, 29, '2022-12-13', 4, 2022, 4, 2022, 214112, None, 133.82, '', None)
-(914, 29, 29, '2023-01-12', 4, 2022, 4, 2022, 218423, None, 136.51, '', None)
-(915, 29, 29, '2023-02-08', 1, 2023, 1, 2023, 247368, None, 154.6, '', None)
-(916, 29, 29, '2023-03-17', 1, 2023, 1, 2023, 255278, None, 159.55, '', None)
-(917, 29, 29, '2023-04-10', 1, 2023, 1, 2023, 276062, None, 172.54, '', None)
-(918, 29, 29, '2023-05-10', 2, 2023, 2, 2023, 293667, None, 183.54, '', None)
-(919, 29, 29, '2023-06-12', 2, 2023, 2, 2023, 307387, None, 192.12, '', None)
-(920, 35, 29, '2023-10-19', 3, 2023, 3, 2023, None, None, 665.49, '', 'Newly established at Principal; amount will be posted on 10.27.23')
-(921, 35, 29, '2024-01-17', 4, 2023, 4, 2023, None, None, 748.16, '', None)
-(922, 35, 29, '2024-04-15', 1, 2024, 1, 2024, None, None, 915.53, '', None)
-(923, 35, 29, '2024-07-16', 2, 2024, 2, 2024, None, None, 946.32, '', None)
-(924, 35, 29, '2024-10-14', 3, 2024, 3, 2024, None, None, 1043.09, '', None)
-
-
-
-
-# INDEXES MADE IF NEEDED: 
--- Primary keys (automatically indexed by SQLite)
-
--- Indexes for Foreign Keys
-CREATE INDEX idx_contacts_client_id ON contacts(client_id);
-CREATE INDEX idx_contracts_client_id ON contracts(client_id);
-CREATE INDEX idx_payments_client_id ON payments(client_id);
-CREATE INDEX idx_payments_contract_id ON payments(contract_id);
-
--- Index for Active Contracts Lookup
-CREATE INDEX idx_contracts_active ON contracts(client_id, active);
-
--- Index for Payment Sorting by Date
-CREATE INDEX idx_payments_date ON payments(client_id, received_date DESC);
-
--- Index for Contacts Filtering by Type
-CREATE INDEX idx_contacts_type ON contacts(client_id, contact_type);
-
--- Optional Composite Index for Payments by Quarter/Year
-CREATE INDEX idx_payments_quarter_year ON payments(client_id, applied_start_quarter, applied_start_year);
-
--- Optional Index for Contracts by Provider
-CREATE INDEX idx_contracts_provider ON contracts(provider_name);
-
+(155, 3, 3, '2021-07-22', 2, 2021, 2, 2021, NULL, NULL, 666.66, 'Auto - Check', 'per RIA comp statement rcvd from Max 7..21.21')
+(156, 3, 3, '2021-08-23', 3, 2021, 3, 2021, NULL, NULL, 666.66, 'Auto - Check', 'per RIA comp statement rcvd from Max 8.23.21')
+(157, 3, 3, '2021-09-17', 3, 2021, 3, 2021, NULL, NULL, 666.66, 'Auto - Check', 'per RIA comp statement rcvd')
+(158, 3, 3, '2021-10-15', 3, 2021, 3, 2021, NULL, NULL, 666.66, 'Auto - Check', 'per RIA comp statement rcvd')
+(159, 3, 3, '2021-11-20', 4, 2021, 4, 2021, NULL, NULL, 666.66, 'Auto - Check', 'per RIA comp statement rcvd')
+(160, 3, 3, '2021-12-17', 4, 2021, 4, 2021, NULL, NULL, 666.66, 'Auto - Check', NULL)
+//truncated...
+(263, 6, 6, '2024-08-20', 3, 2024, 3, 2024, 14710457, NULL, 1837.19, 'Auto - Check', NULL)
+(264, 6, 6, '2024-09-23', 3, 2024, 3, 2024, 15130036, NULL, 1889.7, 'Auto - Check', '')
+(265, 6, 6, '2024-10-17', 3, 2024, 3, 2024, 15426229, NULL, 1926.67, 'Auto - Check', NULL)
+(266, 6, 6, '2024-11-19', 3, 2024, 3, 2024, 15397306, NULL, 1923.0, 'Auto - Check', '')
+(267, 7, 7, '2019-10-01', 3, 2019, 3, 2019, NULL, NULL, 655.54, '', 'Partial Payment for 9/14/2019-9/30/2019')
+(268, 7, 7, '2020-01-01', 4, 2019, 4, 2019, NULL, NULL, 547.12, '', '12/14 - 12/31/2019')
+(269, 7, 7, '2020-04-01', 1, 2020, 1, 2020, NULL, NULL, 472.5, '', '3/14/20 - 3/31/20')
+(270, 7, 7, '2020-07-13', 2, 2020, 2, 2020, NULL, NULL, 551.67, '', 'Per email from TB 7/14/2020')
+//truncated...
+(271, 7, 7, '2020-10-13', 3, 2020, 3, 2020, NULL, NULL, 594.92, '', '9/16 - 9/30')
+(272, 7, 7, '2021-01-11', 4, 2020, 4, 2020, NULL, NULL, 651.62, '', 'ACH notice via mail.')
+(273, 7, 7, '2021-01-29', 4, 2020, 4, 2020, NULL, NULL, 78.04, '', 'ACH notice via mail.')
+(274, 32, 7, '2021-08-23', 3, 2021, 3, 2021, NULL, NULL, 1596.68, '', NULL)
+(275, 32, 7, '2021-09-17', 3, 2021, 3, 2021, NULL, NULL, 247.34, '', 'per RIA comp statement rcvd from Max 8.23.21')
+(276, 32, 7, '2021-10-15', 3, 2021, 3, 2021, NULL, NULL, 243.1, '', 'per RIA comp statement')
+(277, 32, 7, '2021-11-19', 4, 2021, 4, 2021, NULL, NULL, 251.32, '', 'per RIA comp statement')
+(278, 32, 7, '2021-12-17', 4, 2021, 4, 2021, NULL, NULL, 250.66, '', 'per RIA comp statement')
+(279, 32, 7, '2022-01-21', 4, 2021, 4, 2021, NULL, NULL, 258.23, '', NULL)
+//truncated...
+(919, 29, 29, '2023-06-12', 2, 2023, 2, 2023, 307387, NULL, 192.12, '', NULL)
+(920, 35, 29, '2023-10-19', 3, 2023, 3, 2023, NULL, NULL, 665.49, '', 'Newly established at Principal; amount will be posted on 10.27.23')
+(921, 35, 29, '2024-01-17', 4, 2023, 4, 2023, NULL, NULL, 748.16, '', NULL)
+(922, 35, 29, '2024-04-15', 1, 2024, 1, 2024, NULL, NULL, 915.53, '', NULL)
+(923, 35, 29, '2024-07-16', 2, 2024, 2, 2024, NULL, NULL, 946.32, '', NULL)
+(924, 35, 29, '2024-10-14', 3, 2024, 3, 2024, NULL, NULL, 1043.09, '', NULL)
 
 ---
 
+# TABLE NAME: contracts
 
+SCHEMA (CREATE STATEMENT):
+CREATE TABLE "contracts" (
+	"contract_id"	INTEGER NOT NULL,
+	"client_id"	INTEGER NOT NULL,
+	"active"	TEXT,
+	"contract_number"	TEXT,
+	"provider_name"	TEXT,
+	"contract_start_date"	TEXT,
+	"fee_type"	TEXT,
+	"percent_rate"	REAL,
+	"flat_rate"	REAL,
+	"payment_schedule"	TEXT,
+	"num_people"	INTEGER,
+	"notes"	TEXT,
+	PRIMARY KEY("contract_id" AUTOINCREMENT),
+	FOREIGN KEY("client_id") REFERENCES "clients"("client_id")
+)
 
-Table: sqlite_sequence
-  Column: name
-    % Nulls: 0.00%
-    Unique Values: 4
-    Diverse: No
-    Average Length: 8.00 characters
-    Length Range: {'min': 7, 'max': 9}
-  Column: seq
-    % Nulls: 0.00%
-    Unique Values: 4
-    Diverse: No
-    Average Length: 2.25 characters
-    Length Range: {'min': 2, 'max': 3}
+# METIRCS: table: contracts
 
-Table: clients
-  Column: client_id
-    % Nulls: 0.00%
-    Unique Values: 29
-    Diverse: Yes
-    Average Length: 1.69 characters
-    Length Range: {'min': 1, 'max': 2}
-  Column: display_name
-    % Nulls: 0.00%
-    Unique Values: 29
-    Diverse: Yes
-    Average Length: 12.97 characters
-    Length Range: {'min': 5, 'max': 27}
-  Column: full_name
-    % Nulls: 0.00%
-    Unique Values: 29
-    Diverse: Yes
-    Average Length: 25.00 characters
-    Length Range: {'min': 4, 'max': 58}
-  Column: ima_signed_date
-    % Nulls: 31.03%
-    Unique Values: 18
-    Diverse: Yes
-    Average Length: 10.00 characters
-    Length Range: {'min': 10, 'max': 10}
-  Column: file_path_account_documentation
-    % Nulls: 100.00%
-    Unique Values: 0
-    Diverse: No
-    Average Length: nan characters
-    Length Range: {'min': nan, 'max': nan}
-  Column: file_path_consulting_fees
-    % Nulls: 100.00%
-    Unique Values: 0
-    Diverse: No
-    Average Length: nan characters
-    Length Range: {'min': nan, 'max': nan}
-  Column: file_path_meetings
-    % Nulls: 100.00%
-    Unique Values: 0
-    Diverse: No
-    Average Length: nan characters
-    Length Range: {'min': nan, 'max': nan}
+Column,Null %,Unique,Is Diverse,Avg Length,Min Length,Max Length
+contract_id,0.0%,35,Yes,1.743,1,2
+client_id,0.0%,29,Yes,1.657,1,2
+active,0.0%,2,Yes,4.171,4,5
+contract_number,28.571%,27,Yes,6.12,5,8
+provider_name,0.0%,15,Yes,11.486,3,30
+contract_start_date,91.429%,4,Yes,10.667,10,12
+fee_type,2.857%,3,Yes,7.706,4,10
+percent_rate,40.0%,15,Yes,7.429,5,8
+flat_rate,62.857%,11,Yes,6.077,6,7
+payment_schedule,2.857%,3,Yes,8.059,7,9
+num_people,14.286%,21,Yes,2.233,1,3
+notes,97.143%,3,Yes,134.0,134,134
 
-Table: contacts
-  Column: contact_id
-    % Nulls: 0.00%
-    Unique Values: 68
-    Diverse: Yes
-    Average Length: 1.87 characters
-    Length Range: {'min': 1, 'max': 2}
-  Column: client_id
-    % Nulls: 0.00%
-    Unique Values: 29
-    Diverse: Yes
-    Average Length: 1.65 characters
-    Length Range: {'min': 1, 'max': 2}
-  Column: contact_type
-    % Nulls: 0.00%
-    Unique Values: 3
-    Diverse: No
-    Average Length: 8.37 characters
-    Length Range: {'min': 7, 'max': 10}
-  Column: contact_name
-    % Nulls: 7.35%
-    Unique Values: 57
-    Diverse: Yes
-    Average Length: 12.41 characters
-    Length Range: {'min': 4, 'max': 20}
-  Column: phone
-    % Nulls: 42.65%
-    Unique Values: 30
-    Diverse: Yes
-    Average Length: 12.00 characters
-    Length Range: {'min': 12, 'max': 12}
-  Column: email
-    % Nulls: 25.00%
-    Unique Values: 46
-    Diverse: Yes
-    Average Length: 22.04 characters
-    Length Range: {'min': 13, 'max': 35}
-  Column: fax
-    % Nulls: 97.06%
-    Unique Values: 2
-    Diverse: No
-    Average Length: 12.50 characters
-    Length Range: {'min': 12, 'max': 13}
-  Column: physical_address
-    % Nulls: 52.94%
-    Unique Values: 28
-    Diverse: Yes
-    Average Length: 37.88 characters
-    Length Range: {'min': 30, 'max': 52}
-  Column: mailing_address
-    % Nulls: 75.00%
-    Unique Values: 17
-    Diverse: Yes
-    Average Length: 38.35 characters
-    Length Range: {'min': 30, 'max': 52}
+## SAMPLE: table: contracts
 
-Table: contracts
-  Column: contract_id
-    % Nulls: 0.00%
-    Unique Values: 35
-    Diverse: Yes
-    Average Length: 1.74 characters
-    Length Range: {'min': 1, 'max': 2}
-  Column: client_id
-    % Nulls: 0.00%
-    Unique Values: 29
-    Diverse: Yes
-    Average Length: 1.66 characters
-    Length Range: {'min': 1, 'max': 2}
-  Column: active
-    % Nulls: 0.00%
-    Unique Values: 2
-    Diverse: No
-    Average Length: 4.17 characters
-    Length Range: {'min': 4, 'max': 5}
-  Column: contract_number
-    % Nulls: 20.00%
-    Unique Values: 26
-    Diverse: Yes
-    Average Length: 5.46 characters
-    Length Range: {'min': 0, 'max': 8}
-  Column: provider_name
-    % Nulls: 0.00%
-    Unique Values: 15
-    Diverse: Yes
-    Average Length: 11.49 characters
-    Length Range: {'min': 3, 'max': 30}
-  Column: contract_start_date
-    % Nulls: 91.43%
-    Unique Values: 3
-    Diverse: No
-    Average Length: 10.67 characters
-    Length Range: {'min': 10, 'max': 12}
-  Column: fee_type
-    % Nulls: 2.86%
-    Unique Values: 2
-    Diverse: No
-    Average Length: 7.71 characters
-    Length Range: {'min': 4, 'max': 10}
-  Column: percent_rate
-    % Nulls: 2.86%
-    Unique Values: 14
-    Diverse: Yes
-    Average Length: 4.59 characters
-    Length Range: {'min': 0, 'max': 8}
-  Column: flat_rate
-    % Nulls: 62.86%
-    Unique Values: 10
-    Diverse: No
-    Average Length: 6.08 characters
-    Length Range: {'min': 6, 'max': 7}
-  Column: payment_schedule
-    % Nulls: 2.86%
-    Unique Values: 2
-    Diverse: No
-    Average Length: 8.06 characters
-    Length Range: {'min': 7, 'max': 9}
-  Column: payment_type
-    % Nulls: 0.00%
-    Unique Values: 6
-    Diverse: No
-    Average Length: 7.06 characters
-    Length Range: {'min': 0, 'max': 15}
-  Column: num_people
-    % Nulls: 14.29%
-    Unique Values: 20
-    Diverse: Yes
-    Average Length: 4.23 characters
-    Length Range: {'min': 3, 'max': 5}
-  Column: notes
-    % Nulls: 94.29%
-    Unique Values: 2
-    Diverse: No
-    Average Length: 67.00 characters
-    Length Range: {'min': 0, 'max': 134}
+(1, 1, 'TRUE', '134565', 'John Hancock', '2018-03-22', 'percentage', 0.0007, NULL, 'monthly', 18, 'Phone: 800-333-0963 Option 1 with Contract # or Option 2, ext 154617\r\nFax: General Info 866-377-9577  Enrollment Forms 866-377-8846 \r\n')
+(2, 2, 'TRUE', NULL, 'Voya', '2019-04-19', 'percentage', 0.000416, NULL, 'monthly', 35, '')
+(3, 3, 'TRUE', '551296', 'Voya', NULL, 'flat', '', 666.66, 'monthly', NULL, NULL)
+(4, 4, 'FALSE', '684021', 'ADP', NULL, 'percentage', 0.00125, NULL, 'quarterly', 139, NULL)
+(5, 5, 'TRUE', '231393', 'Ascensus Trust Company', '2019-05-2019', 'flat', '', 3000.0, 'quarterly', 93, NULL)
+(6, 6, 'TRUE', '29366', 'John Hancock', NULL, 'percentage', 0.00125, NULL, 'monthly', 289, NULL)
+(7, 7, 'FALSE', '15880157', 'Nationwide', NULL, 'percentage', 0.041667, NULL, 'monthly', 15, NULL)
+(8, 8, 'TRUE', '273504', 'Ascensus', NULL, 'percentage', 0.003446, NULL, 'quarterly', 177, NULL)
+(9, 9, 'TRUE', '134019', 'Direct from CG Engineering', NULL, 'flat', '', 2500.0, 'quarterly', 42, NULL)
+(10, 10, 'TRUE', NULL, 'Empower', NULL, 'percentage', 0.000667, NULL, 'monthly', 208, NULL)
+(11, 11, 'TRUE', '147266', 'John Hancock', NULL, 'percentage', 0.000208, NULL, 'monthly', 531, NULL)
+(12, 12, 'TRUE', '222908', 'Ascensus Trust Company', NULL, 'flat', '', 2500.0, 'quarterly', 80, NULL)
+(13, 13, 'TRUE', '41909', 'Fidelity', NULL, 'flat', '', 1250.0, 'monthly', 80, NULL)
+(14, 14, 'TRUE', '34283', 'Fidelity', NULL, 'flat', '', 3750.0, 'quarterly', 24, NULL)
+(15, 15, 'TRUE', '809872', 'Transamerica', NULL, 'percentage', 0.000417, NULL, 'monthly', NULL, NULL)
+//truncated...
+(32, 7, 'TRUE', '', 'Voya', NULL, 'percentage', 0.000417, NULL, 'monthly', 15, NULL)
+(33, 16, 'TRUE', '', 'Empower', NULL, 'flat', '', 3500.0, 'quarterly', NULL, NULL)
+(34, 28, 'TRUE', NULL, 'Empower', NULL, 'percentage', 0.000667, NULL, 'monthly', 43, NULL)
+(35, 29, 'TRUE', NULL, 'Principal', NULL, 'percentage', 0.001875, NULL, 'quarterly', 15, NULL)
 
-Table: payments
-  Column: payment_id
-    % Nulls: 0.00%
-    Unique Values: 924
-    Diverse: Yes
-    Average Length: 2.88 characters
-    Length Range: {'min': 1, 'max': 3}
-  Column: contract_id
-    % Nulls: 0.00%
-    Unique Values: 35
-    Diverse: Yes
-    Average Length: 1.69 characters
-    Length Range: {'min': 1, 'max': 2}
-  Column: client_id
-    % Nulls: 0.00%
-    Unique Values: 29
-    Diverse: Yes
-    Average Length: 1.64 characters
-    Length Range: {'min': 1, 'max': 2}
-  Column: received_date
-    % Nulls: 0.00%
-    Unique Values: 360
-    Diverse: Yes
-    Average Length: 10.00 characters
-    Length Range: {'min': 10, 'max': 10}
-  Column: applied_start_quarter
-    % Nulls: 0.00%
-    Unique Values: 4
-    Diverse: No
-    Average Length: 1.00 characters
-    Length Range: {'min': 1, 'max': 1}
-  Column: applied_start_year
-    % Nulls: 0.00%
-    Unique Values: 8
-    Diverse: No
-    Average Length: 4.00 characters
-    Length Range: {'min': 4, 'max': 4}
-  Column: applied_end_quarter
-    % Nulls: 0.00%
-    Unique Values: 4
-    Diverse: No
-    Average Length: 1.00 characters
-    Length Range: {'min': 1, 'max': 1}
-  Column: applied_end_year
-    % Nulls: 0.00%
-    Unique Values: 8
-    Diverse: No
-    Average Length: 4.00 characters
-    Length Range: {'min': 4, 'max': 4}
-  Column: total_assets
-    % Nulls: 51.30%
-    Unique Values: 443
-    Diverse: Yes
-    Average Length: 6.53 characters
-    Length Range: {'min': 1, 'max': 8}
-  Column: expected_fee
-    % Nulls: 73.48%
-    Unique Values: 148
-    Diverse: Yes
-    Average Length: 6.08 characters
-    Length Range: {'min': 3, 'max': 7}
-  Column: actual_fee
-    % Nulls: 0.11%
-    Unique Values: 674
-    Diverse: Yes
-    Average Length: 6.15 characters
-    Length Range: {'min': 4, 'max': 8}
-  Column: method
-    % Nulls: 0.00%
-    Unique Values: 6
-    Diverse: No
-    Average Length: 8.10 characters
-    Length Range: {'min': 0, 'max': 15}
-  Column: notes
-    % Nulls: 81.60%
-    Unique Values: 113
-    Diverse: Yes
-    Average Length: 40.93 characters
-    Length Range: {'min': 0, 'max': 138}
+---
+
+# INDEXES MADE IF NEEDED:
+
+CREATE INDEX idx_contacts_client_id ON contacts(client_id)
+CREATE INDEX idx_payments_client_id ON payments(client_id)
+CREATE INDEX idx_payments_contract_id ON payments(contract_id)
+CREATE INDEX idx_payments_date ON payments(client_id, received_date DESC)
+CREATE INDEX idx_contacts_type ON contacts(client_id, contact_type)
+CREATE INDEX idx_payments_quarter_year ON payments(client_id, applied_start_quarter, applied_start_year)
+CREATE INDEX idx_contracts_active ON contracts(client_id, active)
+CREATE INDEX idx_contracts_client_id ON contracts(client_id)
+CREATE INDEX idx_contracts_provider ON contracts(provider_name)

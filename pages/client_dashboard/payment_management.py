@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from utils.utils import (
+from utils import (
     get_payment_history, update_payment_note,
     get_paginated_payment_history, get_total_payment_count,
     get_payment_year_quarters
@@ -135,7 +135,7 @@ def show_payment_history(client_id):
     
     with left_col:
         time_filter = st.radio(
-            "",
+            "Time Filter",
             options=["All Time", "This Year", "Custom"],
             horizontal=True,
             label_visibility="collapsed"
@@ -144,10 +144,10 @@ def show_payment_history(client_id):
         if time_filter == "Custom":
             col1, col2, _ = st.columns([1, 1, 2])
             with col1:
-                year = st.selectbox("Year", options=years, index=0, label_visibility="collapsed")
+                year = st.selectbox("Select Year", options=years, index=0, label_visibility="collapsed")
             with col2:
                 quarter = st.selectbox(
-                    "Quarter",
+                    "Select Quarter",
                     options=["All Quarters", "Q1", "Q2", "Q3", "Q4"],
                     index=0,
                     label_visibility="collapsed"
