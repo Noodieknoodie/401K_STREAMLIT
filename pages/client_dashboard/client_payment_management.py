@@ -8,6 +8,7 @@ from utils.utils import (
     get_client_details, add_contact, update_contact,
     delete_contact
 )
+from utils.perf_logging import log_event
 
 # ============================================================================
 # CONTACT FORM STATE MANAGEMENT
@@ -364,6 +365,7 @@ def format_payment_data(payments):
 
 def handle_note_edit(payment_id, new_note):
     """Handle updating a payment note."""
+    log_event('note_saved', {'payment_id': payment_id, 'has_content': bool(new_note)})
     update_payment_note(payment_id, new_note)
     if 'notes_state' in st.session_state:
         st.session_state.notes_state['active_note'] = None
@@ -423,6 +425,13 @@ def render_note_cell(payment_id, note, provider=None, period=None):
     # Check if the clickable text was clicked
     if st.session_state.get(note_key, False):
         notes_state = st.session_state.notes_state
+        
+        # Log note interaction
+        log_event('note_clicked', {
+            'payment_id': payment_id,
+            'action': 'close' if notes_state['active_note'] == payment_id else 'open',
+            'has_content': bool(note)
+        })
         
         # Auto-save previous note if exists
         if notes_state['active_note'] and notes_state['active_note'] != payment_id:
