@@ -3,9 +3,10 @@ import pandas as pd
 from datetime import datetime
 from utils.utils import (
     get_payment_history, update_payment_note,
-    get_clients, get_contacts,
+    get_paginated_payment_history, get_total_payment_count,
+    get_payment_year_quarters, get_clients, get_contacts,
     get_client_details, add_contact, update_contact,
-    delete_contact, get_payment_year_quarters
+    delete_contact
 )
 from utils.perf_logging import log_event
 
@@ -233,7 +234,14 @@ def init_filter_state():
         }
 
 def clear_client_specific_states():
-    """Clear all client-specific states when switching clients."""
+    """Clear all client-specific states when switching clients.
+    BEFORE: Incomplete state cleanup on client switch
+    AFTER: Comprehensive cleanup of all client-related states
+    """
+    # Clear payment data
+    st.session_state.payment_data = []
+    st.session_state.payment_offset = 0
+    
     # Clear filter state
     if 'filter_state' in st.session_state:
         st.session_state.filter_state = {
@@ -250,10 +258,10 @@ def clear_client_specific_states():
             'temp_notes': {}
         }
     
-    # Reset payment form
+    # Reset payment form - Updated to include client_id reset
     if 'payment_form' in st.session_state:
         st.session_state.payment_form['is_visible'] = False
-        st.session_state.payment_form['client_id'] = None
+        st.session_state.payment_form['client_id'] = None  # Reset client association
         st.session_state.payment_form['mode'] = 'add'
         st.session_state.payment_form['has_validation_error'] = False
         st.session_state.payment_form['show_cancel_confirm'] = False
@@ -473,13 +481,14 @@ def show_payment_history(client_id):
     init_notes_state()
     init_filter_state()
     
-    # Initialize delete confirmation state
-    if 'delete_payment_id' not in st.session_state:
-        st.session_state.delete_payment_id = None
-    if 'show_delete_confirm' not in st.session_state:
-        st.session_state.show_delete_confirm = False
+    # Initialize payment state
+    if 'payment_data' not in st.session_state:
+        st.session_state.payment_data = []
+    if 'payment_offset' not in st.session_state:
+        st.session_state.payment_offset = 0
     
     # Get data first
+    total_payments = get_total_payment_count(client_id)
     year_quarters = get_payment_year_quarters(client_id)
     
     # Get available years
@@ -520,14 +529,14 @@ def show_payment_history(client_id):
     
     with middle_col:
         if st.button("Add Payment", type="primary", use_container_width=True):
-            st.session_state.payment_form['is_visible'] = True
+            st.session_state.payment_form['is_visible'] = True  # Use dedicated visibility state
             st.rerun()
     
     with right_col:
         status_text = (
-            f"Showing all payments" if time_filter == "All Time" else
-            f"Showing payments from {datetime.now().year}" if time_filter == "This Year" else
-            f"Showing payments from {st.session_state.filter_state['year']}" + 
+            f"Viewing all {total_payments} payments" if time_filter == "All Time" else
+            f"Viewing payments from {datetime.now().year}" if time_filter == "This Year" else
+            f"Viewing payments from {st.session_state.filter_state['year']}" + 
             (f" Q{st.session_state.filter_state['quarter'][1]}" 
              if st.session_state.filter_state['quarter'] != "All Quarters" else "")
         )
@@ -544,14 +553,33 @@ def show_payment_history(client_id):
         year_filters = [st.session_state.filter_state['year']]
         quarter_filters = None if st.session_state.filter_state['quarter'] == "All Quarters" else [int(st.session_state.filter_state['quarter'][1])]
     
-    # Load and format all payment data
-    payments = get_payment_history(client_id, years=year_filters, quarters=quarter_filters)
-    if not payments:
+    # Check if filters changed
+    current_filters = (year_filters, quarter_filters)
+    if st.session_state.filter_state['current_filters'] != current_filters:
+        st.session_state.payment_data = []
+        st.session_state.payment_offset = 0
+        st.session_state.filter_state['current_filters'] = current_filters
+    
+    # Load initial data if needed
+    if len(st.session_state.payment_data) == 0:
+        new_payments = get_paginated_payment_history(
+            client_id,
+            offset=0,
+            limit=25,
+            years=year_filters,
+            quarters=quarter_filters
+        )
+        if new_payments:
+            table_data = format_payment_data(new_payments)
+            st.session_state.payment_data.extend(table_data)
+    
+    # Now check if we have any data to display
+    if not st.session_state.payment_data:
         st.info("No payment history available for this client.", icon="ℹ️")
         return
     
-    table_data = format_payment_data(payments)
-    df = pd.DataFrame(table_data)
+    # Create DataFrame for display
+    df = pd.DataFrame(st.session_state.payment_data)
     
     # Add CSS for payment rows
     st.markdown("""
@@ -565,16 +593,6 @@ def show_payment_history(client_id):
         
         /* Note button specific styling */
         div.payment-table div[data-testid="column"]:last-child button {
-            padding: 0 !important;
-            min-height: 24px !important;
-            height: 24px !important;
-            line-height: 24px !important;
-            width: 24px !important;
-            margin: 0 auto !important;
-        }
-        
-        /* Action buttons styling */
-        div.payment-table div[data-testid="column"]:nth-last-child(1) button {
             padding: 0 !important;
             min-height: 24px !important;
             height: 24px !important;
@@ -615,8 +633,32 @@ def show_payment_history(client_id):
     # Wrap the payment table in a div with our specific class
     st.markdown('<div class="payment-table">', unsafe_allow_html=True)
     
+    # Create scrollable container with optimized height
+    st.markdown("""
+        <style>
+        div[data-testid="stVerticalBlock"] > div:has(div.stDataFrame) {
+            height: 550px;  /* Slightly reduced height */
+            overflow-y: auto;
+            padding-right: 1rem;
+            margin: 0.5rem 0;
+        }
+        div.stDataFrame {
+            height: 100%;
+            margin: 0;
+        }
+        div.stDataFrame thead th {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1;
+            padding: 0.15rem 0;
+            line-height: 24px;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
     # Display headers with minimal spacing
-    header_cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1, 1])
+    header_cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1])
     with header_cols[0]:
         st.markdown("<p style='font-weight: bold; margin: 0;'>Provider</p>", unsafe_allow_html=True)
     with header_cols[1]:
@@ -635,8 +677,6 @@ def show_payment_history(client_id):
         st.markdown("<p style='font-weight: bold; margin: 0;'>Discrepancy</p>", unsafe_allow_html=True)
     with header_cols[8]:
         st.markdown("<p style='font-weight: bold; margin: 0;'>Notes</p>", unsafe_allow_html=True)
-    with header_cols[9]:
-        st.markdown("<p style='font-weight: bold; margin: 0;'>Actions</p>", unsafe_allow_html=True)
     
     # Single header divider with minimal spacing
     st.markdown("<hr style='margin: 0.1rem 0; border-color: #eee;'>", unsafe_allow_html=True)
@@ -645,10 +685,14 @@ def show_payment_history(client_id):
     for index, row in df.iterrows():
         # Create a container for the entire row including potential note
         with st.container():
+            # Remove the hr lines between rows
+            # if index > 0:
+            #     st.markdown("<hr style='margin: 0.25rem 0; border-color: #eee;'>", unsafe_allow_html=True)
+            
             # Create container for the row content
             with st.container():
                 # First render the row with all columns
-                row_cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1, 1])
+                row_cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1])
                 
                 with row_cols[0]:
                     st.markdown(f"<p style='margin: 0;'>{row['Provider']}</p>", unsafe_allow_html=True)
@@ -682,46 +726,6 @@ def show_payment_history(client_id):
                         else:
                             st.session_state.active_note_id = row['payment_id']
                         st.rerun()
-                
-                with row_cols[9]:
-                    # Create a container for action buttons with horizontal layout
-                    action_cols = st.columns([1, 1])
-                    with action_cols[0]:
-                        if st.button("✏️", key=f"edit_payment_{row['payment_id']}", help="Edit payment"):
-                            st.session_state.payment_form = {
-                                'is_visible': True,
-                                'mode': 'edit',
-                                'payment_id': row['payment_id']
-                            }
-                            st.rerun()
-                    with action_cols[1]:
-                        if st.button("🗑️", key=f"delete_payment_{row['payment_id']}", help="Delete payment"):
-                            st.session_state.delete_payment_id = row['payment_id']
-                            st.session_state.show_delete_confirm = True
-                            st.rerun()
-            
-            # Show delete confirmation if needed
-            if (
-                st.session_state.show_delete_confirm 
-                and st.session_state.delete_payment_id == row['payment_id']
-            ):
-                with st.container():
-                    confirm_cols = st.columns([7, 3])
-                    with confirm_cols[1]:
-                        st.markdown("""<div style="border-top: 1px solid #eee; padding-top: 0.25rem;"></div>""", unsafe_allow_html=True)
-                        st.warning("Delete this payment?")
-                        confirm_cols2 = st.columns(2)
-                        with confirm_cols2[0]:
-                            if st.button("Yes", key=f"confirm_delete_{row['payment_id']}", type="primary"):
-                                # TODO: Add delete_payment function call here
-                                st.session_state.delete_payment_id = None
-                                st.session_state.show_delete_confirm = False
-                                st.rerun()
-                        with confirm_cols2[1]:
-                            if st.button("No", key=f"cancel_delete_{row['payment_id']}"):
-                                st.session_state.delete_payment_id = None
-                                st.session_state.show_delete_confirm = False
-                                st.rerun()
             
             # After the row columns are closed, check if this row's note should be displayed
             if (
@@ -746,6 +750,21 @@ def show_payment_history(client_id):
                         if edited_note != row["Notes"]:
                             update_payment_note(row['payment_id'], edited_note)
                             st.rerun()
+    
+    # Load more data if we're near the bottom
+    if len(st.session_state.payment_data) < total_payments:
+        if len(st.session_state.payment_data) % 25 == 0:  # Load next batch when we've displayed all current rows
+            st.session_state.payment_offset = len(st.session_state.payment_data)
+            new_payments = get_paginated_payment_history(
+                client_id,
+                offset=st.session_state.payment_offset,
+                limit=25,  # Load 25 rows at a time
+                years=year_filters,
+                quarters=quarter_filters
+            )
+            if new_payments:
+                table_data = format_payment_data(new_payments)
+                st.session_state.payment_data.extend(table_data)
     
     st.markdown('</div>', unsafe_allow_html=True)
 
