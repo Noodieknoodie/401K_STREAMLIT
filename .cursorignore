@@ -1,2 +1,7 @@
 # Add directories or file patterns to ignore during indexing (e.g. foo/ or *.csv)
 *.db
+Cursor_MemoryBank/Cursor_Changelog_and_Decisions.md
+Cursor_MemoryBank/Cursor_MUST_REMEMBER.md
+README/ReadMe_Project.md
+IGNORE/
+

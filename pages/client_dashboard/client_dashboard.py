@@ -10,21 +10,21 @@ def show_client_dashboard():
     """Main dashboard view with modular components."""
     st.write("👥 Client Dashboard")
     
-    # Get selected client first
+    # Initialize base states first
+    init_contact_form_state()
+    init_payment_form_state()
+    
+    # Get selected client
     client_id, selected_client_name = get_selected_client()
     
-    # Reset state when changing clients - MOVED BEFORE state initialization
+    # Initialize previous client tracking if needed
     if 'previous_client' not in st.session_state:
         st.session_state.previous_client = None
     
-    # Clear states if client changed - MOVED BEFORE state initialization
+    # Clear client-specific states only when switching clients
     if selected_client_name != "Select a client..." and st.session_state.previous_client != selected_client_name:
         clear_client_specific_states()
         st.session_state.previous_client = selected_client_name
-    
-    # Initialize all states AFTER clearing
-    init_contact_form_state()
-    init_payment_form_state()
     
     # Show contact form dialog if open
     if 'contact_form' in st.session_state and st.session_state.contact_form['is_open']:
