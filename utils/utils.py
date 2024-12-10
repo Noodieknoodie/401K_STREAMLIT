@@ -607,3 +607,102 @@ def add_payment(client_id, payment_data):
         return None
     finally:
         conn.close()
+
+def get_payment_by_id(payment_id):
+    """Get complete payment data for editing"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT 
+                p.received_date,
+                p.applied_start_quarter,
+                p.applied_start_year,
+                p.applied_end_quarter,
+                p.applied_end_year,
+                p.total_assets,
+                p.actual_fee,
+                p.method,
+                p.notes,
+                c.payment_schedule
+            FROM payments p
+            JOIN contracts c ON p.contract_id = c.contract_id
+            WHERE p.payment_id = ?
+        """, (payment_id,))
+        return cursor.fetchone()
+    finally:
+        conn.close()
+
+@st.cache_data(ttl=300)  # Cache for 5 minutes
+def get_client_dashboard_data(client_id):
+    """Get all necessary client data for the dashboard in a single database call"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        
+        # Get client details, active contract, and recent payments in one query
+        cursor.execute("""
+            WITH recent_payments AS (
+                SELECT 
+                    p.*,
+                    c.provider_name,
+                    c.payment_schedule
+                FROM payments p
+                JOIN contracts c ON p.contract_id = c.contract_id
+                WHERE p.client_id = ?
+                ORDER BY p.received_date DESC
+                LIMIT 50
+            )
+            SELECT 
+                (SELECT json_group_array(json_object(
+                    'contact_type', contact_type,
+                    'contact_name', contact_name,
+                    'phone', phone,
+                    'email', email,
+                    'fax', fax,
+                    'physical_address', physical_address,
+                    'mailing_address', mailing_address,
+                    'contact_id', contact_id
+                ))
+                FROM contacts WHERE client_id = ?) as contacts,
+                
+                (SELECT json_object(
+                    'contract_id', contract_id,
+                    'provider_name', provider_name,
+                    'contract_number', contract_number,
+                    'payment_schedule', payment_schedule,
+                    'fee_type', fee_type,
+                    'percent_rate', percent_rate,
+                    'flat_rate', flat_rate,
+                    'num_people', num_people
+                )
+                FROM contracts 
+                WHERE client_id = ? AND active = 'TRUE'
+                LIMIT 1) as active_contract,
+                
+                (SELECT json_group_array(json_object(
+                    'provider_name', provider_name,
+                    'applied_start_quarter', applied_start_quarter,
+                    'applied_start_year', applied_start_year,
+                    'applied_end_quarter', applied_end_quarter,
+                    'applied_end_year', applied_end_year,
+                    'payment_schedule', payment_schedule,
+                    'received_date', received_date,
+                    'total_assets', total_assets,
+                    'expected_fee', expected_fee,
+                    'actual_fee', actual_fee,
+                    'notes', notes,
+                    'payment_id', payment_id
+                ))
+                FROM recent_payments) as recent_payments;
+        """, (client_id, client_id, client_id))
+        
+        result = cursor.fetchone()
+        return {
+            'contacts': result[0],
+            'active_contract': result[1],
+            'recent_payments': result[2]
+        }
+    finally:
+        conn.close()
+

@@ -84,6 +84,21 @@ def clear_payment_form():
             'notes': ''
         }
 
+def populate_payment_form_for_edit(payment_data):
+    """Populate the payment form with existing payment data for editing"""
+    if payment_data and 'payment_form' in st.session_state:
+        st.session_state.payment_form['form_data'] = {
+            'received_date': payment_data[0],
+            'applied_start_quarter': payment_data[1],
+            'applied_start_year': payment_data[2], 
+            'applied_end_quarter': payment_data[3],
+            'applied_end_year': payment_data[4],
+            'total_assets': format_currency_ui(payment_data[5]) if payment_data[5] else '',
+            'actual_fee': format_currency_ui(payment_data[6]) if payment_data[6] else '',
+            'method': payment_data[7] or 'None Specified',
+            'notes': payment_data[8] or ''
+        }
+
 def has_unsaved_changes(form_data):
     """Check if the form has unsaved changes"""
     current_quarter = get_current_quarter()
