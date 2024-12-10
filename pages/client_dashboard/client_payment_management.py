@@ -362,48 +362,86 @@ def format_payment_data(payments):
     
     return table_data
 
-# CRITICAL!!! Performance optimized note handling (removes unnecessary reruns)
 def handle_note_edit(payment_id, new_note):
     """Handle updating a payment note."""
     update_payment_note(payment_id, new_note)
     if 'notes_state' in st.session_state:
         st.session_state.notes_state['active_note'] = None
-    # Removed st.rerun() as Streamlit will handle the update naturally
+
+@st.cache_data(ttl=60)  # Cache note formatting for 1 minute
+def format_note_display(note):
+    """Format note for display with caching."""
+    return bool(note), "🟢" if note else "◯", note if note else "Add note"
+
+def initialize_notes_state():
+    """Initialize centralized note state management."""
+    if 'notes_state' not in st.session_state:
+        st.session_state.notes_state = {
+            'active_note': None,
+            'edited_notes': {}
+        }
 
 def render_note_cell(payment_id, note, provider=None, period=None):
     """Render a note cell with edit functionality using centralized state."""
     initialize_notes_state()
     
     # Get cached note display format
-    has_note, icon_content, tooltip = format_note_display(note)
+    has_note = bool(note)
+    icon_content = "🟢" if has_note else "◯"
+    tooltip = note if has_note else "Add note"
     
-    # Create the note button with tooltip
-    if st.button(
-        icon_content, 
-        key=f"note_button_{payment_id}",
-        help=tooltip,
-        use_container_width=False
-    ):
+    # Create unique key for this note
+    note_key = f"note_{payment_id}"
+    
+    # Create clickable text with custom CSS and JavaScript
+    st.markdown(f"""
+        <style>
+        .clickable-text {{
+            cursor: pointer;
+            color: #1E90FF;
+            text-decoration: none;
+        }}
+        .clickable-text:hover {{
+            text-decoration: underline;
+        }}
+        </style>
+        <span 
+            class="clickable-text" 
+            title="{tooltip}" 
+            onclick="handleNoteClick('{note_key}')" 
+            id="{note_key}"
+        >
+            {icon_content}
+        </span>
+        <script>
+        function handleNoteClick(key) {{
+            Streamlit.setComponentValue(key, true);
+        }}
+        </script>
+    """, unsafe_allow_html=True)
+    
+    # Check if the clickable text was clicked
+    if st.session_state.get(note_key, False):
         notes_state = st.session_state.notes_state
         
         # Auto-save previous note if exists
         if notes_state['active_note'] and notes_state['active_note'] != payment_id:
             prev_id = notes_state['active_note']
             if prev_id in notes_state['edited_notes']:
-                # Save without forcing rerun
                 update_payment_note(prev_id, notes_state['edited_notes'][prev_id])
                 notes_state['edited_notes'].pop(prev_id)
         
         # Toggle note state
         if notes_state['active_note'] == payment_id:
             if payment_id in notes_state['edited_notes']:
-                # Save without forcing rerun
                 update_payment_note(payment_id, notes_state['edited_notes'][payment_id])
                 notes_state['edited_notes'].pop(payment_id)
             notes_state['active_note'] = None
         else:
             notes_state['active_note'] = payment_id
         
+        # Reset the clicked state
+        st.session_state[note_key] = False
         # Let Streamlit handle the rerun naturally
     
     # Note editing form
@@ -424,20 +462,7 @@ def render_note_cell(payment_id, note, provider=None, period=None):
                 )
                 if edited_note != note:
                     st.session_state.notes_state['edited_notes'][payment_id] = edited_note
-                    # No need for rerun here - Streamlit handles text_area updates naturally
-
-@st.cache_data(ttl=60)  # Cache note formatting for 1 minute
-def format_note_display(note):
-    """Format note for display with caching."""
-    return bool(note), "🟢" if note else "◯", note if note else "Add note"
-
-def initialize_notes_state():
-    """Initialize centralized note state management."""
-    if 'notes_state' not in st.session_state:
-        st.session_state.notes_state = {
-            'active_note': None,
-            'edited_notes': {}
-        }
+                    # Let Streamlit handle text_area updates naturally
 
 def show_payment_history(client_id):
     """Display payment history with efficient layout and smart navigation."""
@@ -468,7 +493,7 @@ def show_payment_history(client_id):
     
     with left_col:
         time_filter = st.radio(
-            "",
+            "Time Period Filter",
             options=["All Time", "This Year", "Custom"],
             horizontal=True,
             label_visibility="collapsed"
@@ -477,11 +502,16 @@ def show_payment_history(client_id):
         if time_filter == "Custom":
             col1, col2, _ = st.columns([1, 1, 2])
             with col1:
-                selected_year = st.selectbox("Year", options=years, index=0, label_visibility="collapsed")
+                selected_year = st.selectbox(
+                    "Select Year",
+                    options=years,
+                    index=0,
+                    label_visibility="collapsed"
+                )
                 st.session_state.filter_state['year'] = selected_year
             with col2:
                 selected_quarter = st.selectbox(
-                    "Quarter",
+                    "Select Quarter",
                     options=["All Quarters", "Q1", "Q2", "Q3", "Q4"],
                     index=0,
                     label_visibility="collapsed"
@@ -542,124 +572,175 @@ def show_payment_history(client_id):
     # Create DataFrame for display
     df = pd.DataFrame(st.session_state.payment_data)
     
-    # Create scrollable container with fixed height
+    # Add CSS for payment rows
+    st.markdown("""
+        <style>
+        /* Payment table specific styling */
+        div.payment-table div[data-testid="column"] > div > div > div > div {
+            padding: 0;
+            margin: 0;
+            line-height: 0.8;
+        }
+        
+        /* Note button specific styling */
+        div.payment-table div[data-testid="column"]:last-child button {
+            padding: 0 !important;
+            min-height: 24px !important;
+            height: 24px !important;
+            line-height: 24px !important;
+            width: 24px !important;
+            margin: 0 auto !important;
+        }
+        
+        /* Payment table text */
+        div.payment-table p {
+            margin: 0;
+            padding: 0;
+            line-height: 1;
+        }
+        
+        /* Header styling */
+        div.payment-table div[data-testid="stHorizontalBlock"] {
+            margin-bottom: 0.1rem;
+        }
+        
+        /* Tooltip fix */
+        div[data-testid="stTooltipIcon"] > div {
+            min-height: auto !important;
+            line-height: normal !important;
+        }
+        
+        /* Note expansion area */
+        div.payment-table div.stTextArea > div {
+            margin: 0.25rem 0;
+        }
+        div.payment-table div.stTextArea textarea {
+            min-height: 80px !important;
+            padding: 0.5rem;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    # Wrap the payment table in a div with our specific class
+    st.markdown('<div class="payment-table">', unsafe_allow_html=True)
+    
+    # Create scrollable container with optimized height
     st.markdown("""
         <style>
         div[data-testid="stVerticalBlock"] > div:has(div.stDataFrame) {
-            height: 600px;
+            height: 550px;  /* Slightly reduced height */
             overflow-y: auto;
             padding-right: 1rem;
+            margin: 0.5rem 0;
         }
         div.stDataFrame {
             height: 100%;
+            margin: 0;
         }
         div.stDataFrame thead th {
             position: sticky;
             top: 0;
             background: white;
             z-index: 1;
+            padding: 0.15rem 0;
+            line-height: 24px;
         }
         </style>
     """, unsafe_allow_html=True)
     
-    # Display rows
-    # Add headers first
+    # Display headers with minimal spacing
     header_cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1])
     with header_cols[0]:
-        st.markdown("**Provider**")
+        st.markdown("<p style='font-weight: bold; margin: 0;'>Provider</p>", unsafe_allow_html=True)
     with header_cols[1]:
-        st.markdown("**Period**")
+        st.markdown("<p style='font-weight: bold; margin: 0;'>Period</p>", unsafe_allow_html=True)
     with header_cols[2]:
-        st.markdown("**Frequency**")
+        st.markdown("<p style='font-weight: bold; margin: 0;'>Frequency</p>", unsafe_allow_html=True)
     with header_cols[3]:
-        st.markdown("**Received**")
+        st.markdown("<p style='font-weight: bold; margin: 0;'>Received</p>", unsafe_allow_html=True)
     with header_cols[4]:
-        st.markdown("**Total Assets**")
+        st.markdown("<p style='font-weight: bold; margin: 0;'>Total Assets</p>", unsafe_allow_html=True)
     with header_cols[5]:
-        st.markdown("**Expected Fee**")
+        st.markdown("<p style='font-weight: bold; margin: 0;'>Expected Fee</p>", unsafe_allow_html=True)
     with header_cols[6]:
-        st.markdown("**Actual Fee**")
+        st.markdown("<p style='font-weight: bold; margin: 0;'>Actual Fee</p>", unsafe_allow_html=True)
     with header_cols[7]:
-        st.markdown("**Discrepancy**")
+        st.markdown("<p style='font-weight: bold; margin: 0;'>Discrepancy</p>", unsafe_allow_html=True)
     with header_cols[8]:
-        st.markdown("**Notes**")
+        st.markdown("<p style='font-weight: bold; margin: 0;'>Notes</p>", unsafe_allow_html=True)
     
-    st.markdown("<hr style='margin: 0.5rem 0; border-color: #eee;'>", unsafe_allow_html=True)
+    # Single header divider with minimal spacing
+    st.markdown("<hr style='margin: 0.1rem 0; border-color: #eee;'>", unsafe_allow_html=True)
     
-
-
-
-    # NOTE SYSTEM IMPLEMENTATION
-    # Notes expand outside the row structure intentionally. Each row shows:
-    # 🟢 (has note) or ◯ (no note). When clicked, a new container is created
-    # AFTER the row (not within it) using [7, 9] column ratio for right-aligned
-    # notes. This preserves clean layout while allowing flexible note display.
-    # State managed by st.session_state.active_note_id. Modifying this system
-    # requires maintaining the out-of-row expansion pattern.
-
-
     # Display data rows
     for index, row in df.iterrows():
-        # First render the row with all columns
-        row_cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1])
-        
-        with row_cols[0]:
-            st.write(row["Provider"])
-        with row_cols[1]:
-            st.write(row["Period"])
-        with row_cols[2]:
-            st.write(row["Frequency"])
-        with row_cols[3]:
-            st.write(row["Received"])
-        with row_cols[4]:
-            st.write(row["Total Assets"])
-        with row_cols[5]:
-            st.write(row["Expected Fee"])
-        with row_cols[6]:
-            st.write(row["Actual Fee"])
-        with row_cols[7]:
-            st.write(row["Discrepancy"])
-        with row_cols[8]:
-            # Just render the note button here
-            has_note = bool(row["Notes"])
-            icon_content = "🟢" if has_note else "◯"
-            tooltip = row["Notes"] if has_note else "Add note"
+        # Create a container for the entire row including potential note
+        with st.container():
+            # Remove the hr lines between rows
+            # if index > 0:
+            #     st.markdown("<hr style='margin: 0.25rem 0; border-color: #eee;'>", unsafe_allow_html=True)
             
-            if st.button(
-                icon_content,
-                key=f"note_button_{row['payment_id']}",
-                help=tooltip,
-                use_container_width=False
-            ):
-                if 'active_note_id' in st.session_state and st.session_state.active_note_id == row['payment_id']:
-                    st.session_state.active_note_id = None
-                else:
-                    st.session_state.active_note_id = row['payment_id']
-                st.rerun()
-        
-        # After the row columns are closed, check if this row's note should be displayed
-        if (
-            'active_note_id' in st.session_state 
-            and st.session_state.active_note_id == row['payment_id']
-        ):
-            # Create a fresh container outside the row structure
+            # Create container for the row content
             with st.container():
-                # Create columns for the note area using full page width
-                note_cols = st.columns([7, 9])
-                with note_cols[1]:
-                    st.markdown("""<div style="border-top: 1px solid #eee; padding-top: 0.5rem;"></div>""", unsafe_allow_html=True)
-                    edited_note = st.text_area(
-                        f"Note for {row['Provider']} - {row['Period']}",
-                        value=row["Notes"] or "",
-                        key=f"note_textarea_{row['payment_id']}",
-                        height=100,
-                        placeholder="Enter note here..."
-                    )
+                # First render the row with all columns
+                row_cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1])
+                
+                with row_cols[0]:
+                    st.markdown(f"<p style='margin: 0;'>{row['Provider']}</p>", unsafe_allow_html=True)
+                with row_cols[1]:
+                    st.markdown(f"<p style='margin: 0;'>{row['Period']}</p>", unsafe_allow_html=True)
+                with row_cols[2]:
+                    st.markdown(f"<p style='margin: 0;'>{row['Frequency']}</p>", unsafe_allow_html=True)
+                with row_cols[3]:
+                    st.markdown(f"<p style='margin: 0;'>{row['Received']}</p>", unsafe_allow_html=True)
+                with row_cols[4]:
+                    st.markdown(f"<p style='margin: 0;'>{row['Total Assets']}</p>", unsafe_allow_html=True)
+                with row_cols[5]:
+                    st.markdown(f"<p style='margin: 0;'>{row['Expected Fee']}</p>", unsafe_allow_html=True)
+                with row_cols[6]:
+                    st.markdown(f"<p style='margin: 0;'>{row['Actual Fee']}</p>", unsafe_allow_html=True)
+                with row_cols[7]:
+                    st.markdown(f"<p style='margin: 0;'>{row['Discrepancy']}</p>", unsafe_allow_html=True)
+                with row_cols[8]:
+                    has_note = bool(row["Notes"])
+                    icon_content = "🟢" if has_note else "◯"
+                    tooltip = row["Notes"] if has_note else "Add note"
                     
-                    # Handle note changes
-                    if edited_note != row["Notes"]:
-                        update_payment_note(row['payment_id'], edited_note)
+                    if st.button(
+                        icon_content,
+                        key=f"note_button_{row['payment_id']}",
+                        help=tooltip,
+                        use_container_width=False
+                    ):
+                        if 'active_note_id' in st.session_state and st.session_state.active_note_id == row['payment_id']:
+                            st.session_state.active_note_id = None
+                        else:
+                            st.session_state.active_note_id = row['payment_id']
                         st.rerun()
+            
+            # After the row columns are closed, check if this row's note should be displayed
+            if (
+                'active_note_id' in st.session_state 
+                and st.session_state.active_note_id == row['payment_id']
+            ):
+                # Create a fresh container for the note area
+                with st.container():
+                    # Create columns for the note area using full page width
+                    note_cols = st.columns([7, 9])
+                    with note_cols[1]:
+                        st.markdown("""<div style="border-top: 1px solid #eee; padding-top: 0.25rem;"></div>""", unsafe_allow_html=True)
+                        edited_note = st.text_area(
+                            f"Note for {row['Provider']} - {row['Period']}",
+                            value=row["Notes"] or "",
+                            key=f"note_textarea_{row['payment_id']}",
+                            height=80,
+                            placeholder="Enter note here..."
+                        )
+                        
+                        # Handle note changes
+                        if edited_note != row["Notes"]:
+                            update_payment_note(row['payment_id'], edited_note)
+                            st.rerun()
     
     # Load more data if we're near the bottom
     if len(st.session_state.payment_data) < total_payments:
@@ -676,6 +757,8 @@ def show_payment_history(client_id):
                 table_data = format_payment_data(new_payments)
                 st.session_state.payment_data.extend(table_data)
     
+    st.markdown('</div>', unsafe_allow_html=True)
+
 def show_client_dashboard():
     """Display the client dashboard with proper state management."""
     st.write("👥 Client Dashboard")
@@ -698,7 +781,7 @@ def show_client_dashboard():
     clients = get_clients()
     client_options = ["Select a client..."] + [client[1] for client in clients]
     selected_client_name = st.selectbox(
-        "🔍 Search or select a client",
+        "Client Selection",
         options=client_options,
         key="client_selector_dashboard",
         label_visibility="collapsed"
