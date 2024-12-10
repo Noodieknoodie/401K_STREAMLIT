@@ -1,88 +1,137 @@
-{"timestamp": "2024-12-10 10:00:34.375835", "event": "client_selected", "session_id": "20241210_100032", "details": {"client": null}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:00:34.377565", "event": "ui_action", "session_id": "20241210_100032", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 8.76}
-{"timestamp": "2024-12-10 10:00:36.601177", "event": "client_selected", "session_id": "20241210_100032", "details": {"client": "AirSea America"}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:00:36.602284", "event": "cache_miss", "session_id": "20241210_100032", "details": {"client_id": 1}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:00:36.611607", "event": "db_call", "session_id": "20241210_100032", "details": {"function": "get_consolidated_client_data", "args": "(1,)", "error": "no such column: contract_json", "success": false}, "duration_ms": 9.31}
-{"timestamp": "2024-12-10 10:00:36.612332", "event": "ui_action", "session_id": "20241210_100032", "details": {"action": "show_dashboard", "error": "no such column: contract_json", "success": false}, "duration_ms": 14.41}
-{"timestamp": "2024-12-10 10:00:39.326077", "event": "client_selected", "session_id": "20241210_100032", "details": {"client": "AirSea America"}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:00:39.327936", "event": "cache_miss", "session_id": "20241210_100032", "details": {"client_id": 1}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:00:39.330385", "event": "db_call", "session_id": "20241210_100032", "details": {"function": "get_consolidated_client_data", "args": "(1,)", "error": "no such column: contract_json", "success": false}, "duration_ms": 2.44}
-{"timestamp": "2024-12-10 10:00:39.331353", "event": "ui_action", "session_id": "20241210_100032", "details": {"action": "show_dashboard", "error": "no such column: contract_json", "success": false}, "duration_ms": 9.51}
-{"timestamp": "2024-12-10 10:01:54.737071", "event": "client_selected", "session_id": "20241210_100152", "details": {"client": null}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:01:54.738772", "event": "ui_action", "session_id": "20241210_100152", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 4.68}
-{"timestamp": "2024-12-10 10:01:55.848790", "event": "client_selected", "session_id": "20241210_100152", "details": {"client": "BDR Interactive"}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:01:55.851422", "event": "cache_miss", "session_id": "20241210_100152", "details": {"client_id": 5}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:01:55.855391", "event": "cache_store", "session_id": "20241210_100152", "details": {"client_id": 5}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:01:55.856162", "event": "db_call", "session_id": "20241210_100152", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 4.75}
-{"timestamp": "2024-12-10 10:01:55.856981", "event": "client_data_loaded", "session_id": "20241210_100152", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": 5.57}
-{"timestamp": "2024-12-10 10:01:55.857844", "event": "cache_hit", "session_id": "20241210_100152", "details": {"client_id": 5}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:01:55.859191", "event": "db_call", "session_id": "20241210_100152", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.35}
-{"timestamp": "2024-12-10 10:01:56.021080", "event": "ui_action", "session_id": "20241210_100152", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 174.45}
-{"timestamp": "2024-12-10 10:02:03.265845", "event": "client_selected", "session_id": "unknown", "details": {"client": null}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:03.267014", "event": "ui_action", "session_id": "unknown", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 3.29}
-{"timestamp": "2024-12-10 10:02:05.020398", "event": "client_selected", "session_id": "unknown", "details": {"client": "BDR Interactive"}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:05.022860", "event": "cache_expired", "session_id": "unknown", "details": {"client_id": 5}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:05.025143", "event": "cache_miss", "session_id": "unknown", "details": {"client_id": 5}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:05.027920", "event": "cache_store", "session_id": "unknown", "details": {"client_id": 5}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:05.028921", "event": "db_call", "session_id": "unknown", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 6.06}
-{"timestamp": "2024-12-10 10:02:05.029580", "event": "client_data_loaded", "session_id": "unknown", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": 6.73}
-{"timestamp": "2024-12-10 10:02:05.030549", "event": "cache_hit", "session_id": "unknown", "details": {"client_id": 5}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:05.031395", "event": "db_call", "session_id": "unknown", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 0.85}
-{"timestamp": "2024-12-10 10:02:05.209976", "event": "ui_action", "session_id": "unknown", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 193.52}
-{"timestamp": "2024-12-10 10:02:08.627199", "event": "client_selected", "session_id": "unknown", "details": {"client": "BDR Interactive"}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:08.629708", "event": "cache_hit", "session_id": "unknown", "details": {"client_id": 5}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:08.632682", "event": "db_call", "session_id": "unknown", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 2.97}
-{"timestamp": "2024-12-10 10:02:08.633731", "event": "client_data_loaded", "session_id": "unknown", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": 4.04}
-{"timestamp": "2024-12-10 10:02:08.634932", "event": "cache_hit", "session_id": "unknown", "details": {"client_id": 5}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:08.635947", "event": "db_call", "session_id": "unknown", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.03}
-{"timestamp": "2024-12-10 10:02:08.774446", "event": "ui_action", "session_id": "unknown", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 148.93}
-{"timestamp": "2024-12-10 10:02:10.888736", "event": "client_selected", "session_id": "unknown", "details": {"client": "Bellmont Cabinets"}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:10.890812", "event": "cache_miss", "session_id": "unknown", "details": {"client_id": 6}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:10.895130", "event": "cache_store", "session_id": "unknown", "details": {"client_id": 6}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:10.896077", "event": "db_call", "session_id": "unknown", "details": {"function": "get_consolidated_client_data", "args": "(6,)", "success": true}, "duration_ms": 5.26}
-{"timestamp": "2024-12-10 10:02:10.896922", "event": "client_data_loaded", "session_id": "unknown", "details": {"client": "Bellmont Cabinets", "has_contract": true, "has_payments": true, "contact_count": 2}, "duration_ms": 6.11}
-{"timestamp": "2024-12-10 10:02:10.897984", "event": "cache_hit", "session_id": "unknown", "details": {"client_id": 6}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:10.898511", "event": "db_call", "session_id": "unknown", "details": {"function": "get_consolidated_client_data", "args": "(6,)", "success": true}, "duration_ms": 0.53}
-{"timestamp": "2024-12-10 10:02:11.049416", "event": "ui_action", "session_id": "unknown", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 163.17}
-{"timestamp": "2024-12-10 10:02:13.930369", "event": "client_selected", "session_id": "unknown", "details": {"client": "AirSea America"}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:13.932096", "event": "cache_miss", "session_id": "unknown", "details": {"client_id": 1}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:13.937375", "event": "cache_store", "session_id": "unknown", "details": {"client_id": 1}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:13.938388", "event": "db_call", "session_id": "unknown", "details": {"function": "get_consolidated_client_data", "args": "(1,)", "success": true}, "duration_ms": 6.29}
-{"timestamp": "2024-12-10 10:02:13.939129", "event": "client_data_loaded", "session_id": "unknown", "details": {"client": "AirSea America", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": 7.03}
-{"timestamp": "2024-12-10 10:02:13.940319", "event": "cache_hit", "session_id": "unknown", "details": {"client_id": 1}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:13.941442", "event": "db_call", "session_id": "unknown", "details": {"function": "get_consolidated_client_data", "args": "(1,)", "success": true}, "duration_ms": 1.13}
-{"timestamp": "2024-12-10 10:02:14.115454", "event": "ui_action", "session_id": "unknown", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 187.07}
-{"timestamp": "2024-12-10 10:02:18.362308", "event": "client_selected", "session_id": "unknown", "details": {"client": "Opportunity Interactive"}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:18.365513", "event": "cache_miss", "session_id": "unknown", "details": {"client_id": 19}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:18.370713", "event": "cache_store", "session_id": "unknown", "details": {"client_id": 19}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:18.372305", "event": "db_call", "session_id": "unknown", "details": {"function": "get_consolidated_client_data", "args": "(19,)", "success": true}, "duration_ms": 6.79}
-{"timestamp": "2024-12-10 10:02:18.373457", "event": "client_data_loaded", "session_id": "unknown", "details": {"client": "Opportunity Interactive", "has_contract": true, "has_payments": true, "contact_count": 1}, "duration_ms": 7.95}
-{"timestamp": "2024-12-10 10:02:18.374558", "event": "cache_hit", "session_id": "unknown", "details": {"client_id": 19}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:18.375733", "event": "db_call", "session_id": "unknown", "details": {"function": "get_consolidated_client_data", "args": "(19,)", "success": true}, "duration_ms": 1.17}
-{"timestamp": "2024-12-10 10:02:18.480083", "event": "ui_action", "session_id": "unknown", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 119.73}
-{"timestamp": "2024-12-10 10:02:21.809028", "event": "client_selected", "session_id": "unknown", "details": {"client": "BDR Interactive"}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:21.811282", "event": "cache_expired", "session_id": "unknown", "details": {"client_id": 5}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:21.813804", "event": "cache_miss", "session_id": "unknown", "details": {"client_id": 5}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:21.817448", "event": "cache_store", "session_id": "unknown", "details": {"client_id": 5}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:21.819578", "event": "db_call", "session_id": "unknown", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 8.29}
-{"timestamp": "2024-12-10 10:02:21.821169", "event": "client_data_loaded", "session_id": "unknown", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": 9.89}
-{"timestamp": "2024-12-10 10:02:21.822423", "event": "cache_hit", "session_id": "unknown", "details": {"client_id": 5}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:21.823657", "event": "db_call", "session_id": "unknown", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.23}
-{"timestamp": "2024-12-10 10:02:21.970287", "event": "ui_action", "session_id": "unknown", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 163.6}
-{"timestamp": "2024-12-10 10:02:25.732450", "event": "client_selected", "session_id": "unknown", "details": {"client": "Auction Edge"}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:25.735687", "event": "cache_miss", "session_id": "unknown", "details": {"client_id": 4}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:25.739803", "event": "cache_store", "session_id": "unknown", "details": {"client_id": 4}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:25.740994", "event": "db_call", "session_id": "unknown", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 5.3}
-{"timestamp": "2024-12-10 10:02:25.742057", "event": "client_data_loaded", "session_id": "unknown", "details": {"client": "Auction Edge", "has_contract": true, "has_payments": true, "contact_count": 2}, "duration_ms": 6.37}
-{"timestamp": "2024-12-10 10:02:25.743068", "event": "cache_hit", "session_id": "unknown", "details": {"client_id": 4}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:25.744370", "event": "db_call", "session_id": "unknown", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.3}
-{"timestamp": "2024-12-10 10:02:25.904855", "event": "ui_action", "session_id": "unknown", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 174.25}
-{"timestamp": "2024-12-10 10:02:29.555473", "event": "client_selected", "session_id": "unknown", "details": {"client": "BDR Interactive"}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:29.558360", "event": "cache_expired", "session_id": "unknown", "details": {"client_id": 5}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:29.560146", "event": "cache_miss", "session_id": "unknown", "details": {"client_id": 5}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:29.562766", "event": "cache_store", "session_id": "unknown", "details": {"client_id": 5}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:29.563755", "event": "db_call", "session_id": "unknown", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 5.39}
-{"timestamp": "2024-12-10 10:02:29.565133", "event": "client_data_loaded", "session_id": "unknown", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": 6.78}
-{"timestamp": "2024-12-10 10:02:29.566182", "event": "cache_hit", "session_id": "unknown", "details": {"client_id": 5}, "duration_ms": null}
-{"timestamp": "2024-12-10 10:02:29.567542", "event": "db_call", "session_id": "unknown", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.36}
-{"timestamp": "2024-12-10 10:02:29.718424", "event": "ui_action", "session_id": "unknown", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 164.86}
+{"timestamp": "2024-12-10 10:10:59.886117", "event": "client_selected", "session_id": "20241210_101057", "details": {"client": null}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:10:59.893020", "event": "ui_action", "session_id": "20241210_101057", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 13.71}
+{"timestamp": "2024-12-10 10:11:02.041529", "event": "client_selected", "session_id": "20241210_101057", "details": {"client": "Amplero"}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:02.043498", "event": "cache_miss", "session_id": "20241210_101057", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:02.053493", "event": "cache_store", "session_id": "20241210_101057", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:02.054520", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 11.02}
+{"timestamp": "2024-12-10 10:11:02.055319", "event": "client_data_loaded", "session_id": "20241210_101057", "details": {"client": "Amplero", "has_contract": true, "has_payments": true, "contact_count": 2}, "duration_ms": 11.82}
+{"timestamp": "2024-12-10 10:11:02.056290", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:02.057185", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 0.9}
+{"timestamp": "2024-12-10 10:11:02.448631", "event": "ui_action", "session_id": "20241210_101057", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 409.5}
+{"timestamp": "2024-12-10 10:11:14.765634", "event": "client_selected", "session_id": "20241210_101057", "details": {"client": "Amplero"}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:14.768666", "event": "cache_expired", "session_id": "20241210_101057", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:14.770315", "event": "cache_miss", "session_id": "20241210_101057", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:14.774794", "event": "cache_store", "session_id": "20241210_101057", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:14.775776", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 7.12}
+{"timestamp": "2024-12-10 10:11:14.776413", "event": "client_data_loaded", "session_id": "20241210_101057", "details": {"client": "Amplero", "has_contract": true, "has_payments": true, "contact_count": 2}, "duration_ms": 7.76}
+{"timestamp": "2024-12-10 10:11:14.777344", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:14.778424", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 1.08}
+{"timestamp": "2024-12-10 10:11:14.868504", "event": "client_selected", "session_id": "20241210_101057", "details": {"client": "Amplero"}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:14.870128", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:14.871260", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 1.14}
+{"timestamp": "2024-12-10 10:11:14.873020", "event": "client_data_loaded", "session_id": "20241210_101057", "details": {"client": "Amplero", "has_contract": true, "has_payments": true, "contact_count": 2}, "duration_ms": 2.91}
+{"timestamp": "2024-12-10 10:11:14.874832", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:14.876842", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 10:11:15.255356", "event": "ui_action", "session_id": "20241210_101057", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 389.17}
+{"timestamp": "2024-12-10 10:11:17.884128", "event": "client_selected", "session_id": "20241210_101057", "details": {"client": "Amplero"}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:17.885954", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:17.887768", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 1.81}
+{"timestamp": "2024-12-10 10:11:17.889120", "event": "client_data_loaded", "session_id": "20241210_101057", "details": {"client": "Amplero", "has_contract": true, "has_payments": true, "contact_count": 2}, "duration_ms": 3.17}
+{"timestamp": "2024-12-10 10:11:17.890808", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:17.892206", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 1.39}
+{"timestamp": "2024-12-10 10:11:17.990225", "event": "client_selected", "session_id": "20241210_101057", "details": {"client": "Amplero"}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:17.991725", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:17.993840", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 2.1}
+{"timestamp": "2024-12-10 10:11:17.995643", "event": "client_data_loaded", "session_id": "20241210_101057", "details": {"client": "Amplero", "has_contract": true, "has_payments": true, "contact_count": 2}, "duration_ms": 3.92}
+{"timestamp": "2024-12-10 10:11:17.997519", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:18.000318", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 2.8}
+{"timestamp": "2024-12-10 10:11:18.389896", "event": "ui_action", "session_id": "20241210_101057", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 401.82}
+{"timestamp": "2024-12-10 10:11:21.672760", "event": "client_selected", "session_id": "20241210_101057", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:21.675438", "event": "cache_miss", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:21.679547", "event": "cache_store", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:21.680435", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 4.99}
+{"timestamp": "2024-12-10 10:11:21.681719", "event": "client_data_loaded", "session_id": "20241210_101057", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": 6.28}
+{"timestamp": "2024-12-10 10:11:21.682875", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:21.684368", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.51}
+{"timestamp": "2024-12-10 10:11:21.819108", "event": "ui_action", "session_id": "20241210_101057", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 147.98}
+{"timestamp": "2024-12-10 10:11:28.621667", "event": "client_selected", "session_id": "20241210_101057", "details": {"client": "Harper Engineering"}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:28.625470", "event": "cache_miss", "session_id": "20241210_101057", "details": {"client_id": 13}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:28.629177", "event": "cache_store", "session_id": "20241210_101057", "details": {"client_id": 13}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:28.630302", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(13,)", "success": true}, "duration_ms": 4.82}
+{"timestamp": "2024-12-10 10:11:28.631268", "event": "client_data_loaded", "session_id": "20241210_101057", "details": {"client": "Harper Engineering", "has_contract": true, "has_payments": true, "contact_count": 2}, "duration_ms": 5.82}
+{"timestamp": "2024-12-10 10:11:28.632372", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 13}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:28.634101", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(13,)", "success": true}, "duration_ms": 1.71}
+{"timestamp": "2024-12-10 10:11:28.791713", "event": "ui_action", "session_id": "20241210_101057", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 171.89}
+{"timestamp": "2024-12-10 10:11:40.397548", "event": "client_selected", "session_id": "20241210_101057", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:40.399986", "event": "cache_expired", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:40.402748", "event": "cache_miss", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:40.405977", "event": "cache_store", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:40.406972", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 6.99}
+{"timestamp": "2024-12-10 10:11:40.408071", "event": "client_data_loaded", "session_id": "20241210_101057", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": 8.11}
+{"timestamp": "2024-12-10 10:11:40.409226", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:40.410613", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.4}
+{"timestamp": "2024-12-10 10:11:40.585173", "event": "ui_action", "session_id": "20241210_101057", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 189.8}
+{"timestamp": "2024-12-10 10:11:42.343990", "event": "client_selected", "session_id": "20241210_101057", "details": {"client": "Auction Edge"}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:42.347410", "event": "cache_miss", "session_id": "20241210_101057", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:42.351036", "event": "cache_store", "session_id": "20241210_101057", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:42.352136", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 4.72}
+{"timestamp": "2024-12-10 10:11:42.353072", "event": "client_data_loaded", "session_id": "20241210_101057", "details": {"client": "Auction Edge", "has_contract": true, "has_payments": true, "contact_count": 2}, "duration_ms": 5.66}
+{"timestamp": "2024-12-10 10:11:42.353934", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:42.354833", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 0.9}
+{"timestamp": "2024-12-10 10:11:42.512566", "event": "ui_action", "session_id": "20241210_101057", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 170.29}
+{"timestamp": "2024-12-10 10:11:44.409697", "event": "client_selected", "session_id": "20241210_101057", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:44.411708", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:44.414567", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 2.84}
+{"timestamp": "2024-12-10 10:11:44.416260", "event": "client_data_loaded", "session_id": "20241210_101057", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": 4.55}
+{"timestamp": "2024-12-10 10:11:44.417413", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:44.418291", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 0.88}
+{"timestamp": "2024-12-10 10:11:44.595989", "event": "ui_action", "session_id": "20241210_101057", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 188.07}
+{"timestamp": "2024-12-10 10:11:48.424833", "event": "client_selected", "session_id": "20241210_101057", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:48.426623", "event": "cache_expired", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:48.428780", "event": "cache_miss", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:48.432662", "event": "cache_store", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:48.434091", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 7.47}
+{"timestamp": "2024-12-10 10:11:48.434900", "event": "client_data_loaded", "session_id": "20241210_101057", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": 8.28}
+{"timestamp": "2024-12-10 10:11:48.435745", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:48.436727", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 0.98}
+{"timestamp": "2024-12-10 10:11:48.490920", "event": "client_selected", "session_id": "20241210_101057", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:48.492340", "event": "payment_form_opened", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:48.512201", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:48.513499", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.3}
+{"timestamp": "2024-12-10 10:11:48.514391", "event": "client_data_loaded", "session_id": "20241210_101057", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": 2.19}
+{"timestamp": "2024-12-10 10:11:48.515445", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:48.516136", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 0.69}
+{"timestamp": "2024-12-10 10:11:48.681571", "event": "ui_action", "session_id": "20241210_101057", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 192.85}
+{"timestamp": "2024-12-10 10:11:50.852324", "event": "client_selected", "session_id": "20241210_101057", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:50.854549", "event": "payment_form_opened", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:50.870111", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:50.872017", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.9}
+{"timestamp": "2024-12-10 10:11:50.874840", "event": "client_data_loaded", "session_id": "20241210_101057", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": 4.71}
+{"timestamp": "2024-12-10 10:11:50.878458", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:50.880378", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.92}
+{"timestamp": "2024-12-10 10:11:51.022968", "event": "ui_action", "session_id": "20241210_101057", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 173.15}
+{"timestamp": "2024-12-10 10:11:53.161937", "event": "client_selected", "session_id": "20241210_101057", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:53.163741", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:53.166409", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 2.68}
+{"timestamp": "2024-12-10 10:11:53.168577", "event": "client_data_loaded", "session_id": "20241210_101057", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": 4.85}
+{"timestamp": "2024-12-10 10:11:53.170879", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:53.172794", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.91}
+{"timestamp": "2024-12-10 10:11:53.337683", "event": "ui_action", "session_id": "20241210_101057", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 177.86}
+{"timestamp": "2024-12-10 10:11:55.277566", "event": "client_selected", "session_id": "20241210_101057", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:55.279011", "event": "cache_expired", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:55.281195", "event": "cache_miss", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:55.285638", "event": "cache_store", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:55.286510", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 7.5}
+{"timestamp": "2024-12-10 10:11:55.287201", "event": "client_data_loaded", "session_id": "20241210_101057", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": 8.2}
+{"timestamp": "2024-12-10 10:11:55.287985", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:55.288925", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 0.94}
+{"timestamp": "2024-12-10 10:11:55.376914", "event": "client_selected", "session_id": "20241210_101057", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:55.378320", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:55.379889", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.57}
+{"timestamp": "2024-12-10 10:11:55.382241", "event": "client_data_loaded", "session_id": "20241210_101057", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": 3.92}
+{"timestamp": "2024-12-10 10:11:55.384134", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:55.385893", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.76}
+{"timestamp": "2024-12-10 10:11:55.563309", "event": "ui_action", "session_id": "20241210_101057", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 188.67}
+{"timestamp": "2024-12-10 10:11:56.667205", "event": "client_selected", "session_id": "20241210_101057", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:56.669792", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:56.672942", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 3.15}
+{"timestamp": "2024-12-10 10:11:56.673865", "event": "client_data_loaded", "session_id": "20241210_101057", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": 4.08}
+{"timestamp": "2024-12-10 10:11:56.674476", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:56.674939", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 0.46}
+{"timestamp": "2024-12-10 10:11:56.775946", "event": "client_selected", "session_id": "20241210_101057", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:56.778745", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:56.780124", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.37}
+{"timestamp": "2024-12-10 10:11:56.782504", "event": "client_data_loaded", "session_id": "20241210_101057", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": 3.76}
+{"timestamp": "2024-12-10 10:11:56.785631", "event": "cache_hit", "session_id": "20241210_101057", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 10:11:56.787188", "event": "db_call", "session_id": "20241210_101057", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.55}
+{"timestamp": "2024-12-10 10:11:56.942776", "event": "ui_action", "session_id": "20241210_101057", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 170.31}

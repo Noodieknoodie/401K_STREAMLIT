@@ -147,30 +147,47 @@ def get_all_contracts(client_id):
         conn.close()
 
 @st.cache_data
-def get_payment_history(client_id):
-    """Get payment history for a client"""
+def get_payment_history(client_id, years=None, quarters=None):
+    """Get payment history for a client with optional year/quarter filters"""
+    base_query = """
+        SELECT 
+            c.provider_name,
+            p.applied_start_quarter,
+            p.applied_start_year,
+            p.applied_end_quarter,
+            p.applied_end_year,
+            c.payment_schedule,
+            p.received_date,
+            p.total_assets,
+            p.expected_fee,
+            p.actual_fee,
+            p.notes,
+            p.payment_id
+        FROM payments p
+        JOIN contracts c ON p.contract_id = c.contract_id
+        WHERE p.client_id = ?
+    """
+    
+    params = [client_id]
+    
+    # Handle multiple years filter
+    if years and len(years) > 0:
+        year_placeholders = ','.join(['?' for _ in years])
+        base_query += f" AND p.applied_start_year IN ({year_placeholders})"
+        params.extend(years)
+    
+    # Handle multiple quarters filter
+    if quarters and len(quarters) > 0:
+        quarter_placeholders = ','.join(['?' for _ in quarters])
+        base_query += f" AND p.applied_start_quarter IN ({quarter_placeholders})"
+        params.extend(quarters)
+    
+    base_query += " ORDER BY p.received_date DESC, p.payment_id DESC"
+    
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute("""
-            SELECT 
-                c.provider_name,
-                p.applied_start_quarter,
-                p.applied_start_year,
-                p.applied_end_quarter,
-                p.applied_end_year,
-                c.payment_schedule,
-                p.received_date,
-                p.total_assets,
-                p.expected_fee,
-                p.actual_fee,
-                p.notes,
-                p.payment_id
-            FROM payments p
-            JOIN contracts c ON p.contract_id = c.contract_id
-            WHERE p.client_id = ?
-            ORDER BY p.received_date DESC
-        """, (client_id,))
+        cursor.execute(base_query, params)
         return cursor.fetchall()
     finally:
         conn.close()

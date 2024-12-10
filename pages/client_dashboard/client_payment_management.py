@@ -3,10 +3,9 @@ import pandas as pd
 from datetime import datetime
 from utils.utils import (
     get_payment_history, update_payment_note,
-    get_paginated_payment_history, get_total_payment_count,
-    get_payment_year_quarters, get_clients, get_contacts,
+    get_clients, get_contacts,
     get_client_details, add_contact, update_contact,
-    delete_contact
+    delete_contact, get_payment_year_quarters
 )
 from utils.perf_logging import log_event
 
@@ -234,14 +233,7 @@ def init_filter_state():
         }
 
 def clear_client_specific_states():
-    """Clear all client-specific states when switching clients.
-    BEFORE: Incomplete state cleanup on client switch
-    AFTER: Comprehensive cleanup of all client-related states
-    """
-    # Clear payment data
-    st.session_state.payment_data = []
-    st.session_state.payment_offset = 0
-    
+    """Clear all client-specific states when switching clients."""
     # Clear filter state
     if 'filter_state' in st.session_state:
         st.session_state.filter_state = {
@@ -258,10 +250,10 @@ def clear_client_specific_states():
             'temp_notes': {}
         }
     
-    # Reset payment form - Updated to include client_id reset
+    # Reset payment form
     if 'payment_form' in st.session_state:
         st.session_state.payment_form['is_visible'] = False
-        st.session_state.payment_form['client_id'] = None  # Reset client association
+        st.session_state.payment_form['client_id'] = None
         st.session_state.payment_form['mode'] = 'add'
         st.session_state.payment_form['has_validation_error'] = False
         st.session_state.payment_form['show_cancel_confirm'] = False
@@ -481,14 +473,7 @@ def show_payment_history(client_id):
     init_notes_state()
     init_filter_state()
     
-    # Initialize payment state
-    if 'payment_data' not in st.session_state:
-        st.session_state.payment_data = []
-    if 'payment_offset' not in st.session_state:
-        st.session_state.payment_offset = 0
-    
     # Get data first
-    total_payments = get_total_payment_count(client_id)
     year_quarters = get_payment_year_quarters(client_id)
     
     # Get available years
@@ -529,14 +514,14 @@ def show_payment_history(client_id):
     
     with middle_col:
         if st.button("Add Payment", type="primary", use_container_width=True):
-            st.session_state.payment_form['is_visible'] = True  # Use dedicated visibility state
+            st.session_state.payment_form['is_visible'] = True
             st.rerun()
     
     with right_col:
         status_text = (
-            f"Viewing all {total_payments} payments" if time_filter == "All Time" else
-            f"Viewing payments from {datetime.now().year}" if time_filter == "This Year" else
-            f"Viewing payments from {st.session_state.filter_state['year']}" + 
+            f"Showing all payments" if time_filter == "All Time" else
+            f"Showing payments from {datetime.now().year}" if time_filter == "This Year" else
+            f"Showing payments from {st.session_state.filter_state['year']}" + 
             (f" Q{st.session_state.filter_state['quarter'][1]}" 
              if st.session_state.filter_state['quarter'] != "All Quarters" else "")
         )
@@ -553,33 +538,14 @@ def show_payment_history(client_id):
         year_filters = [st.session_state.filter_state['year']]
         quarter_filters = None if st.session_state.filter_state['quarter'] == "All Quarters" else [int(st.session_state.filter_state['quarter'][1])]
     
-    # Check if filters changed
-    current_filters = (year_filters, quarter_filters)
-    if st.session_state.filter_state['current_filters'] != current_filters:
-        st.session_state.payment_data = []
-        st.session_state.payment_offset = 0
-        st.session_state.filter_state['current_filters'] = current_filters
-    
-    # Load initial data if needed
-    if len(st.session_state.payment_data) == 0:
-        new_payments = get_paginated_payment_history(
-            client_id,
-            offset=0,
-            limit=25,
-            years=year_filters,
-            quarters=quarter_filters
-        )
-        if new_payments:
-            table_data = format_payment_data(new_payments)
-            st.session_state.payment_data.extend(table_data)
-    
-    # Now check if we have any data to display
-    if not st.session_state.payment_data:
+    # Load and format all payment data
+    payments = get_payment_history(client_id, years=year_filters, quarters=quarter_filters)
+    if not payments:
         st.info("No payment history available for this client.", icon="ℹ️")
         return
     
-    # Create DataFrame for display
-    df = pd.DataFrame(st.session_state.payment_data)
+    table_data = format_payment_data(payments)
+    df = pd.DataFrame(table_data)
     
     # Add CSS for payment rows
     st.markdown("""
@@ -633,30 +599,6 @@ def show_payment_history(client_id):
     # Wrap the payment table in a div with our specific class
     st.markdown('<div class="payment-table">', unsafe_allow_html=True)
     
-    # Create scrollable container with optimized height
-    st.markdown("""
-        <style>
-        div[data-testid="stVerticalBlock"] > div:has(div.stDataFrame) {
-            height: 550px;  /* Slightly reduced height */
-            overflow-y: auto;
-            padding-right: 1rem;
-            margin: 0.5rem 0;
-        }
-        div.stDataFrame {
-            height: 100%;
-            margin: 0;
-        }
-        div.stDataFrame thead th {
-            position: sticky;
-            top: 0;
-            background: white;
-            z-index: 1;
-            padding: 0.15rem 0;
-            line-height: 24px;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-    
     # Display headers with minimal spacing
     header_cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1])
     with header_cols[0]:
@@ -685,10 +627,6 @@ def show_payment_history(client_id):
     for index, row in df.iterrows():
         # Create a container for the entire row including potential note
         with st.container():
-            # Remove the hr lines between rows
-            # if index > 0:
-            #     st.markdown("<hr style='margin: 0.25rem 0; border-color: #eee;'>", unsafe_allow_html=True)
-            
             # Create container for the row content
             with st.container():
                 # First render the row with all columns
@@ -750,21 +688,6 @@ def show_payment_history(client_id):
                         if edited_note != row["Notes"]:
                             update_payment_note(row['payment_id'], edited_note)
                             st.rerun()
-    
-    # Load more data if we're near the bottom
-    if len(st.session_state.payment_data) < total_payments:
-        if len(st.session_state.payment_data) % 25 == 0:  # Load next batch when we've displayed all current rows
-            st.session_state.payment_offset = len(st.session_state.payment_data)
-            new_payments = get_paginated_payment_history(
-                client_id,
-                offset=st.session_state.payment_offset,
-                limit=25,  # Load 25 rows at a time
-                years=year_filters,
-                quarters=quarter_filters
-            )
-            if new_payments:
-                table_data = format_payment_data(new_payments)
-                st.session_state.payment_data.extend(table_data)
     
     st.markdown('</div>', unsafe_allow_html=True)
 
