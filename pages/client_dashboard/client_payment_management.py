@@ -191,17 +191,49 @@ def init_notes_state():
             'temp_notes': {}  # For storing unsaved changes
         }
 
+# ============================================================================
+# FILTER STATE MANAGEMENT
+# ============================================================================
+
 def init_filter_state():
-    """Initialize payment filter state management.
-    BEFORE: Individual state keys for filters
-    AFTER: Bundled filter state in single object
-    """
+    """Initialize payment history filter state"""
     if 'filter_state' not in st.session_state:
         st.session_state.filter_state = {
-            'year': None,
+            'time_filter': 'All Time',  # 'All Time', 'This Year', 'Custom'
+            'year': datetime.now().year,
             'quarter': None,
-            'current_filters': None  # Tuple of (year_filters, quarter_filters)
+            'current_filters': None  # Keep for backward compatibility
         }
+
+def update_filter_state(key, value):
+    """Update filter state and handle dependencies"""
+    if key == 'time_filter':
+        st.session_state.filter_state['time_filter'] = value
+        if value == 'All Time':
+            st.session_state.filter_state['year'] = None
+            st.session_state.filter_state['quarter'] = None
+        elif value == 'This Year':
+            st.session_state.filter_state['year'] = datetime.now().year
+            st.session_state.filter_state['quarter'] = None
+    else:
+        st.session_state.filter_state[key] = value
+
+def get_current_filters():
+    """Get current year and quarter filters based on filter state"""
+    filter_state = st.session_state.filter_state
+    time_filter = filter_state['time_filter']
+    
+    if time_filter == 'All Time':
+        return None, None
+    elif time_filter == 'This Year':
+        return [datetime.now().year], None
+    else:  # Custom
+        year = filter_state['year']
+        quarter = filter_state['quarter']
+        return (
+            [year] if year else None,
+            [int(quarter[1])] if quarter and quarter != "All Quarters" else None
+        )
 
 def clear_client_specific_states():
     """Clear all client-specific states when switching clients."""
@@ -463,31 +495,35 @@ def show_payment_history(client_id):
     left_col, middle_col, right_col = st.columns([4, 2, 4])
     
     with left_col:
-        time_filter = st.radio(
+        st.radio(
             "Time Period Filter",
             options=["All Time", "This Year", "Custom"],
+            key="filter_time_period",
             horizontal=True,
-            label_visibility="collapsed"
+            label_visibility="collapsed",
+            on_change=lambda: update_filter_state('time_filter', st.session_state.filter_time_period)
         )
         
-        if time_filter == "Custom":
+        if st.session_state.filter_state['time_filter'] == "Custom":
             col1, col2, _ = st.columns([1, 1, 2])
             with col1:
-                selected_year = st.selectbox(
+                st.selectbox(
                     "Select Year",
                     options=years,
-                    index=0,
-                    label_visibility="collapsed"
+                    index=years.index(st.session_state.filter_state['year']) if st.session_state.filter_state['year'] in years else 0,
+                    key="filter_year",
+                    label_visibility="collapsed",
+                    on_change=lambda: update_filter_state('year', st.session_state.filter_year)
                 )
-                st.session_state.filter_state['year'] = selected_year
             with col2:
-                selected_quarter = st.selectbox(
+                st.selectbox(
                     "Select Quarter",
                     options=["All Quarters", "Q1", "Q2", "Q3", "Q4"],
                     index=0,
-                    label_visibility="collapsed"
+                    key="filter_quarter",
+                    label_visibility="collapsed",
+                    on_change=lambda: update_filter_state('quarter', st.session_state.filter_quarter)
                 )
-                st.session_state.filter_state['quarter'] = selected_quarter
     
     with middle_col:
         if st.button("Add Payment", type="primary", use_container_width=True):
@@ -495,25 +531,18 @@ def show_payment_history(client_id):
             st.rerun()
     
     with right_col:
+        filter_state = st.session_state.filter_state
         status_text = (
-            f"Showing all payments" if time_filter == "All Time" else
-            f"Showing payments from {datetime.now().year}" if time_filter == "This Year" else
-            f"Showing payments from {st.session_state.filter_state['year']}" + 
-            (f" Q{st.session_state.filter_state['quarter'][1]}" 
-             if st.session_state.filter_state['quarter'] != "All Quarters" else "")
+            f"Showing all payments" if filter_state['time_filter'] == "All Time" else
+            f"Showing payments from {datetime.now().year}" if filter_state['time_filter'] == "This Year" else
+            f"Showing payments from {filter_state['year']}" + 
+            (f" Q{filter_state['quarter'][1]}" 
+             if filter_state['quarter'] and filter_state['quarter'] != "All Quarters" else "")
         )
         st.markdown(f"<div style='text-align: right'>{status_text}</div>", unsafe_allow_html=True)
     
-    # Determine filters based on selection
-    if time_filter == "All Time":
-        year_filters = None
-        quarter_filters = None
-    elif time_filter == "This Year":
-        year_filters = [datetime.now().year]
-        quarter_filters = None
-    else:  # Custom
-        year_filters = [st.session_state.filter_state['year']]
-        quarter_filters = None if st.session_state.filter_state['quarter'] == "All Quarters" else [int(st.session_state.filter_state['quarter'][1])]
+    # Get filtered data using the helper function
+    year_filters, quarter_filters = get_current_filters()
     
     # Load and format all payment data
     payments = get_payment_history(client_id, years=year_filters, quarters=quarter_filters)
