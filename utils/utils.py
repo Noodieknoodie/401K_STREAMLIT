@@ -640,68 +640,103 @@ def get_client_dashboard_data(client_id):
     try:
         cursor = conn.cursor()
         
-        # Get client details, active contract, and recent payments in one query
+        # Get contacts
         cursor.execute("""
-            WITH recent_payments AS (
-                SELECT 
-                    p.*,
-                    c.provider_name,
-                    c.payment_schedule
-                FROM payments p
-                JOIN contracts c ON p.contract_id = c.contract_id
-                WHERE p.client_id = ?
-                ORDER BY p.received_date DESC
-                LIMIT 50
-            )
             SELECT 
-                (SELECT json_group_array(json_object(
-                    'contact_type', contact_type,
-                    'contact_name', contact_name,
-                    'phone', phone,
-                    'email', email,
-                    'fax', fax,
-                    'physical_address', physical_address,
-                    'mailing_address', mailing_address,
-                    'contact_id', contact_id
-                ))
-                FROM contacts WHERE client_id = ?) as contacts,
-                
-                (SELECT json_object(
-                    'contract_id', contract_id,
-                    'provider_name', provider_name,
-                    'contract_number', contract_number,
-                    'payment_schedule', payment_schedule,
-                    'fee_type', fee_type,
-                    'percent_rate', percent_rate,
-                    'flat_rate', flat_rate,
-                    'num_people', num_people
-                )
-                FROM contracts 
-                WHERE client_id = ? AND active = 'TRUE'
-                LIMIT 1) as active_contract,
-                
-                (SELECT json_group_array(json_object(
-                    'provider_name', provider_name,
-                    'applied_start_quarter', applied_start_quarter,
-                    'applied_start_year', applied_start_year,
-                    'applied_end_quarter', applied_end_quarter,
-                    'applied_end_year', applied_end_year,
-                    'payment_schedule', payment_schedule,
-                    'received_date', received_date,
-                    'total_assets', total_assets,
-                    'expected_fee', expected_fee,
-                    'actual_fee', actual_fee,
-                    'notes', notes,
-                    'payment_id', payment_id
-                ))
-                FROM recent_payments) as recent_payments;
-        """, (client_id, client_id, client_id))
-        
-        result = cursor.fetchone()
+                contact_type, contact_name, phone, email, 
+                fax, physical_address, mailing_address, contact_id
+            FROM contacts 
+            WHERE client_id = ?
+            ORDER BY 
+                CASE contact_type
+                    WHEN 'Primary Contact' THEN 1
+                    WHEN 'Authorized Contact' THEN 2
+                    WHEN 'Provider Contact' THEN 3
+                    ELSE 4
+                END,
+                contact_name
+        """, (client_id,))
+        contacts = [
+            {
+                'contact_type': row[0],
+                'contact_name': row[1],
+                'phone': row[2],
+                'email': row[3],
+                'fax': row[4],
+                'physical_address': row[5],
+                'mailing_address': row[6],
+                'contact_id': row[7]
+            }
+            for row in cursor.fetchall()
+        ]
+
+        # Get active contract
+        cursor.execute("""
+            SELECT 
+                contract_id, provider_name, contract_number,
+                payment_schedule, fee_type, percent_rate,
+                flat_rate, num_people
+            FROM contracts 
+            WHERE client_id = ? AND active = 'TRUE'
+            LIMIT 1
+        """, (client_id,))
+        contract_row = cursor.fetchone()
+        active_contract = None
+        if contract_row:
+            active_contract = {
+                'contract_id': contract_row[0],
+                'provider_name': contract_row[1],
+                'contract_number': contract_row[2],
+                'payment_schedule': contract_row[3],
+                'fee_type': contract_row[4],
+                'percent_rate': contract_row[5],
+                'flat_rate': contract_row[6],
+                'num_people': contract_row[7]
+            }
+
+        # Get recent payments with contract info
+        cursor.execute("""
+            SELECT 
+                p.payment_id,
+                c.provider_name,
+                p.applied_start_quarter,
+                p.applied_start_year,
+                p.applied_end_quarter,
+                p.applied_end_year,
+                c.payment_schedule,
+                p.received_date,
+                p.total_assets,
+                p.expected_fee,
+                p.actual_fee,
+                p.notes
+            FROM payments p
+            JOIN contracts c ON p.contract_id = c.contract_id
+            WHERE p.client_id = ?
+            ORDER BY p.received_date DESC
+            LIMIT 50
+        """, (client_id,))
+        recent_payments = [
+            {
+                'payment_id': row[0],
+                'provider_name': row[1],
+                'applied_start_quarter': row[2],
+                'applied_start_year': row[3],
+                'applied_end_quarter': row[4],
+                'applied_end_year': row[5],
+                'payment_schedule': row[6],
+                'received_date': row[7],
+                'total_assets': row[8],
+                'expected_fee': row[9],
+                'actual_fee': row[10],
+                'notes': row[11]
+            }
+            for row in cursor.fetchall()
+        ]
+
         return {
-            'contacts': result[0],
-            'active_contract': result[1],
-            'recent_payments': result[2]
+            'contacts': contacts,
+            'active_contract': active_contract,
+            'recent_payments': recent_payments
         }
     finally:
         conn.close()
