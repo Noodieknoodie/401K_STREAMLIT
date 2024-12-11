@@ -553,41 +553,182 @@ def show_payment_history(client_id):
         return
     
     table_data = format_payment_data(payments)
+    df = pd.DataFrame(table_data)
     
-    # Render the payment table using the new functions
-    render_payment_table(table_data)
+    # Add CSS for payment rows
+    st.markdown("""
+        <style>
+        /* Payment table specific styling */
+        div.payment-table div[data-testid="column"] > div > div > div > div {
+            padding: 0;
+            margin: 0;
+            line-height: 0.8;
+        }
+        
+        /* Note button specific styling */
+        div.payment-table div[data-testid="column"]:last-child button {
+            padding: 0 !important;
+            min-height: 24px !important;
+            height: 24px !important;
+            line-height: 24px !important;
+            width: 24px !important;
+            margin: 0 auto !important;
+        }
+        
+        /* Action buttons styling */
+        div.payment-table div[data-testid="column"]:nth-last-child(1) button {
+            padding: 0 !important;
+            min-height: 24px !important;
+            height: 24px !important;
+            line-height: 24px !important;
+            width: 24px !important;
+            margin: 0 auto !important;
+        }
+        
+        /* Payment table text */
+        div.payment-table p {
+            margin: 0;
+            padding: 0;
+            line-height: 1;
+        }
+        
+        /* Header styling */
+        div.payment-table div[data-testid="stHorizontalBlock"] {
+            margin-bottom: 0.1rem;
+        }
+        
+        /* Tooltip fix */
+        div[data-testid="stTooltipIcon"] > div {
+            min-height: auto !important;
+            line-height: normal !important;
+        }
+        
+        /* Note expansion area */
+        div.payment-table div.stTextArea > div {
+            margin: 0.25rem 0;
+        }
+        div.payment-table div.stTextArea textarea {
+            min-height: 80px !important;
+            padding: 0.5rem;
+        }
+        </style>
+    """, unsafe_allow_html=True)
     
-    # Handle note editing - preserving existing note functionality
-    if (
-        'notes_state' in st.session_state 
-        and st.session_state.notes_state['active_note'] is not None
-    ):
-        payment_id = st.session_state.notes_state['active_note']
-        payment_data = next(
-            (row for row in table_data if row['payment_id'] == payment_id),
-            None
-        )
-        if payment_data:
+    # Wrap the payment table in a div with our specific class
+    st.markdown('<div class="payment-table">', unsafe_allow_html=True)
+    
+    # Display headers with minimal spacing
+    header_cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1, 1])
+    with header_cols[0]:
+        st.markdown("<p style='font-weight: bold; margin: 0;'>Provider</p>", unsafe_allow_html=True)
+    with header_cols[1]:
+        st.markdown("<p style='font-weight: bold; margin: 0;'>Period</p>", unsafe_allow_html=True)
+    with header_cols[2]:
+        st.markdown("<p style='font-weight: bold; margin: 0;'>Frequency</p>", unsafe_allow_html=True)
+    with header_cols[3]:
+        st.markdown("<p style='font-weight: bold; margin: 0;'>Received</p>", unsafe_allow_html=True)
+    with header_cols[4]:
+        st.markdown("<p style='font-weight: bold; margin: 0;'>Total Assets</p>", unsafe_allow_html=True)
+    with header_cols[5]:
+        st.markdown("<p style='font-weight: bold; margin: 0;'>Expected Fee</p>", unsafe_allow_html=True)
+    with header_cols[6]:
+        st.markdown("<p style='font-weight: bold; margin: 0;'>Actual Fee</p>", unsafe_allow_html=True)
+    with header_cols[7]:
+        st.markdown("<p style='font-weight: bold; margin: 0;'>Discrepancy</p>", unsafe_allow_html=True)
+    with header_cols[8]:
+        st.markdown("<p style='font-weight: bold; margin: 0;'>Notes</p>", unsafe_allow_html=True)
+    with header_cols[9]:
+        st.markdown("<p style='font-weight: bold; margin: 0;'>Actions</p>", unsafe_allow_html=True)
+    
+    # Single header divider with minimal spacing
+    st.markdown("<hr style='margin: 0.1rem 0; border-color: #eee;'>", unsafe_allow_html=True)
+
+# DO NOT REMOVE NOTE FUNCTIONALITY KEEP NOTES EXACTLY AS THEY ARE        
+
+    # Display data rows
+    for index, row in df.iterrows():
+        render_table_row(row)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+def render_table_row(row):
+    """Render a single payment table row"""
+    with st.container():
+        row_cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1, 1])
+        
+        with row_cols[0]:
+            st.markdown(f"<p style='margin: 0;'>{row['Provider']}</p>", unsafe_allow_html=True)
+        with row_cols[1]:
+            st.markdown(f"<p style='margin: 0;'>{row['Period']}</p>", unsafe_allow_html=True)
+        with row_cols[2]:
+            st.markdown(f"<p style='margin: 0;'>{row['Frequency']}</p>", unsafe_allow_html=True)
+        with row_cols[3]:
+            st.markdown(f"<p style='margin: 0;'>{row['Received']}</p>", unsafe_allow_html=True)
+        with row_cols[4]:
+            st.markdown(f"<p style='margin: 0;'>{row['Total Assets']}</p>", unsafe_allow_html=True)
+        with row_cols[5]:
+            st.markdown(f"<p style='margin: 0;'>{row['Expected Fee']}</p>", unsafe_allow_html=True)
+        with row_cols[6]:
+            st.markdown(f"<p style='margin: 0;'>{row['Actual Fee']}</p>", unsafe_allow_html=True)
+        with row_cols[7]:
+            st.markdown(f"<p style='margin: 0;'>{row['Discrepancy']}</p>", unsafe_allow_html=True)
+        with row_cols[8]:
+            has_note = bool(row["Notes"])
+            icon_content = "🟢" if has_note else "◯"
+            tooltip = row["Notes"] if has_note else "Add note"
+            
+            if st.button(
+                icon_content,
+                key=f"note_button_{row['payment_id']}",
+                help=tooltip,
+                use_container_width=False
+            ):
+                if 'active_note_id' in st.session_state and st.session_state.active_note_id == row['payment_id']:
+                    st.session_state.active_note_id = None
+                else:
+                    st.session_state.active_note_id = row['payment_id']
+                st.rerun()
+        
+        with row_cols[9]:
+            action_cols = st.columns([1, 1])
+            with action_cols[0]:
+                if st.button("✏️", key=f"editpayment{row['payment_id']}", help="Edit payment"):
+                    payment_data = get_payment_by_id(row['payment_id'])
+                    if payment_data:
+                        st.session_state.payment_form['is_visible'] = True
+                        st.session_state.payment_form['mode'] = 'edit'
+                        st.session_state.payment_form['payment_id'] = row['payment_id']
+                        populate_payment_form_for_edit(payment_data)
+                    st.rerun()
+            with action_cols[1]:
+                if st.button("🗑️", key=f"deletepayment{row['payment_id']}", help="Delete payment"):
+                    st.session_state.delete_payment_id = row['payment_id']
+                    st.session_state.show_delete_confirm = True
+                    st.rerun()
+
+        # After the row columns are closed, check if this row's note should be displayed
+        if (
+            'active_note_id' in st.session_state 
+            and st.session_state.active_note_id == row['payment_id']
+        ):
+            # Create a fresh container for the note area
             with st.container():
+                # Create columns for the note area using full page width
                 note_cols = st.columns([7, 9])
                 with note_cols[1]:
-                    st.markdown("""<div style="border-top: 1px solid #eee; padding-top: 0.5rem;"></div>""", unsafe_allow_html=True)
+                    st.markdown("""<div style="border-top: 1px solid #eee; padding-top: 0.25rem;"></div>""", unsafe_allow_html=True)
                     edited_note = st.text_area(
-                        f"Note for {payment_data['Provider']} - {payment_data['Period']}",
-                        value=payment_data['Notes'],
-                        key=f"note_{payment_id}",
-                        height=100
+                        f"Note for {row['Provider']} - {row['Period']}",
+                        value=row["Notes"] or "",
+                        key=f"note_textarea_{row['payment_id']}",
+                        height=80,
+                        placeholder="Enter note here..."
                     )
                     
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        if st.button("Save Note", key=f"save_note_{payment_id}", type="primary", use_container_width=True):
-                            handle_note_edit(payment_id, edited_note)
-                            st.rerun()
-                    with col2:
-                        if st.button("Cancel", key=f"cancel_note_{payment_id}", use_container_width=True):
-                            st.session_state.notes_state['active_note'] = None
-                            st.rerun()
+                    # Handle note changes
+                    if edited_note != row["Notes"]:
+                        update_payment_note(row['payment_id'], edited_note)
+                        st.rerun()
 
 def display_client_dashboard():
     """Display the main client dashboard with optimized data loading"""
@@ -822,156 +963,6 @@ def display_contacts_section():
     
     for contact in sorted_contacts:
         render_contact_card(contact)
-
-# ============================================================================
-# TABLE UI COMPONENTS
-# ============================================================================
-
-def add_table_styles():
-    """Add CSS styles for payment table"""
-    st.markdown("""
-        <style>
-        /* Payment table specific styling */
-        div.payment-table div[data-testid="column"] > div > div > div > div {
-            padding: 0;
-            margin: 0;
-            line-height: 0.8;
-        }
-        
-        /* Note button specific styling */
-        div.payment-table div[data-testid="column"]:last-child button {
-            padding: 0 !important;
-            min-height: 24px !important;
-            height: 24px !important;
-            line-height: 24px !important;
-            width: 24px !important;
-            margin: 0 auto !important;
-        }
-        
-        /* Action buttons styling */
-        div.payment-table div[data-testid="column"]:nth-last-child(1) button {
-            padding: 0 !important;
-            min-height: 24px !important;
-            height: 24px !important;
-            line-height: 24px !important;
-            width: 24px !important;
-            margin: 0 auto !important;
-        }
-        
-        /* Payment table text */
-        div.payment-table p {
-            margin: 0;
-            padding: 0;
-            line-height: 1;
-        }
-        
-        /* Header styling */
-        div.payment-table div[data-testid="stHorizontalBlock"] {
-            margin-bottom: 0.1rem;
-        }
-        
-        /* Tooltip fix */
-        div[data-testid="stTooltipIcon"] > div {
-            min-height: auto !important;
-            line-height: normal !important;
-        }
-        
-        /* Note expansion area */
-        div.payment-table div.stTextArea > div {
-            margin: 0.25rem 0;
-        }
-        div.payment-table div.stTextArea textarea {
-            min-height: 80px !important;
-            padding: 0.5rem;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
-def render_table_headers():
-    """Render payment table headers"""
-    header_cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1, 1])
-    with header_cols[0]:
-        st.markdown("<p style='font-weight: bold; margin: 0;'>Provider</p>", unsafe_allow_html=True)
-    with header_cols[1]:
-        st.markdown("<p style='font-weight: bold; margin: 0;'>Period</p>", unsafe_allow_html=True)
-    with header_cols[2]:
-        st.markdown("<p style='font-weight: bold; margin: 0;'>Frequency</p>", unsafe_allow_html=True)
-    with header_cols[3]:
-        st.markdown("<p style='font-weight: bold; margin: 0;'>Received</p>", unsafe_allow_html=True)
-    with header_cols[4]:
-        st.markdown("<p style='font-weight: bold; margin: 0;'>Total Assets</p>", unsafe_allow_html=True)
-    with header_cols[5]:
-        st.markdown("<p style='font-weight: bold; margin: 0;'>Expected Fee</p>", unsafe_allow_html=True)
-    with header_cols[6]:
-        st.markdown("<p style='font-weight: bold; margin: 0;'>Actual Fee</p>", unsafe_allow_html=True)
-    with header_cols[7]:
-        st.markdown("<p style='font-weight: bold; margin: 0;'>Discrepancy</p>", unsafe_allow_html=True)
-    with header_cols[8]:
-        st.markdown("<p style='font-weight: bold; margin: 0;'>Notes</p>", unsafe_allow_html=True)
-    with header_cols[9]:
-        st.markdown("<p style='font-weight: bold; margin: 0;'>Actions</p>", unsafe_allow_html=True)
-    
-    st.markdown("<hr style='margin: 0.1rem 0; border-color: #eee;'>", unsafe_allow_html=True)
-
-def render_table_row(row):
-    """Render a single payment table row"""
-    with st.container():
-        row_cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1, 1])
-        
-        with row_cols[0]:
-            st.markdown(f"<p style='margin: 0;'>{row['Provider']}</p>", unsafe_allow_html=True)
-        with row_cols[1]:
-            st.markdown(f"<p style='margin: 0;'>{row['Period']}</p>", unsafe_allow_html=True)
-        with row_cols[2]:
-            st.markdown(f"<p style='margin: 0;'>{row['Frequency']}</p>", unsafe_allow_html=True)
-        with row_cols[3]:
-            st.markdown(f"<p style='margin: 0;'>{row['Received']}</p>", unsafe_allow_html=True)
-        with row_cols[4]:
-            st.markdown(f"<p style='margin: 0;'>{row['Total Assets']}</p>", unsafe_allow_html=True)
-        with row_cols[5]:
-            st.markdown(f"<p style='margin: 0;'>{row['Expected Fee']}</p>", unsafe_allow_html=True)
-        with row_cols[6]:
-            st.markdown(f"<p style='margin: 0;'>{row['Actual Fee']}</p>", unsafe_allow_html=True)
-        with row_cols[7]:
-            st.markdown(f"<p style='margin: 0;'>{row['Discrepancy']}</p>", unsafe_allow_html=True)
-        with row_cols[8]:
-            has_note = bool(row["Notes"])
-            icon_content = "🟢" if has_note else "◯"
-            tooltip = row["Notes"] if has_note else "Add note"
-            
-            if st.button(
-                icon_content,
-                key=f"note_button_{row['payment_id']}",
-                help=tooltip,
-                use_container_width=False
-            ):
-                if 'active_note_id' in st.session_state and st.session_state.active_note_id == row['payment_id']:
-                    st.session_state.active_note_id = None
-                else:
-                    st.session_state.active_note_id = row['payment_id']
-                st.rerun()
-        
-        with row_cols[9]:
-            action_cols = st.columns([1, 1])
-            with action_cols[0]:
-                if st.button("✏️", key=f"editpayment{row['payment_id']}", help="Edit payment"):
-                    payment_data = get_payment_by_id(row['payment_id'])
-                    if payment_data:
-                        st.session_state.payment_form['is_visible'] = True
-                        st.session_state.payment_form['mode'] = 'edit'
-                        st.session_state.payment_form['payment_id'] = row['payment_id']
-                        populate_payment_form_for_edit(payment_data)
-                    st.rerun()
-
-def render_payment_table(table_data):
-    """Render the complete payment table"""
-    add_table_styles()
-    st.markdown('<div class="payment-table">', unsafe_allow_html=True)
-    render_table_headers()
-    
-    df = pd.DataFrame(table_data)
-    for _, row in df.iterrows():
-        render_table_row(row)
 
 if __name__ == "__main__":
     display_client_dashboard()

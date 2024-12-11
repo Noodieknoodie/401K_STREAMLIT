@@ -714,3 +714,352 @@
 {"timestamp": "2024-12-10 22:51:29.902879", "event": "cache_hit", "session_id": "20241210_225118", "details": {"client_id": 3}, "duration_ms": null}
 {"timestamp": "2024-12-10 22:51:29.902879", "event": "db_call", "session_id": "20241210_225118", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": null}
 {"timestamp": "2024-12-10 22:51:30.112662", "event": "ui_action", "session_id": "20241210_225118", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 215.62}
+{"timestamp": "2024-12-10 23:08:57.680537", "event": "client_selected", "session_id": "20241210_230856", "details": {"client": null}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:08:57.681538", "event": "ui_action", "session_id": "20241210_230856", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 3.0}
+{"timestamp": "2024-12-10 23:08:58.856221", "event": "client_selected", "session_id": "20241210_230856", "details": {"client": "Amplero"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:08:58.856221", "event": "cache_miss", "session_id": "20241210_230856", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:08:58.857219", "event": "cache_store", "session_id": "20241210_230856", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:08:58.858220", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:08:58.858220", "event": "client_data_loaded", "session_id": "20241210_230856", "details": {"client": "Amplero", "has_contract": true, "has_payments": true, "contact_count": 2}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:08:58.858220", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:08:58.858220", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:08:59.061108", "event": "ui_action", "session_id": "20241210_230856", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 206.89}
+{"timestamp": "2024-12-10 23:09:12.724626", "event": "client_selected", "session_id": "20241210_230856", "details": {"client": "Corina Bakery"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:12.725626", "event": "cache_miss", "session_id": "20241210_230856", "details": {"client_id": 7}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:12.726628", "event": "cache_store", "session_id": "20241210_230856", "details": {"client_id": 7}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:12.727626", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(7,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:09:12.727626", "event": "client_data_loaded", "session_id": "20241210_230856", "details": {"client": "Corina Bakery", "has_contract": true, "has_payments": true, "contact_count": 1}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:09:12.727626", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 7}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:12.728626", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(7,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:09:12.870041", "event": "ui_action", "session_id": "20241210_230856", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 146.42}
+{"timestamp": "2024-12-10 23:09:19.516382", "event": "client_selected", "session_id": "20241210_230856", "details": {"client": "Hansen Bros"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:19.516382", "event": "cache_miss", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:19.517381", "event": "cache_store", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:19.518381", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:09:19.518381", "event": "client_data_loaded", "session_id": "20241210_230856", "details": {"client": "Hansen Bros", "has_contract": true, "has_payments": true, "contact_count": 1}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:09:19.518381", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:19.519380", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:09:19.601275", "event": "ui_action", "session_id": "20241210_230856", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 85.89}
+{"timestamp": "2024-12-10 23:09:22.764029", "event": "client_selected", "session_id": "20241210_230856", "details": {"client": "Hansen Bros"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:22.764029", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:22.765030", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:09:22.765030", "event": "client_data_loaded", "session_id": "20241210_230856", "details": {"client": "Hansen Bros", "has_contract": true, "has_payments": true, "contact_count": 1}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:09:22.766029", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:22.766029", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:22.806336", "event": "client_selected", "session_id": "20241210_230856", "details": {"client": "Hansen Bros"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:22.806336", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:22.806336", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:22.806336", "event": "client_data_loaded", "session_id": "20241210_230856", "details": {"client": "Hansen Bros", "has_contract": true, "has_payments": true, "contact_count": 1}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:22.806336", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:22.806336", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:22.892834", "event": "ui_action", "session_id": "20241210_230856", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 102.12}
+{"timestamp": "2024-12-10 23:09:29.461138", "event": "client_selected", "session_id": "20241210_230856", "details": {"client": "Hansen Bros"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:29.462138", "event": "cache_expired", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:29.462138", "event": "cache_miss", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:29.464136", "event": "cache_store", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:29.464136", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:09:29.464136", "event": "client_data_loaded", "session_id": "20241210_230856", "details": {"client": "Hansen Bros", "has_contract": true, "has_payments": true, "contact_count": 1}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:09:29.464136", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:29.465140", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:09:29.509239", "event": "client_selected", "session_id": "20241210_230856", "details": {"client": "Hansen Bros"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:29.510674", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:29.510674", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:29.510674", "event": "client_data_loaded", "session_id": "20241210_230856", "details": {"client": "Hansen Bros", "has_contract": true, "has_payments": true, "contact_count": 1}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:29.511676", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:29.511676", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:29.589929", "event": "ui_action", "session_id": "20241210_230856", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 81.69}
+{"timestamp": "2024-12-10 23:09:32.378261", "event": "client_selected", "session_id": "20241210_230856", "details": {"client": "Hansen Bros"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:32.378261", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:32.379261", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:09:32.379261", "event": "client_data_loaded", "session_id": "20241210_230856", "details": {"client": "Hansen Bros", "has_contract": true, "has_payments": true, "contact_count": 1}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:09:32.380259", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:32.380259", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:32.420563", "event": "client_selected", "session_id": "20241210_230856", "details": {"client": "Hansen Bros"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:32.420563", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:32.420563", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:32.420563", "event": "client_data_loaded", "session_id": "20241210_230856", "details": {"client": "Hansen Bros", "has_contract": true, "has_payments": true, "contact_count": 1}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:32.420563", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:32.420563", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:32.501156", "event": "ui_action", "session_id": "20241210_230856", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 96.22}
+{"timestamp": "2024-12-10 23:09:33.679028", "event": "client_selected", "session_id": "20241210_230856", "details": {"client": "Hansen Bros"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:33.679028", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:33.680028", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:09:33.680028", "event": "client_data_loaded", "session_id": "20241210_230856", "details": {"client": "Hansen Bros", "has_contract": true, "has_payments": true, "contact_count": 1}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:09:33.680028", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:33.680028", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:33.721336", "event": "client_selected", "session_id": "20241210_230856", "details": {"client": "Hansen Bros"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:33.721336", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:33.721336", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:33.721336", "event": "client_data_loaded", "session_id": "20241210_230856", "details": {"client": "Hansen Bros", "has_contract": true, "has_payments": true, "contact_count": 1}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:33.721336", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:33.721336", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:33.803321", "event": "ui_action", "session_id": "20241210_230856", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 81.98}
+{"timestamp": "2024-12-10 23:09:36.151785", "event": "client_selected", "session_id": "20241210_230856", "details": {"client": "Hansen Bros"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:36.152786", "event": "cache_expired", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:36.152786", "event": "cache_miss", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:36.153783", "event": "cache_store", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:36.153783", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:09:36.153783", "event": "client_data_loaded", "session_id": "20241210_230856", "details": {"client": "Hansen Bros", "has_contract": true, "has_payments": true, "contact_count": 1}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:09:36.154783", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:36.154783", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:36.201154", "event": "client_selected", "session_id": "20241210_230856", "details": {"client": "Hansen Bros"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:36.201154", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:36.201154", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:36.202328", "event": "client_data_loaded", "session_id": "20241210_230856", "details": {"client": "Hansen Bros", "has_contract": true, "has_payments": true, "contact_count": 1}, "duration_ms": 1.17}
+{"timestamp": "2024-12-10 23:09:36.202328", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 12}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:36.202328", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(12,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:36.286621", "event": "ui_action", "session_id": "20241210_230856", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 87.47}
+{"timestamp": "2024-12-10 23:09:37.955604", "event": "client_selected", "session_id": "20241210_230856", "details": {"client": "AirSea America"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:37.956604", "event": "cache_miss", "session_id": "20241210_230856", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:37.957603", "event": "cache_store", "session_id": "20241210_230856", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:37.957603", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(1,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:09:37.958603", "event": "client_data_loaded", "session_id": "20241210_230856", "details": {"client": "AirSea America", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:09:37.958603", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:37.958603", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(1,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:38.184692", "event": "ui_action", "session_id": "20241210_230856", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 230.09}
+{"timestamp": "2024-12-10 23:09:43.410762", "event": "client_selected", "session_id": "20241210_230856", "details": {"client": "AirSea America"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:43.410762", "event": "cache_expired", "session_id": "20241210_230856", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:43.410762", "event": "cache_miss", "session_id": "20241210_230856", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:43.410762", "event": "cache_store", "session_id": "20241210_230856", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:43.410762", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(1,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:43.410762", "event": "client_data_loaded", "session_id": "20241210_230856", "details": {"client": "AirSea America", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:43.410762", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:43.410762", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(1,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:43.463614", "event": "client_selected", "session_id": "20241210_230856", "details": {"client": "AirSea America"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:43.464701", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:43.464701", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(1,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:43.465706", "event": "client_data_loaded", "session_id": "20241210_230856", "details": {"client": "AirSea America", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:09:43.465706", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:43.466636", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(1,)", "success": true}, "duration_ms": 0.93}
+{"timestamp": "2024-12-10 23:09:43.704598", "event": "ui_action", "session_id": "20241210_230856", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 241.99}
+{"timestamp": "2024-12-10 23:09:46.189055", "event": "client_selected", "session_id": "20241210_230856", "details": {"client": "AirSea America"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:46.189055", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:46.190056", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(1,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:09:46.190056", "event": "client_data_loaded", "session_id": "20241210_230856", "details": {"client": "AirSea America", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:09:46.191054", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:46.191054", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(1,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:46.233374", "event": "client_selected", "session_id": "20241210_230856", "details": {"client": "AirSea America"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:46.233374", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:46.233374", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(1,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:46.233374", "event": "client_data_loaded", "session_id": "20241210_230856", "details": {"client": "AirSea America", "has_contract": true, "has_payments": true, "contact_count": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:46.233374", "event": "cache_hit", "session_id": "20241210_230856", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:46.233374", "event": "db_call", "session_id": "20241210_230856", "details": {"function": "get_consolidated_client_data", "args": "(1,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:09:46.451663", "event": "ui_action", "session_id": "20241210_230856", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 221.3}
+{"timestamp": "2024-12-10 23:10:50.405306", "event": "client_selected", "session_id": "20241210_231049", "details": {"client": null}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:50.405306", "event": "ui_action", "session_id": "20241210_231049", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:10:51.234309", "event": "client_selected", "session_id": "20241210_231049", "details": {"client": "Auction Edge"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:51.235308", "event": "cache_miss", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:51.236309", "event": "cache_store", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:51.237309", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:10:51.237309", "event": "client_data_loaded", "session_id": "20241210_231049", "details": {"client": "Auction Edge", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:10:51.237309", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:51.237309", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:51.325705", "event": "ui_action", "session_id": "20241210_231049", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 92.4}
+{"timestamp": "2024-12-10 23:10:55.720210", "event": "client_selected", "session_id": "20241210_231049", "details": {"client": "Auction Edge"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:55.721210", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:55.721210", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:55.721210", "event": "client_data_loaded", "session_id": "20241210_231049", "details": {"client": "Auction Edge", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:55.722208", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:55.722208", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:55.766101", "event": "client_selected", "session_id": "20241210_231049", "details": {"client": "Auction Edge"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:55.767102", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:55.767102", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:55.767102", "event": "client_data_loaded", "session_id": "20241210_231049", "details": {"client": "Auction Edge", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:55.768236", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:55.768236", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:55.850383", "event": "ui_action", "session_id": "20241210_231049", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 85.28}
+{"timestamp": "2024-12-10 23:10:59.384458", "event": "client_selected", "session_id": "20241210_231049", "details": {"client": "Auction Edge"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:59.384458", "event": "cache_expired", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:59.385460", "event": "cache_miss", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:59.385460", "event": "cache_store", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:59.386457", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:10:59.386457", "event": "client_data_loaded", "session_id": "20241210_231049", "details": {"client": "Auction Edge", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:10:59.386457", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:59.386457", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:59.432425", "event": "client_selected", "session_id": "20241210_231049", "details": {"client": "Auction Edge"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:59.432425", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:59.432425", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:59.432425", "event": "client_data_loaded", "session_id": "20241210_231049", "details": {"client": "Auction Edge", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:59.432425", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:59.432425", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:10:59.516491", "event": "ui_action", "session_id": "20241210_231049", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 99.69}
+{"timestamp": "2024-12-10 23:11:00.554240", "event": "client_selected", "session_id": "20241210_231049", "details": {"client": "Auction Edge"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:00.555240", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:00.555240", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:00.555240", "event": "client_data_loaded", "session_id": "20241210_231049", "details": {"client": "Auction Edge", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:00.556244", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:00.556244", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:00.600335", "event": "client_selected", "session_id": "20241210_231049", "details": {"client": "Auction Edge"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:00.600335", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:00.600335", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:00.601521", "event": "client_data_loaded", "session_id": "20241210_231049", "details": {"client": "Auction Edge", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": 1.19}
+{"timestamp": "2024-12-10 23:11:00.601521", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:00.602526", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.01}
+{"timestamp": "2024-12-10 23:11:00.685098", "event": "ui_action", "session_id": "20241210_231049", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 85.77}
+{"timestamp": "2024-12-10 23:11:01.720035", "event": "client_selected", "session_id": "20241210_231049", "details": {"client": "Auction Edge"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:01.720035", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:01.721034", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:11:01.721034", "event": "client_data_loaded", "session_id": "20241210_231049", "details": {"client": "Auction Edge", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:11:01.722036", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:01.722036", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:01.765027", "event": "client_selected", "session_id": "20241210_231049", "details": {"client": "Auction Edge"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:01.765027", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:01.766028", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:11:01.766028", "event": "client_data_loaded", "session_id": "20241210_231049", "details": {"client": "Auction Edge", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:11:01.767027", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:01.767027", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:01.839015", "event": "ui_action", "session_id": "20241210_231049", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 75.04}
+{"timestamp": "2024-12-10 23:11:45.182865", "event": "client_selected", "session_id": "20241210_231049", "details": {"client": "Auction Edge"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:45.183865", "event": "cache_expired", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:45.184865", "event": "cache_miss", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:45.185864", "event": "cache_store", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:45.185864", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:11:45.185864", "event": "client_data_loaded", "session_id": "20241210_231049", "details": {"client": "Auction Edge", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:11:45.186865", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:45.186865", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:45.233318", "event": "client_selected", "session_id": "20241210_231049", "details": {"client": "Auction Edge"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:45.234383", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:45.234383", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:45.235427", "event": "client_data_loaded", "session_id": "20241210_231049", "details": {"client": "Auction Edge", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": 1.04}
+{"timestamp": "2024-12-10 23:11:45.235427", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:45.235427", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:45.333299", "event": "ui_action", "session_id": "20241210_231049", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 100.98}
+{"timestamp": "2024-12-10 23:11:46.011123", "event": "client_selected", "session_id": "20241210_231049", "details": {"client": "Auction Edge"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:46.012126", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:46.012126", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:46.013124", "event": "client_data_loaded", "session_id": "20241210_231049", "details": {"client": "Auction Edge", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:11:46.013124", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:46.013124", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:46.054448", "event": "client_selected", "session_id": "20241210_231049", "details": {"client": "Auction Edge"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:46.054448", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:46.054448", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:46.054448", "event": "client_data_loaded", "session_id": "20241210_231049", "details": {"client": "Auction Edge", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:46.054448", "event": "cache_hit", "session_id": "20241210_231049", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:46.054448", "event": "db_call", "session_id": "20241210_231049", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:11:46.132949", "event": "ui_action", "session_id": "20241210_231049", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 78.5}
+{"timestamp": "2024-12-10 23:13:04.773249", "event": "client_selected", "session_id": "20241210_231303", "details": {"client": null}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:13:04.773249", "event": "ui_action", "session_id": "20241210_231303", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:13:05.633075", "event": "client_selected", "session_id": "20241210_231303", "details": {"client": "Auction Edge"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:13:05.633075", "event": "cache_miss", "session_id": "20241210_231303", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:13:05.635074", "event": "cache_store", "session_id": "20241210_231303", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:13:05.635074", "event": "db_call", "session_id": "20241210_231303", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:13:05.635074", "event": "client_data_loaded", "session_id": "20241210_231303", "details": {"client": "Auction Edge", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:13:05.635074", "event": "cache_hit", "session_id": "20241210_231303", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:13:05.636075", "event": "db_call", "session_id": "20241210_231303", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:13:05.723403", "event": "ui_action", "session_id": "20241210_231303", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 91.33}
+{"timestamp": "2024-12-10 23:14:14.419130", "event": "client_selected", "session_id": "20241210_231413", "details": {"client": null}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:14.419130", "event": "ui_action", "session_id": "20241210_231413", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:14:15.302926", "event": "client_selected", "session_id": "20241210_231413", "details": {"client": "Auction Edge"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:15.303922", "event": "cache_miss", "session_id": "20241210_231413", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:15.304925", "event": "cache_store", "session_id": "20241210_231413", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:15.304925", "event": "db_call", "session_id": "20241210_231413", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:14:15.304925", "event": "client_data_loaded", "session_id": "20241210_231413", "details": {"client": "Auction Edge", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:14:15.304925", "event": "cache_hit", "session_id": "20241210_231413", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:15.305925", "event": "db_call", "session_id": "20241210_231413", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:14:15.395387", "event": "ui_action", "session_id": "20241210_231413", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 93.46}
+{"timestamp": "2024-12-10 23:14:17.662668", "event": "client_selected", "session_id": "20241210_231413", "details": {"client": "Auction Edge"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:17.662668", "event": "cache_hit", "session_id": "20241210_231413", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:17.663668", "event": "db_call", "session_id": "20241210_231413", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:14:17.663668", "event": "client_data_loaded", "session_id": "20241210_231413", "details": {"client": "Auction Edge", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:14:17.663668", "event": "cache_hit", "session_id": "20241210_231413", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:17.664665", "event": "db_call", "session_id": "20241210_231413", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:14:17.708027", "event": "client_selected", "session_id": "20241210_231413", "details": {"client": "Auction Edge"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:17.709075", "event": "cache_hit", "session_id": "20241210_231413", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:17.709075", "event": "db_call", "session_id": "20241210_231413", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:17.710075", "event": "client_data_loaded", "session_id": "20241210_231413", "details": {"client": "Auction Edge", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:14:17.710075", "event": "cache_hit", "session_id": "20241210_231413", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:17.710075", "event": "db_call", "session_id": "20241210_231413", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:17.797497", "event": "ui_action", "session_id": "20241210_231413", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 90.55}
+{"timestamp": "2024-12-10 23:14:19.864493", "event": "client_selected", "session_id": "20241210_231413", "details": {"client": "Auction Edge"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:19.865493", "event": "cache_hit", "session_id": "20241210_231413", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:19.865493", "event": "db_call", "session_id": "20241210_231413", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:19.865493", "event": "client_data_loaded", "session_id": "20241210_231413", "details": {"client": "Auction Edge", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:19.866494", "event": "cache_hit", "session_id": "20241210_231413", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:19.866494", "event": "db_call", "session_id": "20241210_231413", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:19.912122", "event": "client_selected", "session_id": "20241210_231413", "details": {"client": "Auction Edge"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:19.912122", "event": "cache_hit", "session_id": "20241210_231413", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:19.912122", "event": "db_call", "session_id": "20241210_231413", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:19.913170", "event": "client_data_loaded", "session_id": "20241210_231413", "details": {"client": "Auction Edge", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": 1.05}
+{"timestamp": "2024-12-10 23:14:19.913170", "event": "cache_hit", "session_id": "20241210_231413", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:14:19.914170", "event": "db_call", "session_id": "20241210_231413", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:14:19.999611", "event": "ui_action", "session_id": "20241210_231413", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 89.58}
+{"timestamp": "2024-12-10 23:21:09.942380", "event": "client_selected", "session_id": "20241210_232107", "details": {"client": null}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:09.942380", "event": "ui_action", "session_id": "20241210_232107", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:21:10.811298", "event": "client_selected", "session_id": "20241210_232107", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:10.811298", "event": "cache_miss", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:10.812296", "event": "cache_store", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:10.813299", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:21:10.813299", "event": "client_data_loaded", "session_id": "20241210_232107", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:21:10.813299", "event": "cache_hit", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:10.813299", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:10.906212", "event": "ui_action", "session_id": "20241210_232107", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 95.92}
+{"timestamp": "2024-12-10 23:21:13.297300", "event": "client_selected", "session_id": "20241210_232107", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:13.298299", "event": "cache_hit", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:13.298299", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:13.299299", "event": "client_data_loaded", "session_id": "20241210_232107", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:21:13.299299", "event": "cache_hit", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:13.299299", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:13.343742", "event": "client_selected", "session_id": "20241210_232107", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:13.343742", "event": "cache_hit", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:13.344741", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:21:13.344741", "event": "client_data_loaded", "session_id": "20241210_232107", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:21:13.344741", "event": "cache_hit", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:13.344741", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:13.436269", "event": "ui_action", "session_id": "20241210_232107", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 93.53}
+{"timestamp": "2024-12-10 23:21:15.457339", "event": "client_selected", "session_id": "20241210_232107", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:15.457339", "event": "cache_hit", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:15.458337", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:21:15.458337", "event": "client_data_loaded", "session_id": "20241210_232107", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:21:15.459337", "event": "cache_hit", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:15.459337", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:15.498998", "event": "client_selected", "session_id": "20241210_232107", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:15.498998", "event": "cache_hit", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:15.498998", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:15.498998", "event": "client_data_loaded", "session_id": "20241210_232107", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:15.498998", "event": "cache_hit", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:15.498998", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:15.584734", "event": "ui_action", "session_id": "20241210_232107", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 85.74}
+{"timestamp": "2024-12-10 23:21:18.752472", "event": "client_selected", "session_id": "20241210_232107", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:18.752472", "event": "cache_expired", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:18.753473", "event": "cache_miss", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:18.754473", "event": "cache_store", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:18.754473", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:21:18.754473", "event": "client_data_loaded", "session_id": "20241210_232107", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:21:18.754473", "event": "cache_hit", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:18.754473", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:18.800550", "event": "client_selected", "session_id": "20241210_232107", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:18.801551", "event": "cache_hit", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:18.801551", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:18.801551", "event": "client_data_loaded", "session_id": "20241210_232107", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:18.801551", "event": "cache_hit", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:18.801551", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:18.879546", "event": "ui_action", "session_id": "20241210_232107", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 80.0}
+{"timestamp": "2024-12-10 23:21:20.375424", "event": "client_selected", "session_id": "20241210_232107", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:20.375424", "event": "cache_hit", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:20.376427", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:21:20.376427", "event": "client_data_loaded", "session_id": "20241210_232107", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 23:21:20.377426", "event": "cache_hit", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:20.377426", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:20.412394", "event": "client_selected", "session_id": "20241210_232107", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:20.412394", "event": "cache_hit", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:20.412394", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:20.412394", "event": "client_data_loaded", "session_id": "20241210_232107", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:20.412394", "event": "cache_hit", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:20.412394", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:20.515469", "event": "ui_action", "session_id": "20241210_232107", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 103.07}
+{"timestamp": "2024-12-10 23:21:31.287030", "event": "client_selected", "session_id": "20241210_232107", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:31.287030", "event": "cache_expired", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:31.288030", "event": "cache_miss", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:31.289032", "event": "cache_store", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:31.289032", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:21:31.289032", "event": "client_data_loaded", "session_id": "20241210_232107", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": 2.0}
+{"timestamp": "2024-12-10 23:21:31.289032", "event": "cache_hit", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:31.289032", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:31.329335", "event": "client_selected", "session_id": "20241210_232107", "details": {"client": "BDR Interactive"}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:31.329335", "event": "payment_form_opened", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:31.329335", "event": "cache_hit", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:31.329335", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:31.329335", "event": "client_data_loaded", "session_id": "20241210_232107", "details": {"client": "BDR Interactive", "has_contract": true, "has_payments": true, "contact_count": 0}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:31.329335", "event": "cache_hit", "session_id": "20241210_232107", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:31.329335", "event": "db_call", "session_id": "20241210_232107", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 23:21:31.428996", "event": "ui_action", "session_id": "20241210_232107", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 99.66}

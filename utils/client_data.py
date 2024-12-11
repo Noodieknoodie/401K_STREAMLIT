@@ -37,7 +37,7 @@ def _cache_client_data(client_id: int, data: Dict[str, Any]) -> None:
 @log_db_call
 def get_consolidated_client_data(client_id: int) -> Dict[str, Any]:
     """Get consolidated client data with caching."""
-    # CRITICAL!!! Check cache first
+    # Check cache first
     cached_data = _get_cached_client_data(client_id)
     if cached_data is not None:
         return cached_data.copy()  # Return a copy to prevent cache corruption
@@ -46,7 +46,7 @@ def get_consolidated_client_data(client_id: int) -> Dict[str, Any]:
     try:
         cursor = conn.cursor()
         
-        # Get client info
+        # Get client info with raw SQL instead of JSON aggregation
         cursor.execute("""
             WITH LatestPayment AS (
                 SELECT 
@@ -55,7 +55,8 @@ def get_consolidated_client_data(client_id: int) -> Dict[str, Any]:
                     received_date,
                     total_assets,
                     applied_start_quarter,
-                    applied_start_year
+                    applied_start_year,
+                    notes
                 FROM payments
                 WHERE payment_id IN (
                     SELECT MAX(payment_id)
@@ -76,24 +77,21 @@ def get_consolidated_client_data(client_id: int) -> Dict[str, Any]:
                 ac.flat_rate,
                 ac.num_people,
                 -- Latest Payment
-                lp.actual_fee as latest_fee,
-                lp.received_date as latest_date,
-                lp.total_assets as latest_assets,
-                lp.applied_start_quarter as latest_quarter,
-                lp.applied_start_year as latest_year,
-                -- Contacts (JSON aggregated)
-                json_group_array(
-                    json_object(
-                        'type', co.contact_type,
-                        'name', co.contact_name,
-                        'phone', co.phone,
-                        'email', co.email,
-                        'fax', co.fax,
-                        'physical_address', co.physical_address,
-                        'mailing_address', co.mailing_address,
-                        'contact_id', co.contact_id
-                    )
-                ) as contacts
+                lp.actual_fee,
+                lp.received_date,
+                lp.total_assets,
+                lp.applied_start_quarter,
+                lp.applied_start_year,
+                lp.notes,
+                -- Contacts as separate rows
+                co.contact_type,
+                co.contact_name,
+                co.phone,
+                co.email,
+                co.fax,
+                co.physical_address,
+                co.mailing_address,
+                co.contact_id
             FROM clients c
             LEFT JOIN (
                 SELECT * FROM contracts 
@@ -102,41 +100,57 @@ def get_consolidated_client_data(client_id: int) -> Dict[str, Any]:
             LEFT JOIN LatestPayment lp ON c.client_id = lp.client_id
             LEFT JOIN contacts co ON c.client_id = co.client_id
             WHERE c.client_id = ?
-            GROUP BY c.client_id
         """, (client_id,))
         
-        row = cursor.fetchone()
-        if not row:
+        rows = cursor.fetchall()
+        if not rows:
             return {}
             
-        contacts_json = row[15]  # The contacts JSON array from the query
-        contacts = json.loads(contacts_json) if contacts_json != '[null]' else []
+        # First row has all the non-contact data
+        first_row = rows[0]
         
+        # Build contacts list from all rows
+        contacts = []
+        for row in rows:
+            if row[15]:  # if contact_type exists
+                contacts.append({
+                    'type': row[15],
+                    'name': row[16],
+                    'phone': row[17],
+                    'email': row[18],
+                    'fax': row[19],
+                    'physical_address': row[20],
+                    'mailing_address': row[21],
+                    'contact_id': row[22]
+                })
+        
+        # Structure the data maintaining the same format as before
         consolidated_data = {
             'client': {
-                'display_name': row[0],
-                'full_name': row[1],
-                'has_contract': row[2] is not None,
-                'has_payments': row[10] is not None,
+                'display_name': first_row[0],
+                'full_name': first_row[1],
+                'has_contract': first_row[2] is not None,
+                'has_payments': first_row[10] is not None,
                 'contact_count': len(contacts)
             },
             'active_contract': {
-                'contract_id': row[2],
-                'provider_name': row[3],
-                'contract_number': row[4],
-                'payment_schedule': row[5],
-                'fee_type': row[6],
-                'percent_rate': row[7],
-                'flat_rate': row[8],
-                'num_people': row[9]
-            } if row[2] else None,
+                'contract_id': first_row[2],
+                'provider_name': first_row[3],
+                'contract_number': first_row[4],
+                'payment_schedule': first_row[5],
+                'fee_type': first_row[6],
+                'percent_rate': first_row[7],
+                'flat_rate': first_row[8],
+                'num_people': first_row[9]
+            } if first_row[2] else None,
             'latest_payment': {
-                'actual_fee': row[10],
-                'received_date': row[11],
-                'total_assets': row[12],
-                'quarter': row[13],
-                'year': row[14]
-            } if row[10] else None,
+                'actual_fee': first_row[10],
+                'received_date': first_row[11],
+                'total_assets': first_row[12],
+                'quarter': first_row[13],
+                'year': first_row[14],
+                'notes': first_row[15]
+            } if first_row[10] else None,
             'contacts': contacts
         }
         
