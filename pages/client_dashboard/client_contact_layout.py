@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.utils import get_contacts
+from utils.client_data import get_contacts_optimized as get_contacts
 from .client_contact_management import render_contact_section, render_contact_card
 
 def show_contact_sections(client_id):
@@ -7,10 +7,16 @@ def show_contact_sections(client_id):
     # Get contacts data
     contacts = get_contacts(client_id)
     contact_types = {'Primary': [], 'Authorized': [], 'Provider': []}
+    
     if contacts:
         for contact in contacts:
-            if contact[0] in contact_types:
-                contact_types[contact[0]].append(contact)
+            try:
+                contact_type = contact[0] if contact and len(contact) > 0 else None
+                if contact_type in contact_types:
+                    contact_types[contact_type].append(contact)
+            except (IndexError, TypeError) as e:
+                st.error(f"Error processing contact data: {str(e)}")
+                continue  # Skip invalid contact data
     
     # Create three equal-width columns for contact cards
     c1, c2, c3 = st.columns(3)

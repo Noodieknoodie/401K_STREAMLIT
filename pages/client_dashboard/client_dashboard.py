@@ -38,14 +38,19 @@ def show_client_dashboard():
         clear_client_specific_states()
         st.session_state.previous_client = selected_client_name
     
-    # Show contact form dialog if open
+    # CRITICAL!!! Handle form visibility with mutual exclusion
+    # Only one form can be open at a time
     if 'contact_form' in st.session_state and st.session_state.contact_form['is_open']:
+        # If contact form is open, ensure payment form is closed
+        if 'payment_form' in st.session_state:
+            st.session_state.payment_form['is_visible'] = False
         log_event('contact_form_opened', {'type': st.session_state.contact_form.get('contact_type')})
         show_contact_form()
-    
-    # Show payment form dialog if open
-    if ('payment_form' in st.session_state and 
-        st.session_state.payment_form['is_visible']):
+    elif ('payment_form' in st.session_state and 
+          st.session_state.payment_form['is_visible']):
+        # If payment form is open, ensure contact form is closed
+        if 'contact_form' in st.session_state:
+            st.session_state.contact_form['is_open'] = False
         log_event('payment_form_opened', {'client_id': client_id})
         show_payment_form(client_id)
     
