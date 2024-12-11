@@ -306,6 +306,14 @@ def show_payment_form(client_id):
     
     # Required field labels with asterisk
     st.markdown("Payment Date<span style='color: red'>*</span>", unsafe_allow_html=True)
+    
+    # Add an invisible element to prevent autofocus
+    st.markdown("""
+        <div style="width: 0; height: 0; overflow: hidden; position: absolute;">
+            <input type="text" tabindex="-1" aria-hidden="true">
+        </div>
+    """, unsafe_allow_html=True)
+    
     received_date = st.date_input(
         label="Payment Date",
         value=datetime.strptime(st.session_state.payment_form['form_data']['received_date'], '%Y-%m-%d'),
