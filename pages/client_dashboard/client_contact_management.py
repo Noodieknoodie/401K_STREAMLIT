@@ -3,6 +3,7 @@ from utils.utils import (
     get_contacts, add_contact, format_phone_number_ui, format_phone_number_db,
     validate_phone_number, delete_contact, update_contact, get_clients
 )
+from .client_payment_management import open_contact_form, clear_contact_form
 
 # Contact form state management
 def init_contact_form_state():
@@ -261,19 +262,21 @@ def render_contact_card(contact):
         with action_col:
             # Action buttons stacked vertically, right-aligned
             if st.button("✏️", key=f"edit_{contact[7]}", help="Edit contact"):
-                # Set up edit mode
-                st.session_state.contact_form['mode'] = 'edit'
-                st.session_state.contact_form['is_open'] = True
-                st.session_state.contact_form['contact_type'] = contact[0]
-                st.session_state.contact_form['contact_id'] = contact[7]
-                st.session_state.contact_form['form_data'] = {
-                    'contact_name': contact[1] or '',
-                    'phone': contact[2] or '',
-                    'email': contact[3] or '',
-                    'fax': contact[4] or '',
-                    'physical_address': contact[5] or '',
-                    'mailing_address': contact[6] or ''
+                # Set up edit mode using the new form management
+                contact_data = {
+                    'contact_id': contact[7],
+                    'contact_name': contact[1],
+                    'phone': contact[2],
+                    'email': contact[3],
+                    'fax': contact[4],
+                    'physical_address': contact[5],
+                    'mailing_address': contact[6]
                 }
+                open_contact_form(
+                    contact_type=contact[0],
+                    mode='edit',
+                    contact_data=contact_data
+                )
                 st.rerun()
             if st.button("🗑️", key=f"delete_{contact[7]}", help="Delete contact"):
                 st.session_state.delete_contact_id = contact[7]
@@ -293,6 +296,5 @@ def render_contact_section(contact_type, contacts):
             st.caption(f"No {contact_type.lower()} contacts")
         
         if st.button(f"Add {contact_type} Contact", key=f"add_{contact_type.lower()}", use_container_width=True):
-            st.session_state.contact_form['is_open'] = True
-            st.session_state.contact_form['contact_type'] = contact_type
+            open_contact_form(contact_type=contact_type)
             st.rerun() 

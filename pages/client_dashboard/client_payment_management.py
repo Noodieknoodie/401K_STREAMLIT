@@ -39,26 +39,58 @@ def init_contact_form_state():
                 'mailing_address': ''
             }
         }
+    elif not st.session_state.contact_form.get('explicit_open', False):
+        # If form wasn't explicitly opened by a button click, ensure it stays closed
+        st.session_state.contact_form['is_open'] = False
+    
     if 'delete_contact_id' not in st.session_state:
         st.session_state.delete_contact_id = None
     if 'show_delete_confirm' not in st.session_state:
         st.session_state.show_delete_confirm = False
 
-def clear_contact_form():
-    """Clear the contact form state."""
-    if 'contact_form' in st.session_state:
-        st.session_state.contact_form['form_data'] = {
-            'contact_name': '',
-            'phone': '',
-            'fax': '',
-            'email': '',
-            'physical_address': '',
-            'mailing_address': ''
+def open_contact_form(contact_type=None, mode='add', contact_data=None):
+    """Explicitly open the contact form with the given parameters."""
+    if 'contact_form' not in st.session_state:
+        init_contact_form_state()
+    
+    st.session_state.contact_form.update({
+        'is_open': True,
+        'explicit_open': True,  # Mark as explicitly opened
+        'mode': mode,
+        'contact_type': contact_type,
+        'contact_id': contact_data.get('contact_id') if contact_data else None,
+        'has_validation_error': False,
+        'show_cancel_confirm': False,
+        'form_data': {
+            'contact_name': contact_data.get('contact_name', '') if contact_data else '',
+            'phone': contact_data.get('phone', '') if contact_data else '',
+            'fax': contact_data.get('fax', '') if contact_data else '',
+            'email': contact_data.get('email', '') if contact_data else '',
+            'physical_address': contact_data.get('physical_address', '') if contact_data else '',
+            'mailing_address': contact_data.get('mailing_address', '') if contact_data else ''
         }
-        st.session_state.contact_form['is_open'] = False
-        st.session_state.contact_form['has_validation_error'] = False
-        st.session_state.contact_form['show_cancel_confirm'] = False
-        get_contacts.clear()  # Clear the contacts cache
+    })
+
+def clear_contact_form():
+    """Clear contact form state completely."""
+    if 'contact_form' in st.session_state:
+        st.session_state.contact_form.update({
+            'is_open': False,
+            'explicit_open': False,
+            'mode': 'add',
+            'contact_type': None,
+            'contact_id': None,
+            'has_validation_error': False,
+            'show_cancel_confirm': False,
+            'form_data': {
+                'contact_name': '',
+                'phone': '',
+                'fax': '',
+                'email': '',
+                'physical_address': '',
+                'mailing_address': ''
+            }
+        })
 
 @st.dialog('Contact Form')
 def show_contact_form():
@@ -683,10 +715,22 @@ def render_table_row(row):
                 help=tooltip,
                 use_container_width=False
             ):
+                # Save any existing active note before switching
+                if ('active_note_id' in st.session_state and 
+                    st.session_state.active_note_id != row['payment_id'] and
+                    'note_textarea_' + str(st.session_state.active_note_id) in st.session_state):
+                    prev_note = st.session_state['note_textarea_' + str(st.session_state.active_note_id)]
+                    update_payment_note(st.session_state.active_note_id, prev_note)
+                
+                # Toggle note state
                 if 'active_note_id' in st.session_state and st.session_state.active_note_id == row['payment_id']:
                     st.session_state.active_note_id = None
                 else:
                     st.session_state.active_note_id = row['payment_id']
+                    # Ensure contact form stays closed
+                    if 'contact_form' in st.session_state:
+                        st.session_state.contact_form['is_open'] = False
+                
                 st.rerun()
         
         with row_cols[9]:
@@ -770,9 +814,7 @@ def display_client_dashboard():
         contact_types = ["Primary Contact", "Authorized Contact", "Provider Contact"]
         for contact_type in contact_types:
             if st.button(f"Add {contact_type}", key=f"add_{contact_type.lower().replace(' ', '_')}"):
-                st.session_state.contact_form['is_open'] = True
-                st.session_state.contact_form['mode'] = 'add'
-                st.session_state.contact_form['contact_type'] = contact_type
+                open_contact_form(contact_type=contact_type)
                 st.rerun()
     
     # Show forms if needed - only show one at a time
