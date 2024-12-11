@@ -412,7 +412,7 @@ def initialize_notes_state():
             'edited_notes': {}
         }
 
-def render_note_cell(payment_id, note, provider=None, period=None):
+def render_note_cell(payment_id, note, provider=None, period=None, ui_manager=None):
     """Render a note cell with edit functionality using centralized state."""
     initialize_notes_state()
     
@@ -454,6 +454,10 @@ def render_note_cell(payment_id, note, provider=None, period=None):
     # Check if the clickable text was clicked
     if st.session_state.get(note_key, False):
         notes_state = st.session_state.notes_state
+        
+        # Close any open forms when opening a note
+        if ui_manager and not notes_state['active_note']:
+            ui_manager.close_all()
         
         # Log note interaction
         log_event('note_clicked', {
@@ -502,8 +506,13 @@ def render_note_cell(payment_id, note, provider=None, period=None):
                     st.session_state.notes_state['edited_notes'][payment_id] = edited_note
                     # Let Streamlit handle text_area updates naturally
 
-def show_payment_history(client_id):
-    """Display payment history with efficient layout and smart navigation."""
+def show_payment_history(client_id, ui_manager=None):
+    """Display payment history with efficient layout and smart navigation.
+    
+    Args:
+        client_id: The ID of the client whose payment history to show
+        ui_manager: Optional UIStateManager instance for coordinating UI states
+    """
     
     # Initialize all required states
     init_payment_form()
@@ -561,7 +570,10 @@ def show_payment_history(client_id):
     
     with middle_col:
         if st.button("Add Payment", type="primary", use_container_width=True):
-            st.session_state.payment_form['is_visible'] = True
+            if ui_manager:
+                ui_manager.show_payment_form()
+            else:
+                st.session_state.payment_form['is_visible'] = True
             st.rerun()
     
     with right_col:
@@ -730,6 +742,9 @@ def render_table_row(row):
                     # Ensure contact form stays closed
                     if 'contact_form' in st.session_state:
                         st.session_state.contact_form['is_open'] = False
+                    # Ensure payment form stays closed
+                    if 'payment_form' in st.session_state:
+                        st.session_state.payment_form['is_visible'] = False
                 
                 st.rerun()
         

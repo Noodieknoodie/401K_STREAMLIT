@@ -3,10 +3,11 @@ from utils.utils import (
     get_contacts, add_contact, format_phone_number_ui, format_phone_number_db,
     validate_phone_number, delete_contact, update_contact, get_clients
 )
-from .client_payment_management import open_contact_form, clear_contact_form
 
-# Contact form state management
 def init_contact_form_state():
+    """Single source of truth for contact form state initialization.
+    This function is the ONLY place where contact form state should be initialized.
+    """
     if 'contact_form' not in st.session_state:
         st.session_state.contact_form = {
             'is_open': False,
@@ -15,6 +16,7 @@ def init_contact_form_state():
             'contact_id': None,  # Used for edit mode
             'has_validation_error': False,
             'show_cancel_confirm': False,
+            'explicit_open': False,  # Track if form was explicitly opened
             'form_data': {
                 'contact_name': '',
                 'phone': '',
@@ -24,25 +26,52 @@ def init_contact_form_state():
                 'mailing_address': ''
             }
         }
-    if 'delete_contact_id' not in st.session_state:
         st.session_state.delete_contact_id = None
-    if 'show_delete_confirm' not in st.session_state:
         st.session_state.show_delete_confirm = False
 
-def clear_form():
-    if 'contact_form' in st.session_state:
-        st.session_state.contact_form['form_data'] = {
-            'contact_name': '',
-            'phone': '',
-            'fax': '',
-            'email': '',
-            'physical_address': '',
-            'mailing_address': ''
+def open_contact_form(contact_type=None, mode='add', contact_data=None):
+    """Explicitly open the contact form with the given parameters."""
+    if 'contact_form' not in st.session_state:
+        init_contact_form_state()
+    
+    st.session_state.contact_form.update({
+        'is_open': True,
+        'explicit_open': True,  # Mark as explicitly opened
+        'mode': mode,
+        'contact_type': contact_type,
+        'contact_id': contact_data.get('contact_id') if contact_data else None,
+        'has_validation_error': False,
+        'show_cancel_confirm': False,
+        'form_data': {
+            'contact_name': contact_data.get('contact_name', '') if contact_data else '',
+            'phone': contact_data.get('phone', '') if contact_data else '',
+            'fax': contact_data.get('fax', '') if contact_data else '',
+            'email': contact_data.get('email', '') if contact_data else '',
+            'physical_address': contact_data.get('physical_address', '') if contact_data else '',
+            'mailing_address': contact_data.get('mailing_address', '') if contact_data else ''
         }
-        st.session_state.contact_form['is_open'] = False
-        st.session_state.contact_form['has_validation_error'] = False
-        st.session_state.contact_form['show_cancel_confirm'] = False
-        
+    })
+
+def clear_contact_form():
+    """Clear contact form state completely."""
+    if 'contact_form' in st.session_state:
+        st.session_state.contact_form.update({
+            'is_open': False,
+            'mode': 'add',
+            'contact_type': None,
+            'contact_id': None,
+            'has_validation_error': False,
+            'show_cancel_confirm': False,
+            'explicit_open': False,
+            'form_data': {
+                'contact_name': '',
+                'phone': '',
+                'fax': '',
+                'email': '',
+                'physical_address': '',
+                'mailing_address': ''
+            }
+        })
         # Clear the contacts cache to force a refresh
         get_contacts.clear()
 
@@ -74,6 +103,7 @@ def format_fax_on_change():
 
 @st.dialog('Contact Form')
 def show_contact_form():
+    """Display and handle the contact form dialog."""
     if not st.session_state.contact_form['is_open']:
         return
     
@@ -114,7 +144,7 @@ def show_contact_form():
         value=st.session_state.contact_form['form_data']['email'],
         on_change=clear_validation_error
     )
-    
+
     physical_address = st.text_area(
         "Physical Address",
         key=f"physical_address_{st.session_state.contact_form['contact_type']}",
@@ -162,8 +192,7 @@ def show_contact_form():
         col1, col2 = st.columns(2)
         with col1:
             if st.button("Yes, Discard Changes", type="primary", use_container_width=True):
-                print("\n❌ Form cancelled - changes discarded")
-                clear_form()
+                clear_contact_form()
                 st.rerun()
         with col2:
             if st.button("No, Go Back", use_container_width=True):
@@ -182,28 +211,18 @@ def show_contact_form():
                     )
                     
                     if mode == "edit":
-                        # Update existing contact
                         if update_contact(st.session_state.contact_form['contact_id'], form_data):
-                            print(f"\n✅ Successfully updated {st.session_state.contact_form['contact_type']} contact in database:")
-                            for field, value in form_data.items():
-                                print(f"  {field}: {value}")
-                            clear_form()
-                            get_contacts.clear()  # Clear the contacts cache
+                            clear_contact_form()
+                            get_contacts.clear()
                             st.rerun()
                     else:
-                        # Add new contact
-                        contact_id = add_contact(
+                        if add_contact(
                             client_id,
                             st.session_state.contact_form['contact_type'],
                             form_data
-                        )
-                        
-                        if contact_id:
-                            print(f"\n✅ Successfully added {st.session_state.contact_form['contact_type']} contact to database:")
-                            for field, value in form_data.items():
-                                print(f"  {field}: {value}")
-                            clear_form()
-                            get_contacts.clear()  # Clear the contacts cache
+                        ):
+                            clear_contact_form()
+                            get_contacts.clear()
                             st.rerun()
                 else:
                     st.session_state.contact_form['has_validation_error'] = True
@@ -215,8 +234,7 @@ def show_contact_form():
                     st.session_state.contact_form['show_cancel_confirm'] = True
                     st.rerun()
                 else:
-                    print("\n❌ Form cancelled - no changes to discard")
-                    clear_form()
+                    clear_contact_form()
                     st.rerun()
 
 def render_contact_card(contact):
@@ -286,7 +304,7 @@ def render_contact_card(contact):
         # Minimal separator
         st.divider()
 
-def render_contact_section(contact_type, contacts):
+def render_contact_section(contact_type, contacts, ui_manager=None):
     """Render a contact section with its contacts and add button"""
     with st.expander(f"{contact_type} Contact ({len(contacts)})", expanded=False):
         if contacts:
@@ -296,5 +314,9 @@ def render_contact_section(contact_type, contacts):
             st.caption(f"No {contact_type.lower()} contacts")
         
         if st.button(f"Add {contact_type} Contact", key=f"add_{contact_type.lower()}", use_container_width=True):
-            open_contact_form(contact_type=contact_type)
+            if ui_manager:
+                ui_manager.show_contact_form()
+                st.session_state.contact_form['contact_type'] = contact_type
+            else:
+                open_contact_form(contact_type=contact_type)
             st.rerun() 
