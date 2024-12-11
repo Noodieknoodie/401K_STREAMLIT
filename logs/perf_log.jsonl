@@ -688,3 +688,29 @@
 {"timestamp": "2024-12-10 22:36:07.402914", "event": "cache_hit", "session_id": "20241210_223553", "details": {"client_id": 3}, "duration_ms": null}
 {"timestamp": "2024-12-10 22:36:07.403914", "event": "db_call", "session_id": "20241210_223553", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 1.0}
 {"timestamp": "2024-12-10 22:36:07.625653", "event": "ui_action", "session_id": "20241210_223553", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 224.86}
+{"timestamp": "2024-12-10 22:51:19.587419", "event": "client_selected", "session_id": "20241210_225118", "details": {"client": null}, "duration_ms": null}
+{"timestamp": "2024-12-10 22:51:19.587419", "event": "ui_action", "session_id": "20241210_225118", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 2.28}
+{"timestamp": "2024-12-10 22:51:20.851256", "event": "client_selected", "session_id": "20241210_225118", "details": {"client": "Amplero"}, "duration_ms": null}
+{"timestamp": "2024-12-10 22:51:20.852255", "event": "cache_miss", "session_id": "20241210_225118", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 22:51:20.853254", "event": "cache_store", "session_id": "20241210_225118", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 22:51:20.853254", "event": "db_call", "session_id": "20241210_225118", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 22:51:20.853254", "event": "client_data_loaded", "session_id": "20241210_225118", "details": {"client": "Amplero", "has_contract": true, "has_payments": true, "contact_count": 2}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 22:51:20.854124", "event": "cache_hit", "session_id": "20241210_225118", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 22:51:20.854124", "event": "db_call", "session_id": "20241210_225118", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 22:51:21.062664", "event": "ui_action", "session_id": "20241210_225118", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 212.41}
+{"timestamp": "2024-12-10 22:51:29.865916", "event": "client_selected", "session_id": "20241210_225118", "details": {"client": "Amplero"}, "duration_ms": null}
+{"timestamp": "2024-12-10 22:51:29.866916", "event": "cache_expired", "session_id": "20241210_225118", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 22:51:29.866916", "event": "cache_miss", "session_id": "20241210_225118", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 22:51:29.867917", "event": "cache_store", "session_id": "20241210_225118", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 22:51:29.867917", "event": "db_call", "session_id": "20241210_225118", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 22:51:29.867917", "event": "client_data_loaded", "session_id": "20241210_225118", "details": {"client": "Amplero", "has_contract": true, "has_payments": true, "contact_count": 2}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 22:51:29.867917", "event": "cache_hit", "session_id": "20241210_225118", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 22:51:29.867917", "event": "db_call", "session_id": "20241210_225118", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 22:51:29.897609", "event": "client_selected", "session_id": "20241210_225118", "details": {"client": "Amplero"}, "duration_ms": null}
+{"timestamp": "2024-12-10 22:51:29.897609", "event": "contact_form_opened", "session_id": "20241210_225118", "details": {"type": "Primary"}, "duration_ms": null}
+{"timestamp": "2024-12-10 22:51:29.901881", "event": "cache_hit", "session_id": "20241210_225118", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 22:51:29.901881", "event": "db_call", "session_id": "20241210_225118", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 22:51:29.902879", "event": "client_data_loaded", "session_id": "20241210_225118", "details": {"client": "Amplero", "has_contract": true, "has_payments": true, "contact_count": 2}, "duration_ms": 1.0}
+{"timestamp": "2024-12-10 22:51:29.902879", "event": "cache_hit", "session_id": "20241210_225118", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-10 22:51:29.902879", "event": "db_call", "session_id": "20241210_225118", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-10 22:51:30.112662", "event": "ui_action", "session_id": "20241210_225118", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 215.62}
