@@ -21,7 +21,7 @@ from .client_payment_utils import (
 from utils.utils import get_database_connection
 
 # Add caching for contract data
-@st.cache_data(ttl=300)  # Cache for 5 minutes
+@st.cache_data(ttl=300)  # is this really necessary? 
 def get_cached_contract(client_id):
     """Get contract data with caching for better performance."""
     return get_active_contract(client_id)
@@ -36,16 +36,20 @@ METHOD_OPTIONS = [
 ]
 
 def init_payment_form():
-    """Initialize the payment form state if it doesn't exist."""
+    """Single source of truth for payment form state initialization.
+    This function is the ONLY place where payment form state should be initialized.
+    """
     if 'payment_form' not in st.session_state:
-        current_quarter = (datetime.now().month - 1) // 3 + 1
+        # Calculate previous quarter consistently with has_unsaved_changes()
+        current_quarter = get_current_quarter()
         current_year = datetime.now().year
-        prev_quarter = current_quarter - 1 if current_quarter > 1 else 4
-        prev_year = current_year if current_quarter > 1 else current_year - 1
+        prev_quarter, prev_year = get_previous_quarter(current_quarter, current_year)
         
         st.session_state.payment_form = {
-            'is_visible': False,  # Changed from is_open to is_visible
+            'is_visible': False,  # We standardize on 'is_visible' vs 'is_open'
+            'client_id': None,    # Track which client the form belongs to
             'mode': 'add',
+            'payment_id': None,   # Used for edit mode
             'has_validation_error': False,
             'show_cancel_confirm': False,
             'modal_lock': False,
@@ -67,7 +71,7 @@ def init_payment_form():
 def clear_payment_form():
     """Reset the payment form state."""
     if 'payment_form' in st.session_state:
-        st.session_state.payment_form['is_visible'] = False  # Changed from is_open to is_visible
+        st.session_state.payment_form['is_visible'] = False  # ensure "is_visible" is the term used consistently in other places
         st.session_state.payment_form['has_validation_error'] = False
         st.session_state.payment_form['show_cancel_confirm'] = False
         st.session_state.payment_form['form_data'] = {
@@ -440,7 +444,9 @@ def show_payment_form(client_id):
             key="method"
         )
     
-    # Show text input for "Other" method
+
+
+    # Show text input for "Other" method -- we need to make sure this is utilized in the associated function
     other_method = None
     if method == "Other":
         with col2:

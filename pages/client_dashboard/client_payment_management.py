@@ -8,10 +8,12 @@ from utils.utils import (
     delete_contact, get_payment_year_quarters, get_payment_by_id, format_currency_ui,
     get_client_dashboard_data,
 )
+
 from utils.perf_logging import log_event
 from .client_payment_form import (
     show_payment_form,
-    populate_payment_form_for_edit
+    populate_payment_form_for_edit,
+    init_payment_form
 )
 
 # ============================================================================
@@ -176,42 +178,6 @@ def show_contact_form():
 # ============================================================================
 # STATE MANAGEMENT INITIALIZATION FUNCTIONS
 # ============================================================================
-
-def init_payment_form_state():
-    """Initialize payment form state management.
-    BEFORE: State was initialized in main flow, causing reset on every reload
-    AFTER: Centralized initialization function, only runs when state doesn't exist
-    """
-    if 'payment_form' not in st.session_state:
-        current_quarter = (datetime.now().month - 1) // 3 + 1
-        current_year = datetime.now().year
-        prev_quarter = current_quarter - 1 if current_quarter > 1 else 4
-        prev_year = current_year if current_quarter > 1 else current_year - 1
-        
-        st.session_state.payment_form = {
-            'is_visible': False,  # Dedicated state for visibility
-            'client_id': None,    # Track which client the form belongs to
-            'mode': 'add',
-            'has_validation_error': False,
-            'show_cancel_confirm': False,
-            'modal_lock': False,
-            'form_data': {
-                'received_date': datetime.now().strftime('%Y-%m-%d'),
-                'applied_start_quarter': prev_quarter,
-                'applied_start_year': prev_year,
-                'applied_end_quarter': None,
-                'applied_end_year': None,
-                'total_assets': '',
-                'actual_fee': '',
-                'expected_fee': None,
-                'method': 'None Specified',
-                'other_method': '',
-                'notes': ''
-            }
-        }
-    elif 'client_id' not in st.session_state.payment_form:
-        # Add client_id to existing payment form states
-        st.session_state.payment_form['client_id'] = None
 
 def init_notes_state():
     """Initialize centralized notes state management.
@@ -474,7 +440,7 @@ def show_payment_history(client_id):
     """Display payment history with efficient layout and smart navigation."""
     
     # Initialize all required states
-    init_payment_form_state()
+    init_payment_form()
     init_notes_state()
     init_filter_state()
     
@@ -754,7 +720,7 @@ def display_client_dashboard():
     """Display the main client dashboard with optimized data loading"""
     # Initialize states
     init_contact_form_state()
-    init_payment_form_state()
+    init_payment_form()
     init_notes_state()
     init_filter_state()
     

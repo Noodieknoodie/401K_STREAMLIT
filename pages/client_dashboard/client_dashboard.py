@@ -1,11 +1,11 @@
 import streamlit as st
 from .client_contact_management import init_contact_form_state, show_contact_form
-from .client_payment_management import show_payment_history, clear_client_specific_states, init_payment_form_state
+from .client_payment_management import show_payment_history, clear_client_specific_states
 from .client_dashboard_metrics import show_client_metrics
 from .client_selection import get_selected_client
 from .client_contact_layout import show_contact_sections
-from .client_payment_form import show_payment_form
-from utils.client_data import (  # New optimized queries
+from .client_payment_form import show_payment_form, init_payment_form
+from utils.client_data import (  
     get_consolidated_client_data,
     get_client_details_optimized as get_client_details,
     get_contacts_optimized as get_contacts
@@ -20,7 +20,7 @@ def show_client_dashboard():
     
     # Initialize base states first
     init_contact_form_state()
-    init_payment_form_state()
+    init_payment_form()
     
     # Get selected client
     client_id, selected_client_name = get_selected_client()
