@@ -10,7 +10,8 @@ def init_contact_form_state():
     """
     if 'contact_form' not in st.session_state:
         st.session_state.contact_form = {
-            'is_open': False,
+            'is_open': False,  # Keep for backward compatibility
+            'visible': False,  # New standardized property
             'mode': 'add',  # 'add' or 'edit'
             'contact_type': None,
             'contact_id': None,  # Used for edit mode
@@ -35,7 +36,8 @@ def open_contact_form(contact_type=None, mode='add', contact_data=None):
         init_contact_form_state()
     
     st.session_state.contact_form.update({
-        'is_open': True,
+        'is_open': True,  # Keep for backward compatibility
+        'visible': True,  # New standardized property
         'explicit_open': True,  # Mark as explicitly opened
         'mode': mode,
         'contact_type': contact_type,
@@ -56,7 +58,8 @@ def clear_contact_form():
     """Clear contact form state completely."""
     if 'contact_form' in st.session_state:
         st.session_state.contact_form.update({
-            'is_open': False,
+            'is_open': False,  # Keep for backward compatibility
+            'visible': False,  # New standardized property
             'mode': 'add',
             'contact_type': None,
             'contact_id': None,

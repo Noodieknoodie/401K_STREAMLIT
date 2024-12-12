@@ -46,7 +46,8 @@ def init_payment_form():
         prev_quarter, prev_year = get_previous_quarter(current_quarter, current_year)
         
         st.session_state.payment_form = {
-            'is_visible': False,  # We standardize on 'is_visible' vs 'is_open'
+            'is_visible': False,  # Keep for backward compatibility
+            'visible': False,     # New standardized property
             'client_id': None,    # Track which client the form belongs to
             'mode': 'add',
             'payment_id': None,   # Used for edit mode
@@ -71,7 +72,8 @@ def init_payment_form():
 def clear_payment_form():
     """Reset the payment form state."""
     if 'payment_form' in st.session_state:
-        st.session_state.payment_form['is_visible'] = False  # ensure "is_visible" is the term used consistently in other places
+        st.session_state.payment_form['is_visible'] = False  # Keep for backward compatibility
+        st.session_state.payment_form['visible'] = False     # New standardized property
         st.session_state.payment_form['has_validation_error'] = False
         st.session_state.payment_form['show_cancel_confirm'] = False
         st.session_state.payment_form['form_data'] = {
@@ -91,17 +93,22 @@ def clear_payment_form():
 def populate_payment_form_for_edit(payment_data):
     """Populate the payment form with existing payment data for editing"""
     if payment_data and 'payment_form' in st.session_state:
-        st.session_state.payment_form['form_data'] = {
-            'received_date': payment_data[0],
-            'applied_start_quarter': payment_data[1],
-            'applied_start_year': payment_data[2], 
-            'applied_end_quarter': payment_data[3],
-            'applied_end_year': payment_data[4],
-            'total_assets': format_currency_ui(payment_data[5]) if payment_data[5] else '',
-            'actual_fee': format_currency_ui(payment_data[6]) if payment_data[6] else '',
-            'method': payment_data[7] or 'None Specified',
-            'notes': payment_data[8] or ''
-        }
+        st.session_state.payment_form.update({
+            'is_visible': True,  # Keep for backward compatibility
+            'visible': True,     # New standardized property
+            'mode': 'edit',
+            'form_data': {
+                'received_date': payment_data[0],
+                'applied_start_quarter': payment_data[1],
+                'applied_start_year': payment_data[2], 
+                'applied_end_quarter': payment_data[3],
+                'applied_end_year': payment_data[4],
+                'total_assets': format_currency_ui(payment_data[5]) if payment_data[5] else '',
+                'actual_fee': format_currency_ui(payment_data[6]) if payment_data[6] else '',
+                'method': payment_data[7] or 'None Specified',
+                'notes': payment_data[8] or ''
+            }
+        })
 
 def has_unsaved_changes(form_data):
     """Check if the form has unsaved changes"""

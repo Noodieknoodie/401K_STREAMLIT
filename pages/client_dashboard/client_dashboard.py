@@ -39,6 +39,15 @@ def lazy_init_form_states():
         init_notes_state()
         init_filter_state()
 
+def clear_dashboard_states(ui_manager):
+    """Clear all dashboard-specific states when client changes"""
+    ui_manager.close_all()  # Close any open forms/modals
+    # Clear any cached data
+    if 'payment_data' in st.session_state:
+        st.session_state.payment_data = []
+    if 'payment_offset' in st.session_state:
+        st.session_state.payment_offset = 0
+
 def display_client_dashboard():
     """Main dashboard display function"""
     start_time = time.time()
@@ -48,6 +57,15 @@ def display_client_dashboard():
     
     # Get selected client (this needs to run always)
     selected_client = get_selected_client()
+    
+    # Track client changes
+    if 'previous_dashboard_client' not in st.session_state:
+        st.session_state.previous_dashboard_client = None
+    
+    # Clear states if client changed
+    if selected_client and st.session_state.previous_dashboard_client != selected_client[0]:
+        clear_dashboard_states(ui_manager)
+        st.session_state.previous_dashboard_client = selected_client[0]
     
     if selected_client:
         client_id = selected_client[0]

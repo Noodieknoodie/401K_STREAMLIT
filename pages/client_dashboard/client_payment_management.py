@@ -211,6 +211,8 @@ def show_contact_form():
 # STATE MANAGEMENT INITIALIZATION FUNCTIONS
 # ============================================================================
 
+
+
 def init_notes_state():
     """Initialize centralized notes state management.
     BEFORE: Multiple scattered state keys for notes
@@ -390,14 +392,37 @@ def format_payment_data(payments):
     
     return table_data
 
+# ============================================================================
+# NOTES STATE MANAGEMENT - DO NOT MODIFY THIS IMPLEMENTATION
+# ============================================================================
+#
+# The notes feature uses two state systems that work together by design:
+#
+# 1. active_note_id (Direct UI State):
+#    - Controls immediate show/hide of note textareas
+#    - Required for Streamlit's button click -> rerun cycle to work
+#    - Enables instant UI feedback when clicking note icons
+#    - Modifying this will break the button click response
+#
+# 2. notes_state (Edit Management):
+#    - Tracks note content and changes
+#    - Handles save states and edit history
+#    - Manages data persistence
+#
+# This is NOT duplicate code - the two systems serve different purposes.
+# Previous attempts to "clean up" or consolidate these states have broken
+# the note click functionality. The separation is intentional and required
+# for proper Streamlit button behavior.
+
+
+
 def handle_note_edit(payment_id, new_note):
     """Handle updating a payment note."""
     log_event('note_saved', {'payment_id': payment_id, 'has_content': bool(new_note)})
     update_payment_note(payment_id, new_note)
     if 'notes_state' in st.session_state:
         st.session_state.notes_state['active_note'] = None
-
-# DO NOT REMOVE NOTE FUNCTIONALITY KEEP NOTES EXACTLY AS THEY ARE             
+          
 
 @st.cache_data(ttl=60)  # Cache note formatting for 1 minute
 def format_note_display(note):
@@ -411,6 +436,7 @@ def initialize_notes_state():
             'active_note': None,
             'edited_notes': {}
         }
+
 
 def render_note_cell(payment_id, note, provider=None, period=None, ui_manager=None):
     """Render a note cell with edit functionality using centralized state."""

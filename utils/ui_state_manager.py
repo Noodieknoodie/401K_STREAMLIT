@@ -22,16 +22,19 @@ class UIStateManager:
         if 'ui_state' not in st.session_state:
             st.session_state.ui_state = {
                 'active_element': None,  # Only one element can be active
-                'payment_form': {'is_visible': False},
-                'contact_form': {'is_open': False}
+                'payment_form': {'visible': False},  # Standardize on 'visible'
+                'contact_form': {'visible': False},  # Standardize on 'visible'
+                'delete_confirm': {'visible': False, 'target_id': None}  # Add delete confirmation state
             }
     
     def close_all(self):
         """Close all managed UI elements"""
         state = st.session_state.ui_state
         state['active_element'] = None
-        state['payment_form']['is_visible'] = False
-        state['contact_form']['is_open'] = False
+        state['payment_form']['visible'] = False
+        state['contact_form']['visible'] = False
+        state['delete_confirm']['visible'] = False
+        state['delete_confirm']['target_id'] = None
         
         # Sync with legacy states for backward compatibility
         if 'payment_form' in st.session_state:
@@ -44,7 +47,7 @@ class UIStateManager:
         self.close_all()
         state = st.session_state.ui_state
         state['active_element'] = 'payment_form'
-        state['payment_form']['is_visible'] = True
+        state['payment_form']['visible'] = True
         # Sync with legacy state
         if 'payment_form' in st.session_state:
             st.session_state.payment_form['is_visible'] = True
@@ -54,10 +57,18 @@ class UIStateManager:
         self.close_all()
         state = st.session_state.ui_state
         state['active_element'] = 'contact_form'
-        state['contact_form']['is_open'] = True
+        state['contact_form']['visible'] = True
         # Sync with legacy state
         if 'contact_form' in st.session_state:
             st.session_state.contact_form['is_open'] = True
+    
+    def show_delete_confirm(self, target_id):
+        """Show delete confirmation dialog"""
+        self.close_all()
+        state = st.session_state.ui_state
+        state['active_element'] = 'delete_confirm'
+        state['delete_confirm']['visible'] = True
+        state['delete_confirm']['target_id'] = target_id
     
     @property
     def active_element(self):
@@ -67,9 +78,19 @@ class UIStateManager:
     @property
     def is_payment_form_visible(self):
         """Check if payment form is visible"""
-        return st.session_state.ui_state['payment_form']['is_visible']
+        return st.session_state.ui_state['payment_form']['visible']
     
     @property
     def is_contact_form_open(self):
         """Check if contact form is open"""
-        return st.session_state.ui_state['contact_form']['is_open'] 
+        return st.session_state.ui_state['contact_form']['visible']  # Use 'visible' consistently
+    
+    @property
+    def is_delete_confirm_visible(self):
+        """Check if delete confirmation is visible"""
+        return st.session_state.ui_state['delete_confirm']['visible']
+    
+    @property
+    def delete_target_id(self):
+        """Get the ID of the item being deleted"""
+        return st.session_state.ui_state['delete_confirm']['target_id'] 
