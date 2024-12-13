@@ -747,3 +747,14 @@ def get_client_dashboard_data(client_id):
     finally:
         conn.close()
 
+def delete_payment(payment_id):
+    """Delete a payment from the database"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM payments WHERE payment_id = ?", (payment_id,))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+

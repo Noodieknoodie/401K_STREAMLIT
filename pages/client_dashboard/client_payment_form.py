@@ -62,7 +62,9 @@ from utils.utils import (
     format_currency_ui,
     format_currency_db,
     validate_payment_data,
-    add_payment
+    add_payment,
+    get_database_connection,
+    get_payment_history
 )
 from .client_payment_utils import (
     get_current_period,
@@ -86,10 +88,12 @@ def get_cached_contract(client_id: int) -> Optional[Tuple]:
 
 # Payment method options
 METHOD_OPTIONS = [
+    "None Specified",
     "Auto - ACH",
     "Auto - Check",
-    "Invoice - Check",
-    "None Specified",
+    "Manual - ACH",
+    "Manual - Check",
+    "Wire",
     "Other"
 ]
 
@@ -561,7 +565,6 @@ def show_payment_dialog(client_id: int) -> None:
         st.markdown("Payment Amount<span style='color: red'>*</span>", unsafe_allow_html=True)
         actual_fee_input = st.text_input(
             label="Payment Amount",
-            value=form_data.get('actual_fee', ''),
             key="actual_fee",
             on_change=lambda: format_payment_amount_on_change(ui_manager, "actual_fee"),
             placeholder="Enter amount (e.g. 1234.56)",
@@ -653,6 +656,8 @@ def show_payment_dialog(client_id: int) -> None:
                     if payment_id:
                         st.success("Payment added successfully!")
                         ui_manager.close_payment_dialog()
+                        # Clear payment history cache to force refresh
+                        get_payment_history.clear()
                         st.rerun()
                     else:
                         st.error("Failed to add payment. Please try again.")

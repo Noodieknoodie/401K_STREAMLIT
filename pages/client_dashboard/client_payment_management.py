@@ -15,6 +15,7 @@ from utils.utils import (
     get_payment_by_id,
     format_currency_ui,
     get_client_dashboard_data,
+    delete_payment
 )
 from utils.perf_logging import log_event
 from utils.ui_state_manager import UIStateManager
@@ -469,6 +470,29 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
                             st.rerun()
     
     st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Handle delete confirmation
+    if 'show_delete_confirm' in st.session_state and st.session_state.show_delete_confirm:
+        payment_id = st.session_state.delete_payment_id
+        st.warning("Are you sure you want to delete this payment? This action cannot be undone.")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Yes, Delete", type="primary", use_container_width=True):
+                if delete_payment(payment_id):
+                    st.success("Payment deleted successfully!")
+                    # Clear the cache to force data refresh
+                    get_payment_history.clear()
+                    # Reset delete confirmation state
+                    st.session_state.show_delete_confirm = False
+                    del st.session_state.delete_payment_id
+                    st.rerun()
+                else:
+                    st.error("Failed to delete payment. Please try again.")
+        with col2:
+            if st.button("No, Cancel", use_container_width=True):
+                st.session_state.show_delete_confirm = False
+                del st.session_state.delete_payment_id
+                st.rerun()
 
 if __name__ == "__main__":
     # Initialize UI manager when running directly
