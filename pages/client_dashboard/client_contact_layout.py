@@ -21,10 +21,12 @@ def render_contact_section(contact_type: str, contacts: list, ui_manager=None):
         
         if st.button(f"Add {contact_type} Contact", key=f"add_{contact_type.lower()}", use_container_width=True):
             if ui_manager:
+                st.session_state.ui_manager = ui_manager  # Store for dialog access
                 ui_manager.open_contact_dialog(
                     contact_type=contact_type,
                     mode='add'
                 )
+                show_contact_form()
                 st.rerun()
 
 def show_contact_sections(client_id: int, ui_manager=None):
@@ -59,4 +61,5 @@ def show_contact_sections(client_id: int, ui_manager=None):
     
     # Show contact form dialog if open
     if ui_manager and ui_manager.is_contact_dialog_open:
-        show_contact_form(ui_manager)
+        st.session_state.ui_manager = ui_manager  # Ensure ui_manager is in session state
+        show_contact_form()  # Call without parameters

@@ -1,3 +1,5 @@
+# utils\ui_state_manager.py
+
 from typing import Optional, Literal, TypedDict, List, Dict, Any, Union
 import streamlit as st
 
@@ -124,7 +126,8 @@ class UIStateManager:
         if clear_data:
             state['form_data'] = {}
             state['validation_errors'] = []
-    
+
+
     # Contact Dialog Methods
     def open_contact_dialog(
         self,

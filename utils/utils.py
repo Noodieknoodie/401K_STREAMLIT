@@ -203,8 +203,14 @@ def update_payment_note(payment_id, new_note):
             WHERE payment_id = ?
         """, (new_note, payment_id))
         conn.commit()
+        
+        # Clear any cached data that might include this payment
+        if 'get_payment_history' in st.session_state:
+            st.session_state.get_payment_history.clear()
     finally:
         conn.close()
+    
+    return True  # Return success status
 
 def format_phone_number_ui(number):
     """Format phone number for UI display: (XXX) XXX-XXXX"""

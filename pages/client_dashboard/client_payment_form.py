@@ -399,25 +399,13 @@ def get_previous_payment_defaults(client_id: int) -> Optional[Tuple[str, str]]:
 def show_payment_dialog(client_id: int) -> None:
     """Display the payment dialog using UIStateManager.
     
-    This function manages the complete payment form UI, handling both monthly
-    and quarterly payment schedules dynamically.
-    
-    Key behaviors:
-    - Adapts period labels based on contract schedule (Month/Quarter)
-    - Handles single and multi-period payments
-    - Validates against contract start date
-    - Manages payment method selection and notes
-    - Performs validation before save
-    
     Args:
         client_id: The ID of the client for this payment
-        
-    Note:
-        - Form uses 'period' terminology but data is stored as quarters
-        - All payments are processed in arrears
-        - Multi-period payments maintain chronological order
     """
-    ui_manager = UIStateManager()
+    # Get ui_manager from session state
+    if 'ui_manager' not in st.session_state:
+        return
+    ui_manager = st.session_state.ui_manager
     
     if not ui_manager.is_payment_dialog_open:
         return

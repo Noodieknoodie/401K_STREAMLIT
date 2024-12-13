@@ -20,12 +20,12 @@ def format_fax_on_change(fax_input: str) -> str:
     return ''
 
 @st.dialog('Contact Form')
-def show_contact_form(ui_manager: UIStateManager):
-    """Display and handle the contact form dialog.
+def show_contact_form():
+    """Display and handle the contact form dialog."""
+    if 'ui_manager' not in st.session_state:
+        return
+    ui_manager = st.session_state.ui_manager
     
-    Args:
-        ui_manager: UIStateManager instance for state management
-    """
     if not ui_manager.is_contact_dialog_open:
         return
     

@@ -18,6 +18,7 @@ from utils.utils import (
 )
 from utils.perf_logging import log_event
 from utils.ui_state_manager import UIStateManager
+from .client_payment_form import show_payment_dialog
 
 # ============================================================================
 # STATE MANAGEMENT
@@ -187,35 +188,13 @@ def render_note_cell(payment_id, note, provider=None, period=None, ui_manager=No
     # Create unique key for this note
     note_key = f"note_{payment_id}"
     
-    # Create clickable text with custom CSS and JavaScript
-    st.markdown(f"""
-        <style>
-        .clickable-text {{
-            cursor: pointer;
-            color: #1E90FF;
-            text-decoration: none;
-        }}
-        .clickable-text:hover {{
-            text-decoration: underline;
-        }}
-        </style>
-        <span 
-            class="clickable-text" 
-            title="{tooltip}" 
-            onclick="handleNoteClick('{note_key}')" 
-            id="{note_key}"
-        >
-            {icon_content}
-        </span>
-        <script>
-        function handleNoteClick(key) {{
-            Streamlit.setComponentValue(key, true);
-        }}
-        </script>
-    """, unsafe_allow_html=True)
-    
-    # Check if the clickable text was clicked
-    if st.session_state.get(note_key, False):
+    # Use native Streamlit button with icon
+    if st.button(
+        icon_content,
+        key=note_key,
+        help=tooltip,
+        use_container_width=True
+    ):
         notes_state = st.session_state.notes_state
         
         # Close any open forms when opening a note
@@ -244,27 +223,6 @@ def render_note_cell(payment_id, note, provider=None, period=None, ui_manager=No
             notes_state['active_note'] = None
         else:
             notes_state['active_note'] = payment_id
-        
-        # Reset the clicked state
-        st.session_state[note_key] = False
-# If note is active for this payment, show the edit form
-    if (
-        'notes_state' in st.session_state 
-        and st.session_state.notes_state['active_note'] == payment_id
-    ):
-        with st.container():
-            note_cols = st.columns([7, 9])
-            with note_cols[1]:
-                st.markdown("""<div style="border-top: 1px solid #eee; padding-top: 0.5rem;"></div>""", unsafe_allow_html=True)
-                edited_note = st.text_area(
-                    f"Note for {provider or 'Payment'} - {period or 'Period'}",
-                    value=note or "",
-                    key=f"note_textarea_{payment_id}",
-                    height=100,
-                    placeholder="Enter note here..."
-                )
-                if edited_note != note:
-                    st.session_state.notes_state['edited_notes'][payment_id] = edited_note
 
 
 def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
@@ -329,10 +287,12 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
     
     with middle_col:
         if st.button("Add Payment", type="primary", use_container_width=True):
+            st.session_state.ui_manager = ui_manager
             initial_data = {
                 'received_date': datetime.now().strftime('%Y-%m-%d')
             }
             ui_manager.open_payment_dialog(client_id=client_id, initial_data=initial_data)
+            show_payment_dialog(client_id)
             st.rerun()
     
     with right_col:
@@ -383,6 +343,23 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
         
         div.payment-table div[data-testid="stHorizontalBlock"] {
             margin-bottom: 0.1rem;
+        }
+
+        /* Note button styling */
+        div.payment-table div[data-testid="column"]:nth-last-child(2) button {
+            background: none !important;
+            border: none !important;
+            padding: 0 !important;
+            min-height: 24px !important;
+            height: 24px !important;
+            line-height: 24px !important;
+            width: 24px !important;
+            margin: 0 auto !important;
+            color: #1E90FF !important;
+        }
+        
+        div.payment-table div[data-testid="column"]:nth-last-child(2) button:hover {
+            color: #0056b3 !important;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -459,6 +436,37 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
                         st.session_state.delete_payment_id = row['payment_id']
                         st.session_state.show_delete_confirm = True
                         st.rerun()
+            
+            # If note is active for this payment, show the edit form below the row
+            if (
+                'notes_state' in st.session_state 
+                and st.session_state.notes_state['active_note'] == row['payment_id']
+            ):
+                # Create a new row for the expanded note that spans multiple columns
+                note_cols = st.columns([4, 12, 1])  # Indent from left, span most of width
+                with note_cols[1]:
+                    st.markdown("<div style='border-top: 1px solid #eee; padding-top: 0.5rem;'></div>", unsafe_allow_html=True)
+                    edited_note = st.text_area(
+                        f"Note for {row['Provider']} - {row['Period']}",
+                        value=row['Notes'] or "",
+                        key=f"note_textarea_{row['payment_id']}",
+                        height=100,
+                        placeholder="Enter note here..."
+                    )
+                    
+                    # Save button row
+                    save_cols = st.columns([6, 2, 2])
+                    with save_cols[1]:
+                        if st.button("Save", key=f"save_note_{row['payment_id']}", type="primary"):
+                            update_payment_note(row['payment_id'], edited_note)
+                            st.session_state.notes_state['active_note'] = None
+                            # Clear the cache to force data refresh
+                            get_payment_history.clear()
+                            st.rerun()
+                    with save_cols[2]:
+                        if st.button("Cancel", key=f"cancel_note_{row['payment_id']}"):
+                            st.session_state.notes_state['active_note'] = None
+                            st.rerun()
     
     st.markdown('</div>', unsafe_allow_html=True)
 

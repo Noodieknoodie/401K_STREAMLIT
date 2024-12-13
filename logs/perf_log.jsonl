@@ -2018,3 +2018,615 @@
 {"timestamp": "2024-12-12 23:34:06.626362", "event": "cache_hit", "session_id": "20241212_233326", "details": {"client_id": 4}, "duration_ms": null}
 {"timestamp": "2024-12-12 23:34:06.626362", "event": "db_call", "session_id": "20241212_233326", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
 {"timestamp": "2024-12-12 23:34:06.704888", "event": "ui_action", "session_id": "20241212_233326", "details": {"action": "show_dashboard", "error": "Only one dialog is allowed to be opened at the same time. Please make sure to not call a dialog-decorated function more than once in a script run.", "success": false}, "duration_ms": 78.53}
+{"timestamp": "2024-12-12 23:48:55.913555", "event": "dashboard_load_start", "session_id": "20241212_234854", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:48:55.913555", "event": "cache_miss", "session_id": "20241212_234854", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:48:55.914554", "event": "db_call", "session_id": "20241212_234854", "details": {"function": "get_consolidated_client_data", "args": "(None,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-12 23:48:55.918552", "event": "dashboard_load_complete", "session_id": "20241212_234854", "details": {"client_id": null, "load_time": 0.006000518798828125}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:48:55.918552", "event": "ui_action", "session_id": "20241212_234854", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 6.0}
+{"timestamp": "2024-12-12 23:48:57.064549", "event": "dashboard_load_start", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:48:57.065549", "event": "cache_miss", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:48:57.066548", "event": "cache_store", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:48:57.066548", "event": "db_call", "session_id": "20241212_234854", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-12 23:48:57.153223", "event": "dashboard_load_complete", "session_id": "20241212_234854", "details": {"client_id": 4, "load_time": 0.08967804908752441}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:48:57.153223", "event": "ui_action", "session_id": "20241212_234854", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 89.68}
+{"timestamp": "2024-12-12 23:48:59.978947", "event": "dashboard_load_start", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:48:59.979948", "event": "cache_hit", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:48:59.980947", "event": "db_call", "session_id": "20241212_234854", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-12 23:49:00.006650", "event": "dashboard_load_start", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:00.006650", "event": "cache_hit", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:00.006650", "event": "db_call", "session_id": "20241212_234854", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:00.096061", "event": "ui_action", "session_id": "20241212_234854", "details": {"action": "show_dashboard", "error": "Only one dialog is allowed to be opened at the same time. Please make sure to not call a dialog-decorated function more than once in a script run.", "success": false}, "duration_ms": 89.41}
+{"timestamp": "2024-12-12 23:49:01.423998", "event": "dashboard_load_start", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:01.423998", "event": "cache_hit", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:01.423998", "event": "db_call", "session_id": "20241212_234854", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:01.512524", "event": "dashboard_load_complete", "session_id": "20241212_234854", "details": {"client_id": 4, "load_time": 0.08852529525756836}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:01.512975", "event": "ui_action", "session_id": "20241212_234854", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 88.98}
+{"timestamp": "2024-12-12 23:49:04.223361", "event": "dashboard_load_start", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:04.223361", "event": "cache_expired", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:04.224361", "event": "cache_miss", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:04.225364", "event": "cache_store", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:04.225364", "event": "db_call", "session_id": "20241212_234854", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-12 23:49:04.250059", "event": "dashboard_load_start", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:04.250059", "event": "cache_hit", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:04.250059", "event": "db_call", "session_id": "20241212_234854", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:04.328591", "event": "ui_action", "session_id": "20241212_234854", "details": {"action": "show_dashboard", "error": "Only one dialog is allowed to be opened at the same time. Please make sure to not call a dialog-decorated function more than once in a script run.", "success": false}, "duration_ms": 78.53}
+{"timestamp": "2024-12-12 23:49:06.102094", "event": "dashboard_load_start", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:06.102094", "event": "cache_hit", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:06.103096", "event": "db_call", "session_id": "20241212_234854", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-12 23:49:06.188653", "event": "ui_action", "session_id": "20241212_234854", "details": {"action": "show_dashboard", "error": "Only one dialog is allowed to be opened at the same time. Please make sure to not call a dialog-decorated function more than once in a script run.", "success": false}, "duration_ms": 87.56}
+{"timestamp": "2024-12-12 23:49:08.172073", "event": "dashboard_load_start", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:08.172073", "event": "cache_hit", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:08.172073", "event": "db_call", "session_id": "20241212_234854", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:08.266747", "event": "dashboard_load_complete", "session_id": "20241212_234854", "details": {"client_id": 4, "load_time": 0.09467411041259766}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:08.266747", "event": "ui_action", "session_id": "20241212_234854", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 94.67}
+{"timestamp": "2024-12-12 23:49:10.755667", "event": "dashboard_load_start", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:10.756666", "event": "cache_expired", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:10.756666", "event": "cache_miss", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:10.758173", "event": "cache_store", "session_id": "20241212_234854", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:49:10.758173", "event": "db_call", "session_id": "20241212_234854", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.51}
+{"timestamp": "2024-12-12 23:49:10.767180", "event": "ui_action", "session_id": "20241212_234854", "details": {"action": "show_dashboard", "error": "name 'show_payment_dialog' is not defined", "success": false}, "duration_ms": 12.52}
+{"timestamp": "2024-12-12 23:50:07.372028", "event": "dashboard_load_start", "session_id": "20241212_235006", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:50:07.372028", "event": "cache_miss", "session_id": "20241212_235006", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:50:07.373027", "event": "db_call", "session_id": "20241212_235006", "details": {"function": "get_consolidated_client_data", "args": "(None,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-12 23:50:07.377028", "event": "dashboard_load_complete", "session_id": "20241212_235006", "details": {"client_id": null, "load_time": 0.006003856658935547}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:50:07.377028", "event": "ui_action", "session_id": "20241212_235006", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 6.0}
+{"timestamp": "2024-12-12 23:50:08.601994", "event": "dashboard_load_start", "session_id": "20241212_235006", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:50:08.601994", "event": "cache_miss", "session_id": "20241212_235006", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:50:08.603499", "event": "cache_store", "session_id": "20241212_235006", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:50:08.604504", "event": "db_call", "session_id": "20241212_235006", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 2.51}
+{"timestamp": "2024-12-12 23:50:08.691374", "event": "dashboard_load_complete", "session_id": "20241212_235006", "details": {"client_id": 4, "load_time": 0.0903782844543457}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:50:08.692594", "event": "ui_action", "session_id": "20241212_235006", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 91.6}
+{"timestamp": "2024-12-12 23:50:10.118886", "event": "dashboard_load_start", "session_id": "20241212_235006", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:50:10.118886", "event": "cache_hit", "session_id": "20241212_235006", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:50:10.119887", "event": "db_call", "session_id": "20241212_235006", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-12 23:50:10.158856", "event": "dashboard_load_start", "session_id": "20241212_235006", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:50:10.159922", "event": "cache_hit", "session_id": "20241212_235006", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:50:10.159922", "event": "db_call", "session_id": "20241212_235006", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:50:10.252798", "event": "ui_action", "session_id": "20241212_235006", "details": {"action": "show_dashboard", "error": "show_payment_dialog() missing 1 required positional argument: 'ui_manager'", "success": false}, "duration_ms": 94.97}
+{"timestamp": "2024-12-12 23:51:14.619154", "event": "dashboard_load_start", "session_id": "20241212_235113", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:51:14.619154", "event": "cache_miss", "session_id": "20241212_235113", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:51:14.620153", "event": "db_call", "session_id": "20241212_235113", "details": {"function": "get_consolidated_client_data", "args": "(None,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-12 23:51:14.624152", "event": "dashboard_load_complete", "session_id": "20241212_235113", "details": {"client_id": null, "load_time": 0.005999326705932617}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:51:14.624152", "event": "ui_action", "session_id": "20241212_235113", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 7.0}
+{"timestamp": "2024-12-12 23:51:17.027403", "event": "dashboard_load_start", "session_id": "20241212_235113", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:51:17.027403", "event": "cache_miss", "session_id": "20241212_235113", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:51:17.028403", "event": "cache_store", "session_id": "20241212_235113", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:51:17.029402", "event": "db_call", "session_id": "20241212_235113", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-12 23:51:17.114271", "event": "dashboard_load_complete", "session_id": "20241212_235113", "details": {"client_id": 4, "load_time": 0.08786869049072266}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:51:17.115271", "event": "ui_action", "session_id": "20241212_235113", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 89.87}
+{"timestamp": "2024-12-12 23:51:18.201920", "event": "dashboard_load_start", "session_id": "20241212_235113", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:51:18.201920", "event": "cache_hit", "session_id": "20241212_235113", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:51:18.203063", "event": "db_call", "session_id": "20241212_235113", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.14}
+{"timestamp": "2024-12-12 23:51:18.245754", "event": "dashboard_load_start", "session_id": "20241212_235113", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:51:18.246756", "event": "cache_hit", "session_id": "20241212_235113", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:51:18.246756", "event": "db_call", "session_id": "20241212_235113", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:51:18.335233", "event": "dashboard_load_complete", "session_id": "20241212_235113", "details": {"client_id": 4, "load_time": 0.08947873115539551}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:51:18.336233", "event": "ui_action", "session_id": "20241212_235113", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 91.52}
+{"timestamp": "2024-12-12 23:55:19.583718", "event": "dashboard_load_start", "session_id": "20241212_235518", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:19.583718", "event": "cache_miss", "session_id": "20241212_235518", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:19.585719", "event": "db_call", "session_id": "20241212_235518", "details": {"function": "get_consolidated_client_data", "args": "(None,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-12 23:55:19.589718", "event": "dashboard_load_complete", "session_id": "20241212_235518", "details": {"client_id": null, "load_time": 0.0069980621337890625}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:19.589718", "event": "ui_action", "session_id": "20241212_235518", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 7.0}
+{"timestamp": "2024-12-12 23:55:20.882588", "event": "dashboard_load_start", "session_id": "20241212_235518", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:20.883587", "event": "cache_miss", "session_id": "20241212_235518", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:20.884586", "event": "cache_store", "session_id": "20241212_235518", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:20.884586", "event": "db_call", "session_id": "20241212_235518", "details": {"function": "get_consolidated_client_data", "args": "(1,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-12 23:55:20.944500", "event": "ui_action", "session_id": "20241212_235518", "details": {"action": "show_dashboard", "error": "There are multiple elements with the same `key='edit_57'`. To fix this, please make sure that the `key` argument is unique for each element you create.", "success": false}, "duration_ms": 62.91}
+{"timestamp": "2024-12-12 23:55:32.064814", "event": "dashboard_load_start", "session_id": "20241212_235518", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:32.065816", "event": "cache_expired", "session_id": "20241212_235518", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:32.065816", "event": "cache_miss", "session_id": "20241212_235518", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:32.067816", "event": "cache_store", "session_id": "20241212_235518", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:32.067816", "event": "db_call", "session_id": "20241212_235518", "details": {"function": "get_consolidated_client_data", "args": "(1,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-12 23:55:32.128865", "event": "dashboard_load_start", "session_id": "20241212_235518", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:32.129950", "event": "cache_hit", "session_id": "20241212_235518", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:32.129950", "event": "db_call", "session_id": "20241212_235518", "details": {"function": "get_consolidated_client_data", "args": "(1,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:32.192419", "event": "ui_action", "session_id": "20241212_235518", "details": {"action": "show_dashboard", "error": "There are multiple elements with the same `key='edit_57'`. To fix this, please make sure that the `key` argument is unique for each element you create.", "success": false}, "duration_ms": 64.56}
+{"timestamp": "2024-12-12 23:55:33.510335", "event": "dashboard_load_start", "session_id": "20241212_235518", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:33.510335", "event": "cache_hit", "session_id": "20241212_235518", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:33.511335", "event": "db_call", "session_id": "20241212_235518", "details": {"function": "get_consolidated_client_data", "args": "(1,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-12 23:55:33.553538", "event": "dashboard_load_start", "session_id": "20241212_235518", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:33.553538", "event": "cache_hit", "session_id": "20241212_235518", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:33.553538", "event": "db_call", "session_id": "20241212_235518", "details": {"function": "get_consolidated_client_data", "args": "(1,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:33.606349", "event": "ui_action", "session_id": "20241212_235518", "details": {"action": "show_dashboard", "error": "There are multiple elements with the same `key='edit_57'`. To fix this, please make sure that the `key` argument is unique for each element you create.", "success": false}, "duration_ms": 52.81}
+{"timestamp": "2024-12-12 23:55:34.707058", "event": "dashboard_load_start", "session_id": "20241212_235518", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:34.707058", "event": "cache_hit", "session_id": "20241212_235518", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:34.708058", "event": "db_call", "session_id": "20241212_235518", "details": {"function": "get_consolidated_client_data", "args": "(1,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-12 23:55:34.750754", "event": "dashboard_load_start", "session_id": "20241212_235518", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:34.750754", "event": "cache_hit", "session_id": "20241212_235518", "details": {"client_id": 1}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:34.750754", "event": "db_call", "session_id": "20241212_235518", "details": {"function": "get_consolidated_client_data", "args": "(1,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:34.807180", "event": "ui_action", "session_id": "20241212_235518", "details": {"action": "show_dashboard", "error": "There are multiple elements with the same `key='edit_57'`. To fix this, please make sure that the `key` argument is unique for each element you create.", "success": false}, "duration_ms": 56.43}
+{"timestamp": "2024-12-12 23:55:47.438311", "event": "dashboard_load_start", "session_id": "20241212_235546", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:47.439311", "event": "cache_miss", "session_id": "20241212_235546", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:47.440313", "event": "db_call", "session_id": "20241212_235546", "details": {"function": "get_consolidated_client_data", "args": "(None,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-12 23:55:47.443834", "event": "dashboard_load_complete", "session_id": "20241212_235546", "details": {"client_id": null, "load_time": 0.005523681640625}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:47.444834", "event": "ui_action", "session_id": "20241212_235546", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 7.52}
+{"timestamp": "2024-12-12 23:55:48.598319", "event": "dashboard_load_start", "session_id": "20241212_235546", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:48.599321", "event": "cache_miss", "session_id": "20241212_235546", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:48.600321", "event": "cache_store", "session_id": "20241212_235546", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:48.600321", "event": "db_call", "session_id": "20241212_235546", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-12 23:55:48.686052", "event": "dashboard_load_complete", "session_id": "20241212_235546", "details": {"client_id": 4, "load_time": 0.08873343467712402}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:55:48.687052", "event": "ui_action", "session_id": "20241212_235546", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 89.73}
+{"timestamp": "2024-12-12 23:56:05.293972", "event": "dashboard_load_start", "session_id": "20241212_235604", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:05.294972", "event": "cache_miss", "session_id": "20241212_235604", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:05.295970", "event": "db_call", "session_id": "20241212_235604", "details": {"function": "get_consolidated_client_data", "args": "(None,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-12 23:56:05.298970", "event": "dashboard_load_complete", "session_id": "20241212_235604", "details": {"client_id": null, "load_time": 0.005998849868774414}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:05.299971", "event": "ui_action", "session_id": "20241212_235604", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 7.0}
+{"timestamp": "2024-12-12 23:56:06.488867", "event": "dashboard_load_start", "session_id": "20241212_235604", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:06.488867", "event": "cache_miss", "session_id": "20241212_235604", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:06.489867", "event": "cache_store", "session_id": "20241212_235604", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:06.490866", "event": "db_call", "session_id": "20241212_235604", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-12 23:56:06.576503", "event": "dashboard_load_complete", "session_id": "20241212_235604", "details": {"client_id": 5, "load_time": 0.08863472938537598}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:06.577502", "event": "ui_action", "session_id": "20241212_235604", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 90.64}
+{"timestamp": "2024-12-12 23:56:16.577756", "event": "dashboard_load_start", "session_id": "20241212_235615", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:16.577756", "event": "cache_miss", "session_id": "20241212_235615", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:16.578758", "event": "db_call", "session_id": "20241212_235615", "details": {"function": "get_consolidated_client_data", "args": "(None,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-12 23:56:16.582757", "event": "dashboard_load_complete", "session_id": "20241212_235615", "details": {"client_id": null, "load_time": 0.006003141403198242}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:16.582757", "event": "ui_action", "session_id": "20241212_235615", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 7.0}
+{"timestamp": "2024-12-12 23:56:17.531768", "event": "dashboard_load_start", "session_id": "20241212_235615", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:17.531768", "event": "cache_miss", "session_id": "20241212_235615", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:17.532771", "event": "cache_store", "session_id": "20241212_235615", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:17.533772", "event": "db_call", "session_id": "20241212_235615", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-12 23:56:17.622243", "event": "dashboard_load_complete", "session_id": "20241212_235615", "details": {"client_id": 5, "load_time": 0.09147524833679199}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:17.623252", "event": "ui_action", "session_id": "20241212_235615", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 93.48}
+{"timestamp": "2024-12-12 23:56:19.532829", "event": "dashboard_load_start", "session_id": "20241212_235615", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:19.532829", "event": "cache_hit", "session_id": "20241212_235615", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:19.533828", "event": "db_call", "session_id": "20241212_235615", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-12 23:56:19.578383", "event": "dashboard_load_start", "session_id": "20241212_235615", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:19.579554", "event": "cache_hit", "session_id": "20241212_235615", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:19.579554", "event": "db_call", "session_id": "20241212_235615", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:19.669014", "event": "dashboard_load_complete", "session_id": "20241212_235615", "details": {"client_id": 5, "load_time": 0.09063100814819336}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:19.670015", "event": "ui_action", "session_id": "20241212_235615", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 92.63}
+{"timestamp": "2024-12-12 23:56:39.529866", "event": "dashboard_load_start", "session_id": "unknown", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:39.529866", "event": "cache_miss", "session_id": "unknown", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:39.530864", "event": "db_call", "session_id": "unknown", "details": {"function": "get_consolidated_client_data", "args": "(None,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-12 23:56:39.534865", "event": "dashboard_load_complete", "session_id": "unknown", "details": {"client_id": null, "load_time": 0.006001710891723633}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:39.534865", "event": "ui_action", "session_id": "unknown", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 6.0}
+{"timestamp": "2024-12-12 23:56:40.466615", "event": "dashboard_load_start", "session_id": "unknown", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:40.467617", "event": "cache_miss", "session_id": "unknown", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:40.468614", "event": "cache_store", "session_id": "unknown", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:40.468614", "event": "db_call", "session_id": "unknown", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-12 23:56:40.557117", "event": "dashboard_load_complete", "session_id": "unknown", "details": {"client_id": 4, "load_time": 0.09150266647338867}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:40.558117", "event": "ui_action", "session_id": "unknown", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 92.5}
+{"timestamp": "2024-12-12 23:56:56.227494", "event": "dashboard_load_start", "session_id": "20241212_235654", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:56.227494", "event": "cache_miss", "session_id": "20241212_235654", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:56.228495", "event": "db_call", "session_id": "20241212_235654", "details": {"function": "get_consolidated_client_data", "args": "(None,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-12 23:56:56.232496", "event": "dashboard_load_complete", "session_id": "20241212_235654", "details": {"client_id": null, "load_time": 0.00599980354309082}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:56.233495", "event": "ui_action", "session_id": "20241212_235654", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 7.0}
+{"timestamp": "2024-12-12 23:56:57.234555", "event": "dashboard_load_start", "session_id": "20241212_235654", "details": {"client_id": 6}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:57.234555", "event": "cache_miss", "session_id": "20241212_235654", "details": {"client_id": 6}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:57.235555", "event": "cache_store", "session_id": "20241212_235654", "details": {"client_id": 6}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:57.236555", "event": "db_call", "session_id": "20241212_235654", "details": {"function": "get_consolidated_client_data", "args": "(6,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-12 23:56:57.344688", "event": "dashboard_load_complete", "session_id": "20241212_235654", "details": {"client_id": 6, "load_time": 0.11113286018371582}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:57.344688", "event": "ui_action", "session_id": "20241212_235654", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 111.13}
+{"timestamp": "2024-12-12 23:56:58.591475", "event": "dashboard_load_start", "session_id": "20241212_235654", "details": {"client_id": 6}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:58.591475", "event": "cache_hit", "session_id": "20241212_235654", "details": {"client_id": 6}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:58.592475", "event": "db_call", "session_id": "20241212_235654", "details": {"function": "get_consolidated_client_data", "args": "(6,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-12 23:56:58.637354", "event": "dashboard_load_start", "session_id": "20241212_235654", "details": {"client_id": 6}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:58.637459", "event": "cache_hit", "session_id": "20241212_235654", "details": {"client_id": 6}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:58.637459", "event": "db_call", "session_id": "20241212_235654", "details": {"function": "get_consolidated_client_data", "args": "(6,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:58.743454", "event": "dashboard_load_complete", "session_id": "20241212_235654", "details": {"client_id": 6, "load_time": 0.10710024833679199}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:56:58.744453", "event": "ui_action", "session_id": "20241212_235654", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 108.1}
+{"timestamp": "2024-12-12 23:58:06.731186", "event": "dashboard_load_start", "session_id": "20241212_235805", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:58:06.732183", "event": "cache_miss", "session_id": "20241212_235805", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:58:06.733183", "event": "db_call", "session_id": "20241212_235805", "details": {"function": "get_consolidated_client_data", "args": "(None,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-12 23:58:06.736184", "event": "dashboard_load_complete", "session_id": "20241212_235805", "details": {"client_id": null, "load_time": 0.004997730255126953}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:58:06.737184", "event": "ui_action", "session_id": "20241212_235805", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 7.0}
+{"timestamp": "2024-12-12 23:58:07.593785", "event": "dashboard_load_start", "session_id": "20241212_235805", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:58:07.594786", "event": "cache_miss", "session_id": "20241212_235805", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:58:07.595784", "event": "cache_store", "session_id": "20241212_235805", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:58:07.595784", "event": "db_call", "session_id": "20241212_235805", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-12 23:58:07.813712", "event": "dashboard_load_complete", "session_id": "20241212_235805", "details": {"client_id": 3, "load_time": 0.22092795372009277}, "duration_ms": null}
+{"timestamp": "2024-12-12 23:58:07.813712", "event": "ui_action", "session_id": "20241212_235805", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 220.93}
+{"timestamp": "2024-12-13 00:00:51.887707", "event": "dashboard_load_start", "session_id": "20241213_000050", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:00:51.887707", "event": "cache_miss", "session_id": "20241213_000050", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:00:51.888705", "event": "db_call", "session_id": "20241213_000050", "details": {"function": "get_consolidated_client_data", "args": "(None,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:00:51.892709", "event": "dashboard_load_complete", "session_id": "20241213_000050", "details": {"client_id": null, "load_time": 0.006003379821777344}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:00:51.892709", "event": "ui_action", "session_id": "20241213_000050", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 6.0}
+{"timestamp": "2024-12-13 00:00:52.848443", "event": "dashboard_load_start", "session_id": "20241213_000050", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:00:52.848443", "event": "cache_miss", "session_id": "20241213_000050", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:00:52.849442", "event": "cache_store", "session_id": "20241213_000050", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:00:52.850443", "event": "db_call", "session_id": "20241213_000050", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-13 00:00:52.938554", "event": "dashboard_load_complete", "session_id": "20241213_000050", "details": {"client_id": 4, "load_time": 0.09111213684082031}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:00:52.939507", "event": "ui_action", "session_id": "20241213_000050", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 92.07}
+{"timestamp": "2024-12-13 00:00:55.081615", "event": "dashboard_load_start", "session_id": "20241213_000050", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:00:55.081615", "event": "cache_hit", "session_id": "20241213_000050", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:00:55.082616", "event": "db_call", "session_id": "20241213_000050", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:00:55.125877", "event": "dashboard_load_start", "session_id": "20241213_000050", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:00:55.125877", "event": "cache_hit", "session_id": "20241213_000050", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:00:55.126875", "event": "db_call", "session_id": "20241213_000050", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:00:55.212352", "event": "dashboard_load_complete", "session_id": "20241213_000050", "details": {"client_id": 4, "load_time": 0.08747649192810059}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:00:55.213351", "event": "ui_action", "session_id": "20241213_000050", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 88.48}
+{"timestamp": "2024-12-13 00:00:57.412430", "event": "dashboard_load_start", "session_id": "20241213_000050", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:00:57.413430", "event": "cache_hit", "session_id": "20241213_000050", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:00:57.413430", "event": "db_call", "session_id": "20241213_000050", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:00:57.503025", "event": "dashboard_load_complete", "session_id": "20241213_000050", "details": {"client_id": 4, "load_time": 0.09159421920776367}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:00:57.504026", "event": "ui_action", "session_id": "20241213_000050", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 92.6}
+{"timestamp": "2024-12-13 00:01:00.094594", "event": "dashboard_load_start", "session_id": "20241213_000050", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:00.094594", "event": "cache_expired", "session_id": "20241213_000050", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:00.094594", "event": "cache_miss", "session_id": "20241213_000050", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:00.110224", "event": "cache_store", "session_id": "20241213_000050", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:00.110224", "event": "db_call", "session_id": "20241213_000050", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 15.63}
+{"timestamp": "2024-12-13 00:01:00.189429", "event": "dashboard_load_complete", "session_id": "20241213_000050", "details": {"client_id": 4, "load_time": 0.09483551979064941}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:00.190437", "event": "ui_action", "session_id": "20241213_000050", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 95.84}
+{"timestamp": "2024-12-13 00:01:02.366514", "event": "dashboard_load_start", "session_id": "20241213_000050", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:02.366514", "event": "cache_hit", "session_id": "20241213_000050", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:02.367517", "event": "db_call", "session_id": "20241213_000050", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:01:02.393596", "event": "dashboard_load_start", "session_id": "20241213_000050", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:02.393596", "event": "cache_hit", "session_id": "20241213_000050", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:02.393596", "event": "db_call", "session_id": "20241213_000050", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:02.409230", "event": "ui_action", "session_id": "20241213_000050", "details": {"action": "show_dashboard", "error": "show_contact_form() takes 0 positional arguments but 1 was given", "success": false}, "duration_ms": 15.63}
+{"timestamp": "2024-12-13 00:01:35.127664", "event": "dashboard_load_start", "session_id": "20241213_000133", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:35.127664", "event": "cache_miss", "session_id": "20241213_000133", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:35.128663", "event": "db_call", "session_id": "20241213_000133", "details": {"function": "get_consolidated_client_data", "args": "(None,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:01:35.132666", "event": "dashboard_load_complete", "session_id": "20241213_000133", "details": {"client_id": null, "load_time": 0.0060040950775146484}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:35.133662", "event": "ui_action", "session_id": "20241213_000133", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 7.0}
+{"timestamp": "2024-12-13 00:01:36.039160", "event": "dashboard_load_start", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:36.040160", "event": "cache_miss", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:36.041159", "event": "cache_store", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:36.041159", "event": "db_call", "session_id": "20241213_000133", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:01:36.128980", "event": "dashboard_load_complete", "session_id": "20241213_000133", "details": {"client_id": 5, "load_time": 0.08982014656066895}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:36.128980", "event": "ui_action", "session_id": "20241213_000133", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 90.82}
+{"timestamp": "2024-12-13 00:01:38.704057", "event": "dashboard_load_start", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:38.704057", "event": "cache_hit", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:38.705058", "event": "db_call", "session_id": "20241213_000133", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:01:38.731251", "event": "dashboard_load_start", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:38.731251", "event": "cache_hit", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:38.731251", "event": "db_call", "session_id": "20241213_000133", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:38.835943", "event": "ui_action", "session_id": "20241213_000133", "details": {"action": "show_dashboard", "error": "Only one dialog is allowed to be opened at the same time. Please make sure to not call a dialog-decorated function more than once in a script run.", "success": false}, "duration_ms": 104.69}
+{"timestamp": "2024-12-13 00:01:41.464222", "event": "dashboard_load_start", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:41.464222", "event": "cache_expired", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:41.464222", "event": "cache_miss", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:41.464222", "event": "cache_store", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:41.464222", "event": "db_call", "session_id": "20241213_000133", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:41.558391", "event": "dashboard_load_complete", "session_id": "20241213_000133", "details": {"client_id": 5, "load_time": 0.09416818618774414}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:41.558391", "event": "ui_action", "session_id": "20241213_000133", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 94.17}
+{"timestamp": "2024-12-13 00:01:43.678378", "event": "dashboard_load_start", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:43.678378", "event": "cache_hit", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:43.679377", "event": "db_call", "session_id": "20241213_000133", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:01:43.721075", "event": "dashboard_load_start", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:43.721075", "event": "cache_hit", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:43.721075", "event": "db_call", "session_id": "20241213_000133", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:43.815069", "event": "dashboard_load_complete", "session_id": "20241213_000133", "details": {"client_id": 5, "load_time": 0.0939934253692627}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:43.815336", "event": "ui_action", "session_id": "20241213_000133", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 94.26}
+{"timestamp": "2024-12-13 00:01:45.245244", "event": "dashboard_load_start", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:45.246244", "event": "cache_hit", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:45.246244", "event": "db_call", "session_id": "20241213_000133", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:45.339016", "event": "dashboard_load_complete", "session_id": "20241213_000133", "details": {"client_id": 5, "load_time": 0.0947728157043457}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:45.339016", "event": "ui_action", "session_id": "20241213_000133", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 94.77}
+{"timestamp": "2024-12-13 00:01:46.611958", "event": "dashboard_load_start", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:46.611958", "event": "cache_expired", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:46.611958", "event": "cache_miss", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:46.611958", "event": "cache_store", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:46.611958", "event": "db_call", "session_id": "20241213_000133", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:46.709836", "event": "dashboard_load_complete", "session_id": "20241213_000133", "details": {"client_id": 5, "load_time": 0.09787750244140625}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:46.710825", "event": "ui_action", "session_id": "20241213_000133", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 98.87}
+{"timestamp": "2024-12-13 00:01:52.085163", "event": "dashboard_load_start", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:52.086164", "event": "cache_expired", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:52.086164", "event": "cache_miss", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:52.087164", "event": "cache_store", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:52.088165", "event": "db_call", "session_id": "20241213_000133", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-13 00:01:52.113864", "event": "dashboard_load_start", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:52.113864", "event": "cache_hit", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:52.113864", "event": "db_call", "session_id": "20241213_000133", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:52.206790", "event": "dashboard_load_complete", "session_id": "20241213_000133", "details": {"client_id": 5, "load_time": 0.0929262638092041}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:52.207792", "event": "ui_action", "session_id": "20241213_000133", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 93.93}
+{"timestamp": "2024-12-13 00:01:54.464576", "event": "dashboard_load_start", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:54.464576", "event": "cache_hit", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:54.464576", "event": "db_call", "session_id": "20241213_000133", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:54.493244", "event": "dashboard_load_start", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:54.493244", "event": "cache_hit", "session_id": "20241213_000133", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:54.493244", "event": "db_call", "session_id": "20241213_000133", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:54.592754", "event": "dashboard_load_complete", "session_id": "20241213_000133", "details": {"client_id": 5, "load_time": 0.09950995445251465}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:01:54.593116", "event": "ui_action", "session_id": "20241213_000133", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 99.87}
+{"timestamp": "2024-12-13 00:05:11.275643", "event": "dashboard_load_start", "session_id": "20241213_000510", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:05:11.276647", "event": "cache_miss", "session_id": "20241213_000510", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:05:11.277647", "event": "db_call", "session_id": "20241213_000510", "details": {"function": "get_consolidated_client_data", "args": "(None,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:05:11.281646", "event": "dashboard_load_complete", "session_id": "20241213_000510", "details": {"client_id": null, "load_time": 0.007003307342529297}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:05:11.281646", "event": "ui_action", "session_id": "20241213_000510", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 7.0}
+{"timestamp": "2024-12-13 00:05:12.369550", "event": "dashboard_load_start", "session_id": "20241213_000510", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:05:12.369550", "event": "cache_miss", "session_id": "20241213_000510", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:05:12.371549", "event": "cache_store", "session_id": "20241213_000510", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:05:12.371549", "event": "db_call", "session_id": "20241213_000510", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-13 00:05:12.452743", "event": "dashboard_load_complete", "session_id": "20241213_000510", "details": {"client_id": 4, "load_time": 0.08519411087036133}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:05:12.453636", "event": "ui_action", "session_id": "20241213_000510", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 86.09}
+{"timestamp": "2024-12-13 00:05:29.765735", "event": "dashboard_load_start", "session_id": "20241213_000528", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:05:29.766735", "event": "cache_miss", "session_id": "20241213_000528", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:05:29.767736", "event": "db_call", "session_id": "20241213_000528", "details": {"function": "get_consolidated_client_data", "args": "(None,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:05:29.771736", "event": "dashboard_load_complete", "session_id": "20241213_000528", "details": {"client_id": null, "load_time": 0.007001638412475586}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:05:29.771736", "event": "ui_action", "session_id": "20241213_000528", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 7.0}
+{"timestamp": "2024-12-13 00:05:31.406477", "event": "dashboard_load_start", "session_id": "20241213_000528", "details": {"client_id": 6}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:05:31.407479", "event": "cache_miss", "session_id": "20241213_000528", "details": {"client_id": 6}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:05:31.408479", "event": "cache_store", "session_id": "20241213_000528", "details": {"client_id": 6}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:05:31.408479", "event": "db_call", "session_id": "20241213_000528", "details": {"function": "get_consolidated_client_data", "args": "(6,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:05:31.511146", "event": "dashboard_load_complete", "session_id": "20241213_000528", "details": {"client_id": 6, "load_time": 0.1056668758392334}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:05:31.511146", "event": "ui_action", "session_id": "20241213_000528", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 105.67}
+{"timestamp": "2024-12-13 00:07:05.685668", "event": "dashboard_load_start", "session_id": "20241213_000704", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:05.686666", "event": "cache_miss", "session_id": "20241213_000704", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:05.687666", "event": "db_call", "session_id": "20241213_000704", "details": {"function": "get_consolidated_client_data", "args": "(None,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:07:05.691666", "event": "dashboard_load_complete", "session_id": "20241213_000704", "details": {"client_id": null, "load_time": 0.006998300552368164}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:05.691666", "event": "ui_action", "session_id": "20241213_000704", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 7.0}
+{"timestamp": "2024-12-13 00:07:06.609573", "event": "dashboard_load_start", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:06.609573", "event": "cache_miss", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:06.611573", "event": "cache_store", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:06.611573", "event": "db_call", "session_id": "20241213_000704", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-13 00:07:06.691349", "event": "dashboard_load_complete", "session_id": "20241213_000704", "details": {"client_id": 4, "load_time": 0.08277368545532227}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:06.692354", "event": "ui_action", "session_id": "20241213_000704", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 83.78}
+{"timestamp": "2024-12-13 00:07:09.674445", "event": "dashboard_load_start", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:09.674445", "event": "cache_hit", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:09.675445", "event": "db_call", "session_id": "20241213_000704", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:07:09.690316", "event": "note_clicked", "session_id": "20241213_000704", "details": {"payment_id": 214, "action": "open", "has_content": false}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:09.759018", "event": "dashboard_load_complete", "session_id": "20241213_000704", "details": {"client_id": 4, "load_time": 0.08557415008544922}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:09.760018", "event": "ui_action", "session_id": "20241213_000704", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 87.57}
+{"timestamp": "2024-12-13 00:07:11.393323", "event": "dashboard_load_start", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:11.393323", "event": "cache_hit", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:11.394323", "event": "db_call", "session_id": "20241213_000704", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:07:11.410208", "event": "note_clicked", "session_id": "20241213_000704", "details": {"payment_id": 214, "action": "close", "has_content": false}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:11.479808", "event": "dashboard_load_complete", "session_id": "20241213_000704", "details": {"client_id": 4, "load_time": 0.08748412132263184}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:11.480808", "event": "ui_action", "session_id": "20241213_000704", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 88.48}
+{"timestamp": "2024-12-13 00:07:12.453450", "event": "dashboard_load_start", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:12.454450", "event": "cache_expired", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:12.454450", "event": "cache_miss", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:12.455451", "event": "cache_store", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:12.456452", "event": "db_call", "session_id": "20241213_000704", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-13 00:07:12.474623", "event": "note_clicked", "session_id": "20241213_000704", "details": {"payment_id": 213, "action": "open", "has_content": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:12.536168", "event": "dashboard_load_complete", "session_id": "20241213_000704", "details": {"client_id": 4, "load_time": 0.08371663093566895}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:12.537170", "event": "ui_action", "session_id": "20241213_000704", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 84.72}
+{"timestamp": "2024-12-13 00:07:13.372433", "event": "dashboard_load_start", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:13.373432", "event": "cache_hit", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:13.373432", "event": "db_call", "session_id": "20241213_000704", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:13.383434", "event": "note_clicked", "session_id": "20241213_000704", "details": {"payment_id": 213, "action": "close", "has_content": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:13.446382", "event": "dashboard_load_complete", "session_id": "20241213_000704", "details": {"client_id": 4, "load_time": 0.07494926452636719}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:13.446382", "event": "ui_action", "session_id": "20241213_000704", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 74.95}
+{"timestamp": "2024-12-13 00:07:15.413898", "event": "dashboard_load_start", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:15.414898", "event": "cache_hit", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:15.414898", "event": "db_call", "session_id": "20241213_000704", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:15.425957", "event": "note_clicked", "session_id": "20241213_000704", "details": {"payment_id": 214, "action": "open", "has_content": false}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:15.488866", "event": "dashboard_load_complete", "session_id": "20241213_000704", "details": {"client_id": 4, "load_time": 0.07596755027770996}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:15.488866", "event": "ui_action", "session_id": "20241213_000704", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 75.97}
+{"timestamp": "2024-12-13 00:07:16.762307", "event": "dashboard_load_start", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:16.762307", "event": "cache_hit", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:16.763306", "event": "db_call", "session_id": "20241213_000704", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:07:16.773305", "event": "note_clicked", "session_id": "20241213_000704", "details": {"payment_id": 214, "action": "close", "has_content": false}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:16.836865", "event": "dashboard_load_complete", "session_id": "20241213_000704", "details": {"client_id": 4, "load_time": 0.07555985450744629}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:07:16.836865", "event": "ui_action", "session_id": "20241213_000704", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 76.56}
+{"timestamp": "2024-12-13 00:08:02.877041", "event": "dashboard_load_start", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:02.878546", "event": "cache_expired", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:02.878546", "event": "cache_miss", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:02.879553", "event": "cache_store", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:02.880553", "event": "db_call", "session_id": "20241213_000704", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 2.01}
+{"timestamp": "2024-12-13 00:08:02.899165", "event": "note_clicked", "session_id": "20241213_000704", "details": {"payment_id": 214, "action": "open", "has_content": false}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:02.986580", "event": "dashboard_load_complete", "session_id": "20241213_000704", "details": {"client_id": 4, "load_time": 0.11053657531738281}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:02.986580", "event": "ui_action", "session_id": "20241213_000704", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 110.54}
+{"timestamp": "2024-12-13 00:08:03.937078", "event": "dashboard_load_start", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:03.937078", "event": "cache_hit", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:03.938080", "event": "db_call", "session_id": "20241213_000704", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:08:03.949079", "event": "note_clicked", "session_id": "20241213_000704", "details": {"payment_id": 214, "action": "close", "has_content": false}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:04.027059", "event": "dashboard_load_complete", "session_id": "20241213_000704", "details": {"client_id": 4, "load_time": 0.09198117256164551}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:04.027059", "event": "ui_action", "session_id": "20241213_000704", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 91.98}
+{"timestamp": "2024-12-13 00:08:18.175992", "event": "dashboard_load_start", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:18.176992", "event": "cache_expired", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:18.176992", "event": "cache_miss", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:18.178992", "event": "cache_store", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:18.178992", "event": "db_call", "session_id": "20241213_000704", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-13 00:08:18.203069", "event": "note_clicked", "session_id": "20241213_000704", "details": {"payment_id": 207, "action": "open", "has_content": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:18.261691", "event": "dashboard_load_complete", "session_id": "20241213_000704", "details": {"client_id": 4, "load_time": 0.08669757843017578}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:18.261691", "event": "ui_action", "session_id": "20241213_000704", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 86.7}
+{"timestamp": "2024-12-13 00:08:20.682028", "event": "dashboard_load_start", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:20.683028", "event": "cache_hit", "session_id": "20241213_000704", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:20.684029", "event": "db_call", "session_id": "20241213_000704", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:08:20.712343", "event": "note_clicked", "session_id": "20241213_000704", "details": {"payment_id": 207, "action": "close", "has_content": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:20.759218", "event": "dashboard_load_complete", "session_id": "20241213_000704", "details": {"client_id": 4, "load_time": 0.07818984985351562}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:20.759218", "event": "ui_action", "session_id": "20241213_000704", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 78.19}
+{"timestamp": "2024-12-13 00:08:41.149620", "event": "dashboard_load_start", "session_id": "20241213_000839", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:41.149620", "event": "cache_miss", "session_id": "20241213_000839", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:41.150620", "event": "db_call", "session_id": "20241213_000839", "details": {"function": "get_consolidated_client_data", "args": "(None,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:08:41.154623", "event": "dashboard_load_complete", "session_id": "20241213_000839", "details": {"client_id": null, "load_time": 0.0060040950775146484}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:41.154623", "event": "ui_action", "session_id": "20241213_000839", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 6.0}
+{"timestamp": "2024-12-13 00:08:42.193789", "event": "dashboard_load_start", "session_id": "20241213_000839", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:42.194789", "event": "cache_miss", "session_id": "20241213_000839", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:42.195789", "event": "cache_store", "session_id": "20241213_000839", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:42.195789", "event": "db_call", "session_id": "20241213_000839", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:08:42.415451", "event": "dashboard_load_complete", "session_id": "20241213_000839", "details": {"client_id": 3, "load_time": 0.22166180610656738}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:42.416453", "event": "ui_action", "session_id": "20241213_000839", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 223.66}
+{"timestamp": "2024-12-13 00:08:51.300582", "event": "dashboard_load_start", "session_id": "20241213_000839", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:51.300582", "event": "cache_expired", "session_id": "20241213_000839", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:51.301583", "event": "cache_miss", "session_id": "20241213_000839", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:51.302582", "event": "cache_store", "session_id": "20241213_000839", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:51.302582", "event": "db_call", "session_id": "20241213_000839", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-13 00:08:51.319528", "event": "note_clicked", "session_id": "20241213_000839", "details": {"payment_id": 191, "action": "open", "has_content": false}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:08:51.322738", "event": "ui_action", "session_id": "20241213_000839", "details": {"action": "show_dashboard", "error": "There are multiple elements with the same `key='note_textarea_191'`. To fix this, please make sure that the `key` argument is unique for each element you create.", "success": false}, "duration_ms": 24.15}
+{"timestamp": "2024-12-13 00:09:27.775221", "event": "dashboard_load_start", "session_id": "20241213_000926", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:27.776221", "event": "cache_miss", "session_id": "20241213_000926", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:27.777223", "event": "db_call", "session_id": "20241213_000926", "details": {"function": "get_consolidated_client_data", "args": "(None,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:09:27.780225", "event": "dashboard_load_complete", "session_id": "20241213_000926", "details": {"client_id": null, "load_time": 0.006003618240356445}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:27.781222", "event": "ui_action", "session_id": "20241213_000926", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 7.0}
+{"timestamp": "2024-12-13 00:09:28.823277", "event": "dashboard_load_start", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:28.824276", "event": "cache_miss", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:28.825278", "event": "cache_store", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:28.825278", "event": "db_call", "session_id": "20241213_000926", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:09:28.913980", "event": "dashboard_load_complete", "session_id": "20241213_000926", "details": {"client_id": 4, "load_time": 0.09170341491699219}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:28.913980", "event": "ui_action", "session_id": "20241213_000926", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 91.7}
+{"timestamp": "2024-12-13 00:09:33.078292", "event": "dashboard_load_start", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:33.078292", "event": "cache_hit", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:33.078292", "event": "db_call", "session_id": "20241213_000926", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:33.094156", "event": "note_clicked", "session_id": "20241213_000926", "details": {"payment_id": 214, "action": "open", "has_content": false}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:33.163983", "event": "dashboard_load_complete", "session_id": "20241213_000926", "details": {"client_id": 4, "load_time": 0.08769369125366211}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:33.163983", "event": "ui_action", "session_id": "20241213_000926", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 87.69}
+{"timestamp": "2024-12-13 00:09:35.089275", "event": "dashboard_load_start", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:35.089275", "event": "cache_expired", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:35.089275", "event": "cache_miss", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:35.091274", "event": "cache_store", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:35.091274", "event": "db_call", "session_id": "20241213_000926", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-13 00:09:35.103276", "event": "note_clicked", "session_id": "20241213_000926", "details": {"payment_id": 214, "action": "close", "has_content": false}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:35.166198", "event": "dashboard_load_complete", "session_id": "20241213_000926", "details": {"client_id": 4, "load_time": 0.07892537117004395}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:35.166198", "event": "ui_action", "session_id": "20241213_000926", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 78.93}
+{"timestamp": "2024-12-13 00:09:36.021261", "event": "dashboard_load_start", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:36.021261", "event": "cache_hit", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:36.021261", "event": "db_call", "session_id": "20241213_000926", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:36.034320", "event": "note_clicked", "session_id": "20241213_000926", "details": {"payment_id": 214, "action": "open", "has_content": false}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:36.095212", "event": "dashboard_load_complete", "session_id": "20241213_000926", "details": {"client_id": 4, "load_time": 0.07595539093017578}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:36.095212", "event": "ui_action", "session_id": "20241213_000926", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 75.96}
+{"timestamp": "2024-12-13 00:09:42.801389", "event": "dashboard_load_start", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:42.801389", "event": "cache_expired", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:42.802395", "event": "cache_miss", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:42.803396", "event": "cache_store", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:42.803562", "event": "db_call", "session_id": "20241213_000926", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 2.17}
+{"timestamp": "2024-12-13 00:09:42.887004", "event": "dashboard_load_complete", "session_id": "20241213_000926", "details": {"client_id": 4, "load_time": 0.08959269523620605}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:42.888002", "event": "ui_action", "session_id": "20241213_000926", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 90.59}
+{"timestamp": "2024-12-13 00:09:42.914119", "event": "dashboard_load_start", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:42.915119", "event": "cache_hit", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:42.915119", "event": "db_call", "session_id": "20241213_000926", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:42.931126", "event": "note_clicked", "session_id": "20241213_000926", "details": {"payment_id": 214, "action": "close", "has_content": false}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:43.007246", "event": "dashboard_load_complete", "session_id": "20241213_000926", "details": {"client_id": 4, "load_time": 0.09412693977355957}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:43.008244", "event": "ui_action", "session_id": "20241213_000926", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 95.13}
+{"timestamp": "2024-12-13 00:09:44.440655", "event": "dashboard_load_start", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:44.441658", "event": "cache_hit", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:44.441658", "event": "db_call", "session_id": "20241213_000926", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:44.452722", "event": "note_clicked", "session_id": "20241213_000926", "details": {"payment_id": 214, "action": "open", "has_content": false}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:44.515226", "event": "dashboard_load_complete", "session_id": "20241213_000926", "details": {"client_id": 4, "load_time": 0.07556986808776855}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:44.515226", "event": "ui_action", "session_id": "20241213_000926", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 75.57}
+{"timestamp": "2024-12-13 00:09:51.171928", "event": "dashboard_load_start", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:51.172929", "event": "cache_expired", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:51.172929", "event": "cache_miss", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:51.174028", "event": "cache_store", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:51.174028", "event": "db_call", "session_id": "20241213_000926", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.1}
+{"timestamp": "2024-12-13 00:09:51.258503", "event": "dashboard_load_complete", "session_id": "20241213_000926", "details": {"client_id": 4, "load_time": 0.08657503128051758}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:51.258503", "event": "ui_action", "session_id": "20241213_000926", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 87.57}
+{"timestamp": "2024-12-13 00:09:53.563101", "event": "dashboard_load_start", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:53.563101", "event": "cache_hit", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:53.564100", "event": "db_call", "session_id": "20241213_000926", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:09:53.580463", "event": "note_clicked", "session_id": "20241213_000926", "details": {"payment_id": 214, "action": "close", "has_content": false}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:53.653149", "event": "dashboard_load_complete", "session_id": "20241213_000926", "details": {"client_id": 4, "load_time": 0.0910487174987793}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:53.654148", "event": "ui_action", "session_id": "20241213_000926", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 92.05}
+{"timestamp": "2024-12-13 00:09:54.592204", "event": "dashboard_load_start", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:54.592204", "event": "cache_hit", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:54.593206", "event": "db_call", "session_id": "20241213_000926", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:09:54.603262", "event": "note_clicked", "session_id": "20241213_000926", "details": {"payment_id": 214, "action": "open", "has_content": false}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:54.666161", "event": "dashboard_load_complete", "session_id": "20241213_000926", "details": {"client_id": 4, "load_time": 0.07495522499084473}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:54.666161", "event": "ui_action", "session_id": "20241213_000926", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 74.96}
+{"timestamp": "2024-12-13 00:09:55.415419", "event": "dashboard_load_start", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:55.416418", "event": "cache_hit", "session_id": "20241213_000926", "details": {"client_id": 4}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:55.416418", "event": "db_call", "session_id": "20241213_000926", "details": {"function": "get_consolidated_client_data", "args": "(4,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:55.426482", "event": "note_clicked", "session_id": "20241213_000926", "details": {"payment_id": 214, "action": "close", "has_content": false}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:55.489388", "event": "dashboard_load_complete", "session_id": "20241213_000926", "details": {"client_id": 4, "load_time": 0.07496786117553711}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:09:55.489388", "event": "ui_action", "session_id": "20241213_000926", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 74.97}
+{"timestamp": "2024-12-13 00:11:02.565576", "event": "dashboard_load_start", "session_id": "20241213_001101", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:02.566576", "event": "cache_miss", "session_id": "20241213_001101", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:02.567574", "event": "db_call", "session_id": "20241213_001101", "details": {"function": "get_consolidated_client_data", "args": "(None,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:11:02.570576", "event": "dashboard_load_complete", "session_id": "20241213_001101", "details": {"client_id": null, "load_time": 0.006001710891723633}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:02.571573", "event": "ui_action", "session_id": "20241213_001101", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 7.0}
+{"timestamp": "2024-12-13 00:11:03.455477", "event": "dashboard_load_start", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:03.456477", "event": "cache_miss", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:03.457476", "event": "cache_store", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:03.457476", "event": "db_call", "session_id": "20241213_001101", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:11:03.697883", "event": "dashboard_load_complete", "session_id": "20241213_001101", "details": {"client_id": 3, "load_time": 0.24340558052062988}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:03.697883", "event": "ui_action", "session_id": "20241213_001101", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 243.41}
+{"timestamp": "2024-12-13 00:11:12.339219", "event": "dashboard_load_start", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:12.340220", "event": "cache_expired", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:12.341221", "event": "cache_miss", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:12.342222", "event": "cache_store", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:12.342222", "event": "db_call", "session_id": "20241213_001101", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-13 00:11:12.358883", "event": "note_clicked", "session_id": "20241213_001101", "details": {"payment_id": 191, "action": "open", "has_content": false}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:12.547430", "event": "dashboard_load_complete", "session_id": "20241213_001101", "details": {"client_id": 3, "load_time": 0.2092115879058838}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:12.547430", "event": "ui_action", "session_id": "20241213_001101", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 210.21}
+{"timestamp": "2024-12-13 00:11:17.054729", "event": "dashboard_load_start", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:17.054729", "event": "cache_hit", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:17.055737", "event": "db_call", "session_id": "20241213_001101", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 1.01}
+{"timestamp": "2024-12-13 00:11:17.255737", "event": "dashboard_load_complete", "session_id": "20241213_001101", "details": {"client_id": 3, "load_time": 0.20503449440002441}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:17.256735", "event": "ui_action", "session_id": "20241213_001101", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 206.03}
+{"timestamp": "2024-12-13 00:11:17.324543", "event": "dashboard_load_start", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:17.324543", "event": "cache_hit", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:17.325542", "event": "db_call", "session_id": "20241213_001101", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:11:17.377579", "event": "dashboard_load_start", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:17.377579", "event": "cache_expired", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:17.378580", "event": "cache_miss", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:17.380747", "event": "cache_store", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:17.380747", "event": "db_call", "session_id": "20241213_001101", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 3.17}
+{"timestamp": "2024-12-13 00:11:17.592160", "event": "dashboard_load_complete", "session_id": "20241213_001101", "details": {"client_id": 3, "load_time": 0.21558356285095215}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:17.592160", "event": "ui_action", "session_id": "20241213_001101", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 215.58}
+{"timestamp": "2024-12-13 00:11:21.629553", "event": "dashboard_load_start", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:21.629553", "event": "cache_hit", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:21.630554", "event": "db_call", "session_id": "20241213_001101", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:11:21.638613", "event": "note_clicked", "session_id": "20241213_001101", "details": {"payment_id": 191, "action": "open", "has_content": false}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:21.826896", "event": "dashboard_load_complete", "session_id": "20241213_001101", "details": {"client_id": 3, "load_time": 0.20034098625183105}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:21.826896", "event": "ui_action", "session_id": "20241213_001101", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 200.34}
+{"timestamp": "2024-12-13 00:11:26.017120", "event": "dashboard_load_start", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:26.018126", "event": "cache_expired", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:26.018126", "event": "cache_miss", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:26.019126", "event": "cache_store", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:26.020127", "event": "db_call", "session_id": "20241213_001101", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-13 00:11:26.215001", "event": "dashboard_load_complete", "session_id": "20241213_001101", "details": {"client_id": 3, "load_time": 0.2018287181854248}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:26.215001", "event": "ui_action", "session_id": "20241213_001101", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 201.83}
+{"timestamp": "2024-12-13 00:11:26.277130", "event": "dashboard_load_start", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:26.277130", "event": "cache_hit", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:26.278127", "event": "db_call", "session_id": "20241213_001101", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:11:26.330703", "event": "dashboard_load_start", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:26.330703", "event": "cache_hit", "session_id": "20241213_001101", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:26.330703", "event": "db_call", "session_id": "20241213_001101", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:26.570129", "event": "dashboard_load_complete", "session_id": "20241213_001101", "details": {"client_id": 3, "load_time": 0.24048590660095215}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:26.570129", "event": "ui_action", "session_id": "20241213_001101", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 241.55}
+{"timestamp": "2024-12-13 00:11:32.919337", "event": "dashboard_load_start", "session_id": "unknown", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:32.920337", "event": "cache_miss", "session_id": "unknown", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:32.921337", "event": "db_call", "session_id": "unknown", "details": {"function": "get_consolidated_client_data", "args": "(None,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:11:32.924338", "event": "dashboard_load_complete", "session_id": "unknown", "details": {"client_id": null, "load_time": 0.006001949310302734}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:32.925514", "event": "ui_action", "session_id": "unknown", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 7.18}
+{"timestamp": "2024-12-13 00:11:34.614366", "event": "dashboard_load_start", "session_id": "unknown", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:34.615366", "event": "cache_expired", "session_id": "unknown", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:34.615366", "event": "cache_miss", "session_id": "unknown", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:34.616363", "event": "cache_store", "session_id": "unknown", "details": {"client_id": 3}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:34.616363", "event": "db_call", "session_id": "unknown", "details": {"function": "get_consolidated_client_data", "args": "(3,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:11:34.823361", "event": "dashboard_load_complete", "session_id": "unknown", "details": {"client_id": 3, "load_time": 0.20999717712402344}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:11:34.823361", "event": "ui_action", "session_id": "unknown", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 210.0}
+{"timestamp": "2024-12-13 00:20:13.305951", "event": "dashboard_load_start", "session_id": "20241213_002012", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:13.305951", "event": "cache_miss", "session_id": "20241213_002012", "details": {"client_id": null}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:13.307949", "event": "db_call", "session_id": "20241213_002012", "details": {"function": "get_consolidated_client_data", "args": "(None,)", "success": true}, "duration_ms": 2.0}
+{"timestamp": "2024-12-13 00:20:13.311951", "event": "dashboard_load_complete", "session_id": "20241213_002012", "details": {"client_id": null, "load_time": 0.006998777389526367}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:13.311951", "event": "ui_action", "session_id": "20241213_002012", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 7.0}
+{"timestamp": "2024-12-13 00:20:14.475181", "event": "dashboard_load_start", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:14.476178", "event": "cache_miss", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:14.477180", "event": "cache_store", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:14.477180", "event": "db_call", "session_id": "20241213_002012", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.0}
+{"timestamp": "2024-12-13 00:20:14.568347", "event": "dashboard_load_complete", "session_id": "20241213_002012", "details": {"client_id": 5, "load_time": 0.09416651725769043}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:14.568347", "event": "ui_action", "session_id": "20241213_002012", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 94.17}
+{"timestamp": "2024-12-13 00:20:17.547045", "event": "dashboard_load_start", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:17.548045", "event": "cache_hit", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:17.548045", "event": "db_call", "session_id": "20241213_002012", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:17.564291", "event": "note_clicked", "session_id": "20241213_002012", "details": {"payment_id": 237, "action": "open", "has_content": false}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:17.635143", "event": "dashboard_load_complete", "session_id": "20241213_002012", "details": {"client_id": 5, "load_time": 0.0890965461730957}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:17.635143", "event": "ui_action", "session_id": "20241213_002012", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 89.1}
+{"timestamp": "2024-12-13 00:20:21.412226", "event": "dashboard_load_start", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:21.412226", "event": "cache_expired", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:21.413232", "event": "cache_miss", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:21.414614", "event": "cache_store", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:21.414614", "event": "db_call", "session_id": "20241213_002012", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 2.39}
+{"timestamp": "2024-12-13 00:20:21.501866", "event": "dashboard_load_complete", "session_id": "20241213_002012", "details": {"client_id": 5, "load_time": 0.0926964282989502}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:21.502865", "event": "ui_action", "session_id": "20241213_002012", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 93.7}
+{"timestamp": "2024-12-13 00:20:21.534436", "event": "dashboard_load_start", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:21.534436", "event": "cache_hit", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:21.534436", "event": "db_call", "session_id": "20241213_002012", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:21.585730", "event": "dashboard_load_start", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:21.585730", "event": "cache_hit", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:21.585730", "event": "db_call", "session_id": "20241213_002012", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:21.677759", "event": "dashboard_load_complete", "session_id": "20241213_002012", "details": {"client_id": 5, "load_time": 0.09554076194763184}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:21.677759", "event": "ui_action", "session_id": "20241213_002012", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 95.54}
+{"timestamp": "2024-12-13 00:20:23.503307", "event": "dashboard_load_start", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:23.503307", "event": "cache_hit", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:23.503307", "event": "db_call", "session_id": "20241213_002012", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:23.514360", "event": "note_clicked", "session_id": "20241213_002012", "details": {"payment_id": 237, "action": "open", "has_content": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:23.577299", "event": "dashboard_load_complete", "session_id": "20241213_002012", "details": {"client_id": 5, "load_time": 0.07499122619628906}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:23.577299", "event": "ui_action", "session_id": "20241213_002012", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 74.99}
+{"timestamp": "2024-12-13 00:20:27.679223", "event": "dashboard_load_start", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:27.682994", "event": "cache_expired", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:27.682994", "event": "cache_miss", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:27.684700", "event": "cache_store", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:27.684700", "event": "db_call", "session_id": "20241213_002012", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 1.71}
+{"timestamp": "2024-12-13 00:20:27.773558", "event": "dashboard_load_complete", "session_id": "20241213_002012", "details": {"client_id": 5, "load_time": 0.09433531761169434}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:27.773558", "event": "ui_action", "session_id": "20241213_002012", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 94.34}
+{"timestamp": "2024-12-13 00:20:27.801735", "event": "dashboard_load_start", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:27.802737", "event": "cache_hit", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:27.802737", "event": "db_call", "session_id": "20241213_002012", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:27.861706", "event": "dashboard_load_start", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:27.862151", "event": "cache_hit", "session_id": "20241213_002012", "details": {"client_id": 5}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:27.862399", "event": "db_call", "session_id": "20241213_002012", "details": {"function": "get_consolidated_client_data", "args": "(5,)", "success": true}, "duration_ms": 0.25}
+{"timestamp": "2024-12-13 00:20:27.941316", "event": "dashboard_load_complete", "session_id": "20241213_002012", "details": {"client_id": 5, "load_time": 0.08078694343566895}, "duration_ms": null}
+{"timestamp": "2024-12-13 00:20:27.941316", "event": "ui_action", "session_id": "20241213_002012", "details": {"action": "show_dashboard", "success": true}, "duration_ms": 80.79}
