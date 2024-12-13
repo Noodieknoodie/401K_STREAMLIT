@@ -52,11 +52,20 @@ This application manages 401k payment tracking with a sophisticated period-based
 - Automatic conversion between storage (quarters) and display formats (months/quarters)
 
 ### State Management
-The application uses a centralized state initialization system that handles:
-- Payment form state (visibility, client selection, validation)
-- Notes state (active notes, edits, temporary storage)
-- Filter state (period selections, current filter parameters)
-- Contact form state (mode, validation, form data)
+The application uses a centralized UIStateManager class that provides:
+- Strongly typed dialog states using TypedDict
+- Separate payment and contact dialog management
+- Form data persistence and validation
+- Confirmation handling for unsaved changes
+- Clean separation between dialog types
+- Automatic state cleanup on dialog close
+
+The UIStateManager ensures:
+- Type safety through TypedDict definitions
+- Consistent dialog lifecycle management
+- Proper validation state handling
+- Form data preservation during updates
+- Clear separation of concerns
 
 ### Row Structure
 Each payment row is contained within its own container, ensuring:
