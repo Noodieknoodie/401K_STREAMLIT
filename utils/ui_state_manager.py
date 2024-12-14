@@ -2,6 +2,7 @@
 
 from typing import Optional, Literal, TypedDict, List, Dict, Any, Union
 import streamlit as st
+from utils.debug_logger import debug  # Add debug logger import
 
 class BaseDialogState(TypedDict):
     """Base state structure shared by all dialogs"""
@@ -136,7 +137,18 @@ class UIStateManager:
         contact_id: Optional[int] = None,
         initial_data: Optional[Dict[str, Any]] = None
     ) -> None:
-        """Open the contact dialog with specified parameters and optional initial data."""
+        """Open the contact dialog with specified parameters."""
+        debug.log_state_change(
+            "contact_dialog",
+            "closed",
+            "open",
+            {
+                "type": contact_type,
+                "mode": mode,
+                "contact_id": contact_id,
+                "has_initial_data": bool(initial_data)
+            }
+        )
         state = self._get_dialog_state('contact')
         state['is_open'] = True
         state['mode'] = mode
@@ -145,30 +157,68 @@ class UIStateManager:
         state['validation_errors'] = []
         state['show_cancel_confirm'] = False
         state['form_data'] = initial_data or {}
+        debug.log_form_data("contact", state['form_data'])
     
     def update_contact_form_data(self, data: Dict[str, Any]) -> None:
         """Update contact form data, preserving existing values."""
         state = self._get_dialog_state('contact')
+        old_data = state['form_data'].copy()
         state['form_data'].update(data)
+        debug.log_state_change(
+            "contact_form_data",
+            old_data,
+            state['form_data'],
+            {"changed_fields": list(data.keys())}
+        )
     
     def set_contact_validation_errors(self, errors: List[str]) -> None:
         """Set validation errors for the contact dialog."""
         state = self._get_dialog_state('contact')
+        old_errors = state['validation_errors']
         state['validation_errors'] = errors
+        debug.log_state_change(
+            "contact_validation",
+            old_errors,
+            errors,
+            {"error_count": len(errors)}
+        )
     
     def clear_contact_validation_errors(self) -> None:
         """Clear all validation errors from the contact dialog."""
         state = self._get_dialog_state('contact')
+        if state['validation_errors']:
+            debug.log_state_change(
+                "contact_validation",
+                state['validation_errors'],
+                [],
+                {"action": "clear"}
+            )
         state['validation_errors'] = []
     
     def show_contact_cancel_confirm(self) -> None:
         """Show the cancel confirmation for contact dialog."""
         state = self._get_dialog_state('contact')
+        debug.log_state_change(
+            "contact_cancel_confirm",
+            False,
+            True,
+            {"form_data": state['form_data']}
+        )
         state['show_cancel_confirm'] = True
     
     def close_contact_dialog(self, clear_data: bool = True) -> None:
         """Close the contact dialog and optionally clear its data."""
         state = self._get_dialog_state('contact')
+        debug.log_state_change(
+            "contact_dialog",
+            "open",
+            "closed",
+            {
+                "clear_data": clear_data,
+                "had_validation_errors": bool(state['validation_errors']),
+                "had_form_data": bool(state['form_data'])
+            }
+        )
         state['is_open'] = False
         state['show_cancel_confirm'] = False
         if clear_data:

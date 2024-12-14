@@ -2,25 +2,63 @@
 import sqlite3
 import streamlit as st
 from datetime import datetime
+from utils.debug_logger import debug
 
 def get_database_connection():
     """Create and return a database connection"""
-    return sqlite3.connect('DATABASE/401kDATABASE.db')
+    try:
+        debug.log_db_operation(
+            operation="connect",
+            table="system",
+            data={"database": "401kDATABASE.db"}
+        )
+        return sqlite3.connect('DATABASE/401kDATABASE.db')
+    except Exception as e:
+        debug.log_db_operation(
+            operation="connect_error",
+            table="system",
+            data={"error": str(e)}
+        )
+        raise
 
 @st.cache_data
 def get_clients():
     """Get all clients from the database"""
+    debug.log_db_operation(
+        operation="fetch_start",
+        table="clients",
+        data={"action": "list_all"}
+    )
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
         cursor.execute("SELECT client_id, display_name FROM clients ORDER BY display_name")
-        return cursor.fetchall()
+        results = cursor.fetchall()
+        debug.log_db_operation(
+            operation="fetch_complete",
+            table="clients",
+            data={"action": "list_all"},
+            result={"count": len(results)}
+        )
+        return results
+    except Exception as e:
+        debug.log_db_operation(
+            operation="fetch_error",
+            table="clients",
+            data={"error": str(e)}
+        )
+        raise
     finally:
         conn.close()
 
 @st.cache_data
 def get_active_contract(client_id):
     """Get active contract for a client"""
+    debug.log_db_operation(
+        operation="fetch_start",
+        table="contracts",
+        data={"client_id": client_id, "active_only": True}
+    )
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
@@ -38,13 +76,32 @@ def get_active_contract(client_id):
             WHERE client_id = ? AND active = 'TRUE'
             LIMIT 1
         """, (client_id,))
-        return cursor.fetchone()
+        result = cursor.fetchone()
+        debug.log_db_operation(
+            operation="fetch_complete",
+            table="contracts",
+            data={"client_id": client_id},
+            result={"found": bool(result)}
+        )
+        return result
+    except Exception as e:
+        debug.log_db_operation(
+            operation="fetch_error",
+            table="contracts",
+            data={"client_id": client_id, "error": str(e)}
+        )
+        raise
     finally:
         conn.close()
 
 @st.cache_data
 def get_latest_payment(client_id):
     """Get latest payment for a client"""
+    debug.log_db_operation(
+        operation="fetch_start",
+        table="payments",
+        data={"client_id": client_id, "action": "get_latest"}
+    )
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
@@ -56,55 +113,120 @@ def get_latest_payment(client_id):
             ORDER BY p.received_date DESC
             LIMIT 1
         """, (client_id,))
-        return cursor.fetchone()
+        result = cursor.fetchone()
+        debug.log_db_operation(
+            operation="fetch_complete",
+            table="payments",
+            data={"client_id": client_id},
+            result={"found": bool(result)}
+        )
+        return result
+    except Exception as e:
+        debug.log_db_operation(
+            operation="fetch_error",
+            table="payments",
+            data={"client_id": client_id, "error": str(e)}
+        )
+        raise
     finally:
         conn.close()
 
 @st.cache_data
 def get_client_details(client_id):
     """Get client details"""
+    debug.log_db_operation(
+        operation="fetch_start",
+        table="clients",
+        data={"client_id": client_id}
+    )
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
         cursor.execute("SELECT display_name, full_name FROM clients WHERE client_id = ?", (client_id,))
-        return cursor.fetchone()
+        result = cursor.fetchone()
+        debug.log_db_operation(
+            operation="fetch_complete",
+            table="clients",
+            data={"client_id": client_id},
+            result={"found": bool(result)}
+        )
+        return result
+    except Exception as e:
+        debug.log_db_operation(
+            operation="fetch_error",
+            table="clients",
+            data={"client_id": client_id, "error": str(e)}
+        )
+        raise
     finally:
         conn.close()
 
 def calculate_rate_conversions(rate_value, fee_type, schedule):
     """Calculate rate conversions based on payment schedule"""
+    debug.log_ui_interaction(
+        action="calculate_rate",
+        element="rate_conversion",
+        data={
+            "rate_value": rate_value,
+            "fee_type": fee_type,
+            "schedule": schedule
+        }
+    )
+    
     if not rate_value or rate_value == 'N/A' or not schedule:
+        debug.log_ui_interaction(
+            action="calculate_rate",
+            element="rate_conversion",
+            data={"result": "N/A", "reason": "invalid_input"}
+        )
         return 'N/A', None
     
     try:
         if fee_type == 'percentage':
             rate = float(rate_value.strip('%')) / 100
             if schedule.lower() == 'monthly':
-                return f"{rate*100:.3f}%", f"Q: {rate*3*100:.3f}% | A: {rate*12*100:.3f}%"
+                result = (f"{rate*100:.3f}%", f"Q: {rate*3*100:.3f}% | A: {rate*12*100:.3f}%")
             elif schedule.lower() == 'quarterly':
                 monthly = rate / 3
-                return f"{rate*100:.3f}%", f"M: {monthly*100:.3f}% | A: {rate*4*100:.3f}%"
+                result = (f"{rate*100:.3f}%", f"M: {monthly*100:.3f}% | A: {rate*4*100:.3f}%")
             else:  # annual
                 monthly = rate / 12
                 quarterly = rate / 4
-                return f"{rate*100:.3f}%", f"M: {monthly*100:.3f}% | Q: {quarterly*100:.3f}%"
+                result = (f"{rate*100:.3f}%", f"M: {monthly*100:.3f}% | Q: {quarterly*100:.3f}%")
         else:  # flat rate
             rate = float(rate_value.strip('$').replace(',', ''))
             if schedule.lower() == 'monthly':
-                return f"${rate:,.2f}", f"Q: ${rate*3:,.2f} | A: ${rate*12:,.2f}"
+                result = (f"${rate:,.2f}", f"Q: ${rate*3:,.2f} | A: ${rate*12:,.2f}")
             elif schedule.lower() == 'quarterly':
                 monthly = rate / 3
-                return f"${rate:,.2f}", f"M: ${monthly:,.2f} | A: ${rate*4:,.2f}"
+                result = (f"${rate:,.2f}", f"M: ${monthly:,.2f} | A: ${rate*4:,.2f}")
             else:  # annual
                 monthly = rate / 12
                 quarterly = rate / 4
-                return f"${rate:,.2f}", f"M: ${monthly:,.2f} | Q: ${quarterly:,.2f}"
-    except:
+                result = (f"${rate:,.2f}", f"M: ${monthly:,.2f} | Q: ${quarterly:,.2f}")
+        
+        debug.log_ui_interaction(
+            action="calculate_rate",
+            element="rate_conversion",
+            data={"result": result, "success": True}
+        )
+        return result
+    except Exception as e:
+        debug.log_ui_interaction(
+            action="calculate_rate",
+            element="rate_conversion",
+            data={"error": str(e), "success": False}
+        )
         return rate_value, None
 
 @st.cache_data
 def get_contacts(client_id):
     """Get all contacts for a client"""
+    debug.log_db_operation(
+        operation="fetch_start",
+        table="contacts",
+        data={"client_id": client_id}
+    )
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
@@ -122,13 +244,32 @@ def get_contacts(client_id):
                 END,
                 contact_name
         """, (client_id,))
-        return cursor.fetchall()
+        results = cursor.fetchall()
+        debug.log_db_operation(
+            operation="fetch_complete",
+            table="contacts",
+            data={"client_id": client_id},
+            result={"count": len(results)}
+        )
+        return results
+    except Exception as e:
+        debug.log_db_operation(
+            operation="fetch_error",
+            table="contacts",
+            data={"client_id": client_id, "error": str(e)}
+        )
+        raise
     finally:
         conn.close()
 
 @st.cache_data
 def get_all_contracts(client_id):
     """Get all contracts for a client"""
+    debug.log_db_operation(
+        operation="fetch_start",
+        table="contracts",
+        data={"client_id": client_id, "action": "get_all"}
+    )
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
@@ -142,13 +283,37 @@ def get_all_contracts(client_id):
                 CASE WHEN active = 'TRUE' THEN 0 ELSE 1 END,
                 contract_start_date DESC
         """, (client_id,))
-        return cursor.fetchall()
+        results = cursor.fetchall()
+        debug.log_db_operation(
+            operation="fetch_complete",
+            table="contracts",
+            data={"client_id": client_id},
+            result={"count": len(results)}
+        )
+        return results
+    except Exception as e:
+        debug.log_db_operation(
+            operation="fetch_error",
+            table="contracts",
+            data={"client_id": client_id, "error": str(e)}
+        )
+        raise
     finally:
         conn.close()
 
 @st.cache_data
 def get_payment_history(client_id, years=None, quarters=None):
     """Get payment history for a client with optional year/quarter filters"""
+    debug.log_db_operation(
+        operation="fetch_start",
+        table="payments",
+        data={
+            "client_id": client_id,
+            "years": years,
+            "quarters": quarters
+        }
+    )
+    
     base_query = """
         SELECT 
             c.provider_name,
@@ -188,7 +353,30 @@ def get_payment_history(client_id, years=None, quarters=None):
     try:
         cursor = conn.cursor()
         cursor.execute(base_query, params)
-        return cursor.fetchall()
+        results = cursor.fetchall()
+        debug.log_db_operation(
+            operation="fetch_complete",
+            table="payments",
+            data={
+                "client_id": client_id,
+                "years": years,
+                "quarters": quarters
+            },
+            result={"count": len(results)}
+        )
+        return results
+    except Exception as e:
+        debug.log_db_operation(
+            operation="fetch_error",
+            table="payments",
+            data={
+                "client_id": client_id,
+                "years": years,
+                "quarters": quarters,
+                "error": str(e)
+            }
+        )
+        raise
     finally:
         conn.close()
 
@@ -250,6 +438,16 @@ def add_contact(client_id, contact_type, contact_data):
     # Clean up contact type to match database values
     contact_type = contact_type.split()[0]  # Extract first word (Primary/Authorized/Provider)
     
+    debug.log_db_operation(
+        operation="insert_start",
+        table="contacts",
+        data={
+            "client_id": client_id,
+            "contact_type": contact_type,
+            "data": contact_data
+        }
+    )
+    
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
@@ -269,23 +467,70 @@ def add_contact(client_id, contact_type, contact_data):
             contact_data.get('mailing_address')
         ))
         conn.commit()
-        return cursor.lastrowid
+        new_id = cursor.lastrowid
+        debug.log_db_operation(
+            operation="insert_complete",
+            table="contacts",
+            data={"client_id": client_id, "contact_type": contact_type},
+            result={"new_id": new_id}
+        )
+        return new_id
+    except Exception as e:
+        debug.log_db_operation(
+            operation="insert_error",
+            table="contacts",
+            data={
+                "client_id": client_id,
+                "contact_type": contact_type,
+                "error": str(e)
+            }
+        )
+        return None
     finally:
-        conn.close()        
+        conn.close()
 
 def delete_contact(contact_id):
     """Delete a contact from the database"""
+    debug.log_db_operation(
+        operation="delete_start",
+        table="contacts",
+        data={"contact_id": contact_id}
+    )
+    
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM contacts WHERE contact_id = ?", (contact_id,))
         conn.commit()
-        return True
+        success = cursor.rowcount > 0
+        debug.log_db_operation(
+            operation="delete_complete",
+            table="contacts",
+            data={"contact_id": contact_id},
+            result={"success": success, "rows_affected": cursor.rowcount}
+        )
+        return success
+    except Exception as e:
+        debug.log_db_operation(
+            operation="delete_error",
+            table="contacts",
+            data={"contact_id": contact_id, "error": str(e)}
+        )
+        return False
     finally:
         conn.close()
 
 def update_contact(contact_id, contact_data):
     """Update an existing contact in the database"""
+    debug.log_db_operation(
+        operation="update_start",
+        table="contacts",
+        data={
+            "contact_id": contact_id,
+            "updates": contact_data
+        }
+    )
+    
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
@@ -308,12 +553,31 @@ def update_contact(contact_id, contact_data):
             contact_id
         ))
         conn.commit()
-        return True
+        success = cursor.rowcount > 0
+        debug.log_db_operation(
+            operation="update_complete",
+            table="contacts",
+            data={"contact_id": contact_id},
+            result={"success": success, "rows_affected": cursor.rowcount}
+        )
+        return success
+    except Exception as e:
+        debug.log_db_operation(
+            operation="update_error",
+            table="contacts",
+            data={"contact_id": contact_id, "error": str(e)}
+        )
+        return False
     finally:
         conn.close()
 
 def get_total_payment_count(client_id):
     """Get total number of payments for a client."""
+    debug.log_db_operation(
+        operation="fetch_start",
+        table="payments",
+        data={"client_id": client_id, "action": "count"}
+    )
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
@@ -322,12 +586,31 @@ def get_total_payment_count(client_id):
             FROM payments p
             WHERE p.client_id = ?
         """, (client_id,))
-        return cursor.fetchone()[0]
+        count = cursor.fetchone()[0]
+        debug.log_db_operation(
+            operation="fetch_complete",
+            table="payments",
+            data={"client_id": client_id},
+            result={"count": count}
+        )
+        return count
+    except Exception as e:
+        debug.log_db_operation(
+            operation="fetch_error",
+            table="payments",
+            data={"client_id": client_id, "error": str(e)}
+        )
+        raise
     finally:
         conn.close()
 
 def get_payment_year_quarters(client_id):
     """Get all available year/quarter combinations for quick navigation."""
+    debug.log_db_operation(
+        operation="fetch_start",
+        table="payments",
+        data={"client_id": client_id, "action": "get_year_quarters"}
+    )
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
@@ -339,7 +622,25 @@ def get_payment_year_quarters(client_id):
             WHERE client_id = ?
             ORDER BY year DESC, quarter DESC
         """, (client_id,))
-        return cursor.fetchall()
+        results = cursor.fetchall()
+        debug.log_db_operation(
+            operation="fetch_complete",
+            table="payments",
+            data={"client_id": client_id},
+            result={
+                "count": len(results),
+                "years": list(set(r[0] for r in results)),
+                "quarters": list(set(r[1] for r in results))
+            }
+        )
+        return results
+    except Exception as e:
+        debug.log_db_operation(
+            operation="fetch_error",
+            table="payments",
+            data={"client_id": client_id, "error": str(e)}
+        )
+        raise
     finally:
         conn.close()
 

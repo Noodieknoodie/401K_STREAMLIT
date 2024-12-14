@@ -19,6 +19,7 @@ from utils.utils import (
 )
 from utils.perf_logging import log_event
 from utils.ui_state_manager import UIStateManager
+from utils.debug_logger import debug
 from .client_payment_form import show_payment_dialog
 
 # ============================================================================
@@ -34,9 +35,18 @@ def init_filter_state():
             'quarter': None,
             'current_filters': None
         }
+        debug.log_ui_interaction(
+            action="init_filter_state",
+            element="payment_management",
+            data={
+                "initial_state": st.session_state.filter_state
+            }
+        )
 
 def update_filter_state(key: str, value: Any) -> None:
     """Update filter state and handle dependencies"""
+    old_value = st.session_state.filter_state.get(key)
+    
     if key == 'time_filter':
         st.session_state.filter_state['time_filter'] = value
         if value == 'All Time':
@@ -47,6 +57,17 @@ def update_filter_state(key: str, value: Any) -> None:
             st.session_state.filter_state['quarter'] = None
     else:
         st.session_state.filter_state[key] = value
+    
+    debug.log_ui_interaction(
+        action="update_filter_state",
+        element="payment_management",
+        data={
+            "key": key,
+            "old_value": old_value,
+            "new_value": value,
+            "updated_state": st.session_state.filter_state
+        }
+    )
 
 def get_current_filters():
     """Get current year and quarter filters based on filter state"""
@@ -54,16 +75,30 @@ def get_current_filters():
     time_filter = filter_state['time_filter']
     
     if time_filter == 'All Time':
-        return None, None
+        result = (None, None)
     elif time_filter == 'This Year':
-        return [datetime.now().year], None
+        result = ([datetime.now().year], None)
     else:  # Custom
         year = filter_state['year']
         quarter = filter_state['quarter']
-        return (
+        result = (
             [year] if year else None,
             [int(quarter[1])] if quarter and quarter != "All Quarters" else None
         )
+    
+    debug.log_ui_interaction(
+        action="get_current_filters",
+        element="payment_management",
+        data={
+            "time_filter": time_filter,
+            "filter_state": filter_state,
+            "result": {
+                "years": result[0],
+                "quarters": result[1]
+            }
+        }
+    )
+    return result
 
 def init_notes_state():
     """Initialize centralized notes state management"""
@@ -73,6 +108,13 @@ def init_notes_state():
             'edited_notes': {},
             'temp_notes': {}
         }
+        debug.log_ui_interaction(
+            action="init_notes_state",
+            element="payment_management",
+            data={
+                "initial_state": st.session_state.notes_state
+            }
+        )
 
 # ============================================================================
 # DATA FORMATTING AND DISPLAY
@@ -80,6 +122,14 @@ def init_notes_state():
 
 def format_payment_data(payments):
     """Format payment data for display with consistent formatting."""
+    debug.log_ui_interaction(
+        action="format_payment_data_start",
+        element="payment_management",
+        data={
+            "payment_count": len(payments) if payments else 0
+        }
+    )
+    
     table_data = []
     
     for payment in payments:
@@ -91,33 +141,67 @@ def format_payment_data(payments):
                     return "N/A"
                 return f"${float(value):,.2f}"
             except (ValueError, TypeError):
+                debug.log_ui_interaction(
+                    action="currency_format_error",
+                    element="payment_management",
+                    data={
+                        "value": value,
+                        "error": "invalid_currency_format"
+                    }
+                )
                 return "N/A"
         
         # Format payment period based on frequency
         frequency = payment[5].title() if payment[5] else "N/A"
         
-        if frequency.lower() == "monthly":
-            # For monthly payments, convert quarter to month range
-            start_month = ((payment[1] - 1) * 3) + 1
-            end_month = ((payment[3] - 1) * 3) + 3
-            
-            if payment[2] == payment[4] and start_month == end_month:
-                # Single month
-                period = f"{datetime.strptime(f'2000-{start_month}-1', '%Y-%m-%d').strftime('%b')} {payment[2]}"
-            else:
-                # Month range
-                start_date = datetime.strptime(f'2000-{start_month}-1', '%Y-%m-%d')
-                end_date = datetime.strptime(f'2000-{end_month}-1', '%Y-%m-%d')
-                if payment[2] == payment[4]:
-                    period = f"{start_date.strftime('%b')} - {end_date.strftime('%b')} {payment[2]}"
+        try:
+            if frequency.lower() == "monthly":
+                # For monthly payments, convert quarter to month range
+                start_month = ((payment[1] - 1) * 3) + 1
+                end_month = ((payment[3] - 1) * 3) + 3
+                
+                if payment[2] == payment[4] and start_month == end_month:
+                    # Single month
+                    period = f"{datetime.strptime(f'2000-{start_month}-1', '%Y-%m-%d').strftime('%b')} {payment[2]}"
                 else:
-                    period = f"{start_date.strftime('%b')} {payment[2]} - {end_date.strftime('%b')} {payment[4]}"
-        else:
-            # Quarterly payments
-            if payment[1] == payment[3] and payment[2] == payment[4]:
-                period = f"Q{payment[1]} {payment[2]}"
+                    # Month range
+                    start_date = datetime.strptime(f'2000-{start_month}-1', '%Y-%m-%d')
+                    end_date = datetime.strptime(f'2000-{end_month}-1', '%Y-%m-%d')
+                    if payment[2] == payment[4]:
+                        period = f"{start_date.strftime('%b')} - {end_date.strftime('%b')} {payment[2]}"
+                    else:
+                        period = f"{start_date.strftime('%b')} {payment[2]} - {end_date.strftime('%b')} {payment[4]}"
             else:
-                period = f"Q{payment[1]} {payment[2]} - Q{payment[3]} {payment[4]}"
+                # Quarterly payments
+                if payment[1] == payment[3] and payment[2] == payment[4]:
+                    period = f"Q{payment[1]} {payment[2]}"
+                else:
+                    period = f"Q{payment[1]} {payment[2]} - Q{payment[3]} {payment[4]}"
+                    
+            debug.log_ui_interaction(
+                action="format_payment_period",
+                element="payment_management",
+                data={
+                    "frequency": frequency,
+                    "start": f"{payment[1]}/{payment[2]}",
+                    "end": f"{payment[3]}/{payment[4]}",
+                    "formatted_period": period
+                }
+            )
+        except (ValueError, TypeError) as e:
+            debug.log_ui_interaction(
+                action="period_format_error",
+                element="payment_management",
+                data={
+                    "error": str(e),
+                    "payment_data": {
+                        "frequency": frequency,
+                        "start": f"{payment[1]}/{payment[2]}",
+                        "end": f"{payment[3]}/{payment[4]}"
+                    }
+                }
+            )
+            period = "Invalid Period"
         
         # Format date
         received_date = "N/A"
@@ -125,7 +209,15 @@ def format_payment_data(payments):
             try:
                 date_obj = datetime.strptime(payment[6], '%Y-%m-%d')
                 received_date = date_obj.strftime('%b %d, %Y')
-            except:
+            except Exception as e:
+                debug.log_ui_interaction(
+                    action="date_format_error",
+                    element="payment_management",
+                    data={
+                        "error": str(e),
+                        "date_input": payment[6]
+                    }
+                )
                 received_date = payment[6]
         
         # Format all currency values
@@ -140,13 +232,22 @@ def format_payment_data(payments):
                 discrepancy_str = f"${discrepancy:,.2f}" if discrepancy >= 0 else f"-${abs(discrepancy):,.2f}"
             else:
                 discrepancy_str = "N/A"
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as e:
+            debug.log_ui_interaction(
+                action="discrepancy_calc_error",
+                element="payment_management",
+                data={
+                    "error": str(e),
+                    "expected_fee": payment[8],
+                    "actual_fee": payment[9]
+                }
+            )
             discrepancy_str = "N/A"
         
         notes = payment[10] or ""
         payment_id = payment[11]
         
-        table_data.append({
+        formatted_row = {
             "Provider": provider_name,
             "Period": period,
             "Frequency": frequency,
@@ -157,8 +258,29 @@ def format_payment_data(payments):
             "Discrepancy": discrepancy_str,
             "Notes": notes,
             "payment_id": payment_id
-        })
+        }
+        
+        debug.log_ui_interaction(
+            action="format_payment_row",
+            element="payment_management",
+            data={
+                "payment_id": payment_id,
+                "provider": provider_name,
+                "period": period,
+                "has_discrepancy": discrepancy_str != "N/A",
+                "has_notes": bool(notes)
+            }
+        )
+        
+        table_data.append(formatted_row)
     
+    debug.log_ui_interaction(
+        action="format_payment_data_complete",
+        element="payment_management",
+        data={
+            "rows_formatted": len(table_data)
+        }
+    )
     return table_data
 
 # ============================================================================
@@ -167,7 +289,17 @@ def format_payment_data(payments):
 
 def format_note_display(note):
     """Format note for display with caching."""
-    return bool(note), "🟢" if note else "◯", note if note else "Add note"
+    result = (bool(note), "🟢" if note else "◯", note if note else "Add note")
+    debug.log_ui_interaction(
+        action="format_note_display",
+        element="payment_management",
+        data={
+            "has_note": bool(note),
+            "display_icon": "🟢" if note else "◯",
+            "display_text": note if note else "Add note"
+        }
+    )
+    return result
 
 def initialize_notes_state():
     """Initialize centralized note state management."""
@@ -176,6 +308,13 @@ def initialize_notes_state():
             'active_note': None,
             'edited_notes': {}
         }
+        debug.log_ui_interaction(
+            action="initialize_notes_state",
+            element="payment_management",
+            data={
+                "initial_state": st.session_state.notes_state
+            }
+        )
 
 def render_note_cell(payment_id, note, provider=None, period=None, ui_manager=None):
     """Render a note cell with edit functionality using centralized state."""
@@ -185,6 +324,17 @@ def render_note_cell(payment_id, note, provider=None, period=None, ui_manager=No
     has_note = bool(note)
     icon_content = "🟢" if has_note else "◯"
     tooltip = note if has_note else "Add note"
+    
+    debug.log_ui_interaction(
+        action="render_note_cell_start",
+        element="payment_management",
+        data={
+            "payment_id": payment_id,
+            "has_note": has_note,
+            "provider": provider,
+            "period": period
+        }
+    )
     
     # Create unique key for this note
     note_key = f"note_{payment_id}"
@@ -209,30 +359,60 @@ def render_note_cell(payment_id, note, provider=None, period=None, ui_manager=No
             'has_content': bool(note)
         })
         
+        debug.log_ui_interaction(
+            action="note_button_clicked",
+            element="payment_management",
+            data={
+                "payment_id": payment_id,
+                "action": "close" if notes_state['active_note'] == payment_id else "open",
+                "has_content": bool(note)
+            }
+        )
+        
         # Auto-save previous note if exists
         if notes_state['active_note'] and notes_state['active_note'] != payment_id:
             prev_id = notes_state['active_note']
             if prev_id in notes_state['edited_notes']:
                 update_payment_note(prev_id, notes_state['edited_notes'][prev_id])
                 notes_state['edited_notes'].pop(prev_id)
+                debug.log_ui_interaction(
+                    action="auto_save_previous_note",
+                    element="payment_management",
+                    data={
+                        "payment_id": prev_id,
+                        "note_length": len(notes_state['edited_notes'][prev_id]) if prev_id in notes_state['edited_notes'] else 0
+                    }
+                )
         
         # Toggle note state
         if notes_state['active_note'] == payment_id:
             if payment_id in notes_state['edited_notes']:
                 update_payment_note(payment_id, notes_state['edited_notes'][payment_id])
                 notes_state['edited_notes'].pop(payment_id)
+                debug.log_ui_interaction(
+                    action="save_current_note",
+                    element="payment_management",
+                    data={
+                        "payment_id": payment_id,
+                        "note_length": len(notes_state['edited_notes'][payment_id]) if payment_id in notes_state['edited_notes'] else 0
+                    }
+                )
             notes_state['active_note'] = None
         else:
             notes_state['active_note'] = payment_id
 
 
 def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
-    """Display payment history with efficient layout and smart navigation.
+    """Display payment history with efficient layout and smart navigation."""
+    debug.log_ui_interaction(
+        action="show_payment_history_start",
+        element="payment_management",
+        data={
+            "client_id": client_id,
+            "has_ui_manager": bool(ui_manager)
+        }
+    )
     
-    Args:
-        client_id: The ID of the client whose payment history to show
-        ui_manager: UIStateManager instance for coordinating UI states
-    """
     # Initialize all required states
     init_notes_state()
     init_filter_state()
@@ -249,8 +429,25 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
     # Get available years
     years = sorted(list(set(yq[0] for yq in year_quarters)), reverse=True)
     if not years:
+        debug.log_ui_interaction(
+            action="no_payment_history",
+            element="payment_management",
+            data={
+                "client_id": client_id
+            }
+        )
         st.info("No payment history available.")
         return
+    
+    debug.log_ui_interaction(
+        action="payment_history_years",
+        element="payment_management",
+        data={
+            "client_id": client_id,
+            "available_years": years,
+            "year_quarter_count": len(year_quarters)
+        }
+    )
     
     # Create a row with the same width as the table
     left_col, middle_col, right_col = st.columns([4, 2, 4])
@@ -268,7 +465,7 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
         if st.session_state.filter_state['time_filter'] == "Custom":
             col1, col2, _ = st.columns([1, 1, 2])
             with col1:
-                st.selectbox(
+                selected_year = st.selectbox(
                     "Select Year",
                     options=years,
                     index=years.index(st.session_state.filter_state['year']) if st.session_state.filter_state['year'] in years else 0,
@@ -277,7 +474,7 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
                     on_change=lambda: update_filter_state('year', st.session_state.filter_year)
                 )
             with col2:
-                st.selectbox(
+                selected_quarter = st.selectbox(
                     "Select Quarter",
                     options=["All Quarters", "Q1", "Q2", "Q3", "Q4"],
                     index=0,
@@ -285,9 +482,25 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
                     label_visibility="collapsed",
                     on_change=lambda: update_filter_state('quarter', st.session_state.filter_quarter)
                 )
+                
+                debug.log_ui_interaction(
+                    action="custom_filter_selected",
+                    element="payment_management",
+                    data={
+                        "selected_year": selected_year,
+                        "selected_quarter": selected_quarter
+                    }
+                )
     
     with middle_col:
         if st.button("Add Payment", type="primary", use_container_width=True):
+            debug.log_ui_interaction(
+                action="add_payment_clicked",
+                element="payment_management",
+                data={
+                    "client_id": client_id
+                }
+            )
             st.session_state.ui_manager = ui_manager
             initial_data = {
                 'received_date': datetime.now().strftime('%Y-%m-%d')
@@ -306,6 +519,15 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
              if filter_state['quarter'] and filter_state['quarter'] != "All Quarters" else "")
         )
         st.markdown(f"<div style='text-align: right'>{status_text}</div>", unsafe_allow_html=True)
+        
+        debug.log_ui_interaction(
+            action="display_filter_status",
+            element="payment_management",
+            data={
+                "filter_state": filter_state,
+                "status_text": status_text
+            }
+        )
     
     # Get filtered data using the helper function
     year_filters, quarter_filters = get_current_filters()
@@ -313,8 +535,28 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
     # Load and format all payment data
     payments = get_payment_history(client_id, years=year_filters, quarters=quarter_filters)
     if not payments:
+        debug.log_ui_interaction(
+            action="no_filtered_payments",
+            element="payment_management",
+            data={
+                "client_id": client_id,
+                "year_filters": year_filters,
+                "quarter_filters": quarter_filters
+            }
+        )
         st.info("No payment history available for this client.", icon="ℹ️")
         return
+    
+    debug.log_ui_interaction(
+        action="load_filtered_payments",
+        element="payment_management",
+        data={
+            "client_id": client_id,
+            "payment_count": len(payments),
+            "year_filters": year_filters,
+            "quarter_filters": quarter_filters
+        }
+    )
     
     table_data = format_payment_data(payments)
     
@@ -411,6 +653,15 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
                 with action_cols[0]:
                     if st.button("✏️", key=f"edit_{row['payment_id']}", 
                                help="Edit payment"):
+                        debug.log_ui_interaction(
+                            action="edit_payment_clicked",
+                            element="payment_management",
+                            data={
+                                "payment_id": row['payment_id'],
+                                "provider": row['Provider'],
+                                "period": row['Period']
+                            }
+                        )
                         payment_data = get_payment_by_id(row['payment_id'])
                         if payment_data:
                             ui_manager.open_payment_dialog(
@@ -434,6 +685,15 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
                 with action_cols[1]:
                     if st.button("🗑️", key=f"delete_{row['payment_id']}", 
                                help="Delete payment"):
+                        debug.log_ui_interaction(
+                            action="delete_payment_clicked",
+                            element="payment_management",
+                            data={
+                                "payment_id": row['payment_id'],
+                                "provider": row['Provider'],
+                                "period": row['Period']
+                            }
+                        )
                         st.session_state.delete_payment_id = row['payment_id']
                         st.session_state.show_delete_confirm = True
                         st.rerun()
@@ -459,6 +719,14 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
                     save_cols = st.columns([6, 2, 2])
                     with save_cols[1]:
                         if st.button("Save", key=f"save_note_{row['payment_id']}", type="primary"):
+                            debug.log_ui_interaction(
+                                action="save_note_clicked",
+                                element="payment_management",
+                                data={
+                                    "payment_id": row['payment_id'],
+                                    "note_length": len(edited_note) if edited_note else 0
+                                }
+                            )
                             update_payment_note(row['payment_id'], edited_note)
                             st.session_state.notes_state['active_note'] = None
                             # Clear the cache to force data refresh
@@ -466,6 +734,13 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
                             st.rerun()
                     with save_cols[2]:
                         if st.button("Cancel", key=f"cancel_note_{row['payment_id']}"):
+                            debug.log_ui_interaction(
+                                action="cancel_note_clicked",
+                                element="payment_management",
+                                data={
+                                    "payment_id": row['payment_id']
+                                }
+                            )
                             st.session_state.notes_state['active_note'] = None
                             st.rerun()
     
@@ -478,6 +753,13 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
         col1, col2 = st.columns(2)
         with col1:
             if st.button("Yes, Delete", type="primary", use_container_width=True):
+                debug.log_ui_interaction(
+                    action="confirm_delete_payment",
+                    element="payment_management",
+                    data={
+                        "payment_id": payment_id
+                    }
+                )
                 if delete_payment(payment_id):
                     st.success("Payment deleted successfully!")
                     # Clear the cache to force data refresh
@@ -487,9 +769,23 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
                     del st.session_state.delete_payment_id
                     st.rerun()
                 else:
+                    debug.log_ui_interaction(
+                        action="delete_payment_error",
+                        element="payment_management",
+                        data={
+                            "payment_id": payment_id
+                        }
+                    )
                     st.error("Failed to delete payment. Please try again.")
         with col2:
             if st.button("No, Cancel", use_container_width=True):
+                debug.log_ui_interaction(
+                    action="cancel_delete_payment",
+                    element="payment_management",
+                    data={
+                        "payment_id": payment_id
+                    }
+                )
                 st.session_state.show_delete_confirm = False
                 del st.session_state.delete_payment_id
                 st.rerun()

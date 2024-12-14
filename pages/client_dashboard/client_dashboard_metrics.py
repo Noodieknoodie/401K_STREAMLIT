@@ -6,13 +6,32 @@ from utils.client_data import (
     get_latest_payment_optimized as get_latest_payment
 )
 from utils.utils import calculate_rate_conversions  # Still need this utility
+from utils.debug_logger import debug
 
 def show_client_metrics(client_id):
     """Display the client metrics section of the dashboard."""
     # Get all data in a single query
     data = get_consolidated_client_data(client_id)
     if not data:
+        debug.log_ui_interaction(
+            action="metrics_load_error",
+            element="dashboard_metrics",
+            data={
+                "error": "no_client_data",
+                "client_id": client_id
+            }
+        )
         return
+    
+    debug.log_ui_interaction(
+        action="load_client_metrics",
+        element="dashboard_metrics",
+        data={
+            "client_id": client_id,
+            "has_contract": bool(data['active_contract']),
+            "has_payment": bool(data['latest_payment'])
+        }
+    )
     
     # Compact container for metrics
     with st.container():
@@ -39,6 +58,18 @@ def show_client_metrics(client_id):
                 "Participants", 
                 data['active_contract']['num_people'] if data['active_contract'] else "N/A"
             )
+            
+        debug.log_ui_interaction(
+            action="display_client_info",
+            element="dashboard_metrics",
+            data={
+                "display_name": data['client']['display_name'],
+                "has_full_name": bool(data['client']['full_name']),
+                "provider": data['active_contract']['provider_name'] if data['active_contract'] else "N/A",
+                "contract_number": data['active_contract']['contract_number'] if data['active_contract'] else "N/A",
+                "participants": data['active_contract']['num_people'] if data['active_contract'] else "N/A"
+            }
+        )
 
         # Second row - 4 columns
         col1, col2, col3, col4 = st.columns(4)
@@ -64,6 +95,17 @@ def show_client_metrics(client_id):
                         contract['fee_type'],
                         schedule
                     )
+                    
+                    debug.log_ui_interaction(
+                        action="calculate_rate_display",
+                        element="dashboard_metrics",
+                        data={
+                            "fee_type": contract['fee_type'],
+                            "rate": rate_value,
+                            "schedule": schedule,
+                            "has_conversions": bool(rate_conversions)
+                        }
+                    )
             
             st.metric(
                 "Rate", 
@@ -72,10 +114,8 @@ def show_client_metrics(client_id):
             )
         
         with col2:
-            st.metric(
-                "Payment Schedule", 
-                data['active_contract']['payment_schedule'].title() if data['active_contract'] and data['active_contract']['payment_schedule'] else "N/A"
-            )
+            schedule = data['active_contract']['payment_schedule'].title() if data['active_contract'] and data['active_contract']['payment_schedule'] else "N/A"
+            st.metric("Payment Schedule", schedule)
         
         with col3:
             last_payment = 'No payments'
@@ -85,6 +125,15 @@ def show_client_metrics(client_id):
                 if payment['actual_fee']:
                     last_payment = f"${payment['actual_fee']:,.2f}"
                     payment_date = payment['received_date']
+                    
+                    debug.log_ui_interaction(
+                        action="display_last_payment",
+                        element="dashboard_metrics",
+                        data={
+                            "amount": payment['actual_fee'],
+                            "date": payment_date
+                        }
+                    )
             st.metric("Last Payment", last_payment, payment_date)
         
         with col4:
@@ -95,4 +144,25 @@ def show_client_metrics(client_id):
                 if payment['total_assets']:
                     aum_value = f"${payment['total_assets']:,.2f}"
                     aum_date = f"Q{payment['quarter']} {payment['year']}"
-            st.metric("Last Recorded AUM", aum_value, aum_date) 
+                    
+                    debug.log_ui_interaction(
+                        action="display_last_aum",
+                        element="dashboard_metrics",
+                        data={
+                            "amount": payment['total_assets'],
+                            "period": aum_date
+                        }
+                    )
+            st.metric("Last Recorded AUM", aum_value, aum_date)
+            
+        debug.log_ui_interaction(
+            action="display_metrics_complete",
+            element="dashboard_metrics",
+            data={
+                "client_id": client_id,
+                "rate": rate_value,
+                "schedule": schedule,
+                "last_payment": last_payment,
+                "last_aum": aum_value
+            }
+        ) 

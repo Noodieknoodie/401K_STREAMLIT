@@ -79,6 +79,7 @@ from .client_payment_utils import (
 )
 from utils.utils import get_database_connection
 from utils.ui_state_manager import UIStateManager
+from utils.debug_logger import debug
 
 # Add caching for contract data
 @st.cache_data(ttl=300)
@@ -99,21 +100,7 @@ METHOD_OPTIONS = [
 
 
 def init_payment_dialog(ui_manager: UIStateManager, client_id: Optional[int] = None) -> None:
-    """Initialize payment dialog state using UIStateManager.
-    
-    This function sets up the initial state for a new payment entry. It automatically
-    determines the previous period (month/quarter) based on current date for arrears
-    payment processing.
-    
-    Args:
-        ui_manager: The UI state manager instance
-        client_id: Optional client ID for the payment
-        
-    Note:
-        - Uses generic period fields in form_data that will be converted to quarters
-          during save operation
-        - Initializes with previous period for arrears payments
-    """
+    """Initialize payment dialog state using UIStateManager."""
     current_quarter = get_current_quarter()
     current_year = datetime.now().year
     prev_quarter, prev_year = get_previous_quarter(current_quarter, current_year)
@@ -133,6 +120,15 @@ def init_payment_dialog(ui_manager: UIStateManager, client_id: Optional[int] = N
         'active_contract': None
     }
     
+    debug.log_ui_interaction(
+        action="init_payment_dialog",
+        element="payment_form",
+        data={
+            "client_id": client_id,
+            "initial_period": f"Q{prev_quarter} {prev_year}"
+        }
+    )
+    
     ui_manager.open_payment_dialog(
         client_id=client_id,
         mode='add',
@@ -141,23 +137,17 @@ def init_payment_dialog(ui_manager: UIStateManager, client_id: Optional[int] = N
 
 
 def clear_payment_dialog(ui_manager: UIStateManager) -> None:
-    """Reset the payment dialog state using UIStateManager.
-    
-    Args:
-        ui_manager: The UI state manager instance
-    """
-    # Close dialog and clear all associated data
+    """Reset the payment dialog state using UIStateManager."""
+    debug.log_ui_interaction(
+        action="clear_payment_dialog",
+        element="payment_form",
+        data={"clear_data": True}
+    )
     ui_manager.close_payment_dialog(clear_data=True)
 
 
-
 def populate_payment_dialog_for_edit(payment_data: Tuple, ui_manager: UIStateManager) -> None:
-    """Populate the payment dialog with existing payment data for editing using UIStateManager.
-    
-    Args:
-        payment_data: Tuple containing payment data from database
-        ui_manager: The UI state manager instance
-    """
+    """Populate the payment dialog with existing payment data for editing."""
     if payment_data:
         form_data = {
             'received_date': payment_data[0],
@@ -171,6 +161,16 @@ def populate_payment_dialog_for_edit(payment_data: Tuple, ui_manager: UIStateMan
             'notes': payment_data[8] or ''
         }
         
+        debug.log_ui_interaction(
+            action="populate_payment_dialog",
+            element="payment_form",
+            data={
+                "payment_period": f"Q{payment_data[1]} {payment_data[2]}",
+                "has_end_period": payment_data[3] is not None,
+                "payment_method": form_data['method']
+            }
+        )
+        
         # Open dialog in edit mode with the existing data
         ui_manager.open_payment_dialog(
             mode='edit',
@@ -179,14 +179,7 @@ def populate_payment_dialog_for_edit(payment_data: Tuple, ui_manager: UIStateMan
 
 
 def has_payment_dialog_changes(ui_manager: UIStateManager) -> bool:
-    """Check if the payment dialog has unsaved changes using UIStateManager.
-    
-    Args:
-        ui_manager: The UI state manager instance
-    
-    Returns:
-        bool: True if there are unsaved changes, False otherwise
-    """
+    """Check if the payment dialog has unsaved changes."""
     current_quarter = get_current_quarter()
     current_year = datetime.now().year
     prev_quarter, prev_year = get_previous_quarter(current_quarter, current_year)
@@ -206,27 +199,28 @@ def has_payment_dialog_changes(ui_manager: UIStateManager) -> bool:
     }
     
     current_data = ui_manager.payment_form_data
-    return any(
+    has_changes = any(
         str(current_data.get(key, '')) != str(initial_data.get(key, ''))
         for key in initial_data
     )
+    
+    if has_changes:
+        debug.log_ui_interaction(
+            action="payment_form_changed",
+            element="payment_form",
+            data={
+                "changed_fields": [
+                    key for key in initial_data
+                    if str(current_data.get(key, '')) != str(initial_data.get(key, ''))
+                ]
+            }
+        )
+    
+    return has_changes
 
 
 def format_payment_amount_on_change(ui_manager: UIStateManager, field_key: str) -> None:
-    """Format currency amount on input change using UIStateManager.
-    
-    This function handles real-time formatting of currency inputs and updates
-    expected fee calculations when total assets change.
-    
-    Args:
-        ui_manager: The UI state manager instance
-        field_key: The field being updated ('total_assets' or 'actual_fee')
-        
-    Note:
-        - Clears validation errors on each change
-        - Updates expected fee when total_assets changes
-        - Auto-populates actual_fee with expected_fee when empty
-    """
+    """Format currency amount on input change using UIStateManager."""
     ui_manager.clear_payment_validation_errors()
     
     if field_key in st.session_state:
@@ -250,6 +244,16 @@ def format_payment_amount_on_change(ui_manager: UIStateManager, field_key: str) 
                 form_data = ui_manager.payment_form_data.copy()
                 form_data[field_key] = formatted
                 
+                debug.log_ui_interaction(
+                    action="payment_amount_changed",
+                    element="payment_form",
+                    data={
+                        "field": field_key,
+                        "raw_input": value,
+                        "formatted_value": formatted
+                    }
+                )
+                
                 # Update expected fee when total assets changes
                 if field_key == 'total_assets' and form_data.get('active_contract'):
                     expected_fee = calculate_expected_fee(
@@ -263,23 +267,32 @@ def format_payment_amount_on_change(ui_manager: UIStateManager, field_key: str) 
                         if not form_data.get('actual_fee'):
                             form_data['actual_fee'] = formatted_fee
                             st.session_state.actual_fee = formatted_fee
+                            
+                            debug.log_ui_interaction(
+                                action="expected_fee_calculated",
+                                element="payment_form",
+                                data={
+                                    "total_assets": formatted,
+                                    "expected_fee": formatted_fee,
+                                    "auto_populated_actual": True
+                                }
+                            )
                 
                 # Update the form data in the manager
                 ui_manager.update_payment_form_data(form_data)
             except ValueError:
-                pass
+                debug.log_ui_interaction(
+                    action="payment_amount_error",
+                    element="payment_form",
+                    data={
+                        "field": field_key,
+                        "invalid_input": value,
+                        "error": "invalid_number_format"
+                    }
+                )
 
 def get_period_from_date(date_str: str, schedule: str, ui_manager: UIStateManager) -> Tuple[int, int]:
-    """Get period from date string (for arrears payments)
-    
-    Args:
-        date_str: The date string in format '%Y-%m-%d'
-        schedule: The payment schedule ('monthly' or 'quarterly')
-        ui_manager: The UI state manager instance
-    
-    Returns:
-        Tuple[int, int]: (period, year) where period is month or quarter number
-    """
+    """Get period from date string (for arrears payments)"""
     try:
         date = datetime.strptime(date_str, '%Y-%m-%d')
         current_month = date.month
@@ -288,18 +301,56 @@ def get_period_from_date(date_str: str, schedule: str, ui_manager: UIStateManage
         # Handle monthly schedule
         if schedule and schedule.lower() == 'monthly':
             if current_month == 1:
-                return 12, current_year - 1
-            return current_month - 1, current_year
+                period = 12
+                year = current_year - 1
+            else:
+                period = current_month - 1
+                year = current_year
+                
+            debug.log_ui_interaction(
+                action="period_from_date",
+                element="payment_form",
+                data={
+                    "date": date_str,
+                    "schedule": "monthly",
+                    "result": f"Month {period} {year}"
+                }
+            )
+            return period, year
             
         # Handle quarterly schedule
         current_quarter = (current_month - 1) // 3 + 1
         if current_quarter == 1:
-            return 4, current_year - 1
-        return current_quarter - 1, current_year
+            period = 4
+            year = current_year - 1
+        else:
+            period = current_quarter - 1
+            year = current_year
+            
+        debug.log_ui_interaction(
+            action="period_from_date",
+            element="payment_form",
+            data={
+                "date": date_str,
+                "schedule": "quarterly",
+                "result": f"Q{period} {year}"
+            }
+        )
+        return period, year
     except ValueError:
         # Default to previous period of current date
         current_period = get_current_period(schedule)
         current_year = datetime.now().year
+        
+        debug.log_ui_interaction(
+            action="period_from_date_error",
+            element="payment_form",
+            data={
+                "invalid_date": date_str,
+                "fallback": f"Current-1: {current_period-1} {current_year}"
+            }
+        )
+        
         if (schedule and schedule.lower() == 'monthly' and current_period == 1) or \
            (schedule and schedule.lower() == 'quarterly' and current_period == 1):
             return 12 if schedule.lower() == 'monthly' else 4, current_year - 1
@@ -307,18 +358,24 @@ def get_period_from_date(date_str: str, schedule: str, ui_manager: UIStateManage
 
 
 def on_payment_date_change(ui_manager: UIStateManager) -> None:
-    """Handle payment date change events using UIStateManager.
-    
-    Args:
-        ui_manager: The UI state manager instance
-    """
+    """Handle payment date change events using UIStateManager."""
     if 'received_date' in st.session_state:
         form_data = ui_manager.payment_form_data.copy()
         contract = form_data.get('active_contract')
         
         if contract:
             date_str = st.session_state.received_date.strftime('%Y-%m-%d')
-            period, year = get_period_from_date(date_str, contract[3])  # contract[3] is payment_schedule
+            period, year = get_period_from_date(date_str, contract[3], ui_manager)  # contract[3] is payment_schedule
+            
+            debug.log_ui_interaction(
+                action="payment_date_changed",
+                element="payment_form",
+                data={
+                    "new_date": date_str,
+                    "schedule": contract[3],
+                    "calculated_period": f"Period {period} {year}"
+                }
+            )
             
             # Update the period and year in form data
             form_data.update({
@@ -333,8 +390,19 @@ def on_payment_date_change(ui_manager: UIStateManager) -> None:
 def get_previous_quarter(quarter: int, year: int) -> Tuple[int, int]:
     """Get the previous quarter and year"""
     if quarter == 1:
-        return 4, year - 1
-    return quarter - 1, year
+        result = (4, year - 1)
+    else:
+        result = (quarter - 1, year)
+        
+    debug.log_ui_interaction(
+        action="calculate_previous_quarter",
+        element="payment_form",
+        data={
+            "current": f"Q{quarter} {year}",
+            "previous": f"Q{result[0]} {result[1]}"
+        }
+    )
+    return result
 
 def get_quarter_options() -> list[str]:
     """Generate quarter options for past 5 years, excluding current quarter"""
@@ -357,11 +425,32 @@ def get_quarter_options() -> list[str]:
             if year == start_year and quarter > start_quarter:
                 continue
             options.append(f"Q{quarter} {year}")
+    
+    debug.log_ui_interaction(
+        action="generate_quarter_options",
+        element="payment_form",
+        data={
+            "current_quarter": f"Q{current_quarter} {current_year}",
+            "start_from": f"Q{start_quarter} {start_year}",
+            "options_count": len(options),
+            "range": f"Q{options[-1]} to Q{options[0]}"
+        }
+    )
     return options
 
 def validate_quarter_range(start_quarter: int, start_year: int, end_quarter: Optional[int] = None, end_year: Optional[int] = None) -> bool:
     """Validate that the quarter range is valid and chronological"""
     if end_quarter is None or end_year is None:
+        debug.log_ui_interaction(
+            action="validate_quarter_range",
+            element="payment_form",
+            data={
+                "start": f"Q{start_quarter} {start_year}",
+                "end": "None",
+                "valid": True,
+                "reason": "single_quarter"
+            }
+        )
         return True
     
     # Convert to comparable values (e.g., 2023Q4 -> 20234)
@@ -369,18 +458,31 @@ def validate_quarter_range(start_quarter: int, start_year: int, end_quarter: Opt
     end_val = end_year * 10 + end_quarter
     
     # End must be chronologically after start
-    return end_val >= start_val
+    is_valid = end_val >= start_val
+    
+    debug.log_ui_interaction(
+        action="validate_quarter_range",
+        element="payment_form",
+        data={
+            "start": f"Q{start_quarter} {start_year}",
+            "end": f"Q{end_quarter} {end_year}",
+            "valid": is_valid,
+            "reason": "chronological_order" if is_valid else "invalid_order"
+        }
+    )
+    return is_valid
 
 def get_previous_payment_defaults(client_id: int) -> Optional[Tuple[str, str]]:
-    """Get default values from client's most recent payment
-    
-    Args:
-        client_id: The ID of the client to get defaults for
-        
-    Returns:
-        Optional[Tuple[str, str]]: Tuple of (method, total_assets) or None if no previous payment
-    """
+    """Get default values from client's most recent payment"""
     if not client_id:
+        debug.log_ui_interaction(
+            action="get_payment_defaults",
+            element="payment_form",
+            data={
+                "error": "no_client_id",
+                "result": None
+            }
+        )
         return None
         
     conn = get_database_connection()
@@ -393,7 +495,19 @@ def get_previous_payment_defaults(client_id: int) -> Optional[Tuple[str, str]]:
             ORDER BY received_date DESC
             LIMIT 1
         """, (client_id,))
-        return cursor.fetchone()
+        result = cursor.fetchone()
+        
+        debug.log_ui_interaction(
+            action="get_payment_defaults",
+            element="payment_form",
+            data={
+                "client_id": client_id,
+                "found_defaults": result is not None,
+                "method": result[0] if result else None,
+                "has_total_assets": bool(result[1]) if result else False
+            }
+        )
+        return result
     finally:
         conn.close()
 
@@ -401,13 +515,14 @@ def get_previous_payment_defaults(client_id: int) -> Optional[Tuple[str, str]]:
 # New dialog display using UIStateManager
 @st.dialog('Add Payment')
 def show_payment_dialog(client_id: int) -> None:
-    """Display the payment dialog using UIStateManager.
-    
-    Args:
-        client_id: The ID of the client for this payment
-    """
+    """Display the payment dialog using UIStateManager."""
     # Get ui_manager from session state
     if 'ui_manager' not in st.session_state:
+        debug.log_ui_interaction(
+            action="payment_dialog_error",
+            element="payment_form",
+            data={"error": "missing_ui_manager"}
+        )
         return
     ui_manager = st.session_state.ui_manager
     
@@ -417,11 +532,31 @@ def show_payment_dialog(client_id: int) -> None:
     # Get active contract
     contract = get_cached_contract(client_id)
     if not contract:
+        debug.log_ui_interaction(
+            action="payment_dialog_error",
+            element="payment_form",
+            data={
+                "error": "no_active_contract",
+                "client_id": client_id
+            }
+        )
         st.error("No active contract found for this client. Please add a contract first.")
         if st.button("Close"):
             ui_manager.close_payment_dialog()
             st.rerun()
         return
+    
+    debug.log_ui_interaction(
+        action="show_payment_dialog",
+        element="payment_form",
+        data={
+            "client_id": client_id,
+            "contract_id": contract[0],
+            "provider": contract[1],
+            "schedule": contract[3],
+            "fee_type": contract[4]
+        }
+    )
     
     st.subheader("Add Payment")
     
@@ -467,11 +602,24 @@ def show_payment_dialog(client_id: int) -> None:
     st.markdown(f"Payment {period_label}<span style='color: red'>*</span>", unsafe_allow_html=True)
     
     if not contract[3]:
+        debug.log_ui_interaction(
+            action="payment_dialog_error",
+            element="payment_form",
+            data={"error": "missing_payment_schedule"}
+        )
         st.warning("Please set the payment schedule in the contract before adding payments.")
         return
     
     period_options = get_period_options(contract[3])
     if not period_options:
+        debug.log_ui_interaction(
+            action="payment_dialog_error",
+            element="payment_form",
+            data={
+                "error": "no_valid_periods",
+                "schedule": contract[3]
+            }
+        )
         st.error(f"No valid {period_label.lower()}s available for payment")
         return
     
@@ -486,12 +634,29 @@ def show_payment_dialog(client_id: int) -> None:
     # Parse selected period
     start_period, start_year = parse_period_option(selected_period, contract[3])
     
+    debug.log_ui_interaction(
+        action="period_selected",
+        element="payment_form",
+        data={
+            "period_type": period_label.lower(),
+            "selected": selected_period,
+            "parsed": f"Period {start_period} {start_year}"
+        }
+    )
+    
     # Custom range selection
     is_custom_range = st.checkbox(
         f"Payment covers multiple {period_label.lower()}s",
         value=False,
         key="is_custom_range"
     )
+    
+    if is_custom_range:
+        debug.log_ui_interaction(
+            action="enable_custom_range",
+            element="payment_form",
+            data={"period_type": period_label.lower()}
+        )
     
     # Show custom range fields if enabled
     end_period = start_period
@@ -523,6 +688,14 @@ def show_payment_dialog(client_id: int) -> None:
             ]
             
             if not valid_end_options:
+                debug.log_ui_interaction(
+                    action="custom_range_error",
+                    element="payment_form",
+                    data={
+                        "error": "no_valid_end_periods",
+                        "start_period": start_period_option
+                    }
+                )
                 st.error(f"No valid end {period_label.lower()}s available")
                 return
             
@@ -534,6 +707,16 @@ def show_payment_dialog(client_id: int) -> None:
                 label_visibility="collapsed"
             )
             end_period, end_year = parse_period_option(end_period_option, contract[3])
+            
+            debug.log_ui_interaction(
+                action="custom_range_selected",
+                element="payment_form",
+                data={
+                    "start": start_period_option,
+                    "end": end_period_option,
+                    "period_type": period_label.lower()
+                }
+            )
     
     # Update form data with period selection
     form_data.update({
@@ -580,6 +763,14 @@ def show_payment_dialog(client_id: int) -> None:
             contract_start = datetime.strptime(contract[2], '%Y-%m-%d')
             payment_start = datetime(start_year, ((start_period - 1) * 3) + 1, 1)
             if payment_start < contract_start:
+                debug.log_ui_interaction(
+                    action="payment_date_warning",
+                    element="payment_form",
+                    data={
+                        "payment_start": payment_start.strftime('%Y-%m-%d'),
+                        "contract_start": contract_start.strftime('%Y-%m-%d')
+                    }
+                )
                 st.warning("⚠️ Payment quarter is before contract start date")
     
     # Payment method selection
@@ -630,18 +821,38 @@ def show_payment_dialog(client_id: int) -> None:
     # Show validation errors if present
     if ui_manager.payment_dialog_has_errors:
         for error in ui_manager.payment_validation_errors:
+            debug.log_ui_interaction(
+                action="validation_error",
+                element="payment_form",
+                data={"error": error}
+            )
             st.error(error)
     
     # Handle cancel confirmation
     if form_data.get('show_cancel_confirm'):
+        debug.log_ui_interaction(
+            action="show_cancel_confirm",
+            element="payment_form",
+            data={"has_changes": has_payment_dialog_changes(ui_manager)}
+        )
         st.warning("You have unsaved changes. Are you sure you want to cancel?")
         col1, col2 = st.columns(2)
         with col1:
             if st.button("Yes, Discard Changes", type="primary", use_container_width=True):
+                debug.log_ui_interaction(
+                    action="confirm_cancel",
+                    element="payment_form",
+                    data=None
+                )
                 ui_manager.close_payment_dialog()
                 st.rerun()
         with col2:
             if st.button("No, Keep Editing", use_container_width=True):
+                debug.log_ui_interaction(
+                    action="cancel_discard",
+                    element="payment_form",
+                    data=None
+                )
                 form_data['show_cancel_confirm'] = False
                 ui_manager.update_payment_form_data(form_data)
                 st.rerun()
@@ -650,27 +861,64 @@ def show_payment_dialog(client_id: int) -> None:
         col1, col2 = st.columns(2)
         with col1:
             if st.button("Save", type="primary", use_container_width=True):
+                debug.log_ui_interaction(
+                    action="attempt_save_payment",
+                    element="payment_form",
+                    data={
+                        "client_id": client_id,
+                        "period": f"{start_period}-{end_period}" if is_custom_range else str(start_period),
+                        "year": f"{start_year}-{end_year}" if is_custom_range else str(start_year)
+                    }
+                )
                 validation_errors = validate_payment_data(form_data)
                 if not validation_errors:
                     payment_id = add_payment(client_id, form_data)
                     if payment_id:
+                        debug.log_ui_interaction(
+                            action="payment_saved",
+                            element="payment_form",
+                            data={
+                                "payment_id": payment_id,
+                                "client_id": client_id
+                            }
+                        )
                         st.success("Payment added successfully!")
                         ui_manager.close_payment_dialog()
                         # Clear payment history cache to force refresh
                         get_payment_history.clear()
                         st.rerun()
                     else:
+                        debug.log_ui_interaction(
+                            action="payment_save_error",
+                            element="payment_form",
+                            data={"client_id": client_id}
+                        )
                         st.error("Failed to add payment. Please try again.")
                 else:
+                    debug.log_ui_interaction(
+                        action="payment_validation_failed",
+                        element="payment_form",
+                        data={"errors": validation_errors}
+                    )
                     ui_manager.set_payment_validation_errors(validation_errors)
                     st.rerun()
         
         with col2:
             if st.button("Cancel", use_container_width=True):
                 if has_payment_dialog_changes(ui_manager):
+                    debug.log_ui_interaction(
+                        action="request_cancel_confirm",
+                        element="payment_form",
+                        data=None
+                    )
                     form_data['show_cancel_confirm'] = True
                     ui_manager.update_payment_form_data(form_data)
                     st.rerun()
                 else:
+                    debug.log_ui_interaction(
+                        action="cancel_no_changes",
+                        element="payment_form",
+                        data=None
+                    )
                     ui_manager.close_payment_dialog()
                     st.rerun() 

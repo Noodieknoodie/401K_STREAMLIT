@@ -17,6 +17,7 @@ from utils.client_data import (
 )
 from utils.perf_logging import log_ui_action, log_event
 from utils.ui_state_manager import UIStateManager
+from utils.debug_logger import debug
 import time
 
 def display_client_dashboard():
@@ -32,6 +33,15 @@ def display_client_dashboard():
     if selected_client:
         client_id = selected_client[0]
         
+        debug.log_ui_interaction(
+            action="load_dashboard",
+            element="client_dashboard",
+            data={
+                "client_id": client_id,
+                "client_name": selected_client[1]
+            }
+        )
+        
         # Log performance metrics
         log_event("dashboard_load_start", {"client_id": client_id})
         
@@ -43,17 +53,43 @@ def display_client_dashboard():
         # Show dialogs if needed - only show one at a time
         # The UIStateManager ensures mutual exclusivity
         if ui_manager.is_payment_dialog_open:
+            debug.log_ui_interaction(
+                action="show_payment_dialog",
+                element="client_dashboard",
+                data={"client_id": client_id}
+            )
             show_payment_dialog(client_id)
         elif ui_manager.is_contact_dialog_open:
+            debug.log_ui_interaction(
+                action="show_contact_dialog",
+                element="client_dashboard",
+                data={"client_id": client_id}
+            )
             show_contact_form()
         
         # Log performance metrics
         end_time = time.time()
+        load_time = end_time - start_time
+        
+        debug.log_ui_interaction(
+            action="dashboard_loaded",
+            element="client_dashboard",
+            data={
+                "client_id": client_id,
+                "load_time_seconds": load_time
+            }
+        )
+        
         log_event("dashboard_load_complete", {
             "client_id": client_id,
-            "load_time": end_time - start_time
+            "load_time": load_time
         })
     else:
+        debug.log_ui_interaction(
+            action="no_client_selected",
+            element="client_dashboard",
+            data=None
+        )
         st.info("Please select a client to view their dashboard.")
 
 # Keep the old function name for backward compatibility

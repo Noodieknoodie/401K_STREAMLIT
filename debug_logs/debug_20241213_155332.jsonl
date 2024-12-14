@@ -1,0 +1,7 @@
+{"type": "ui_interaction", "action": "navigation", "element": "sidebar", "data": {"from_page": "\ud83d\udcca Quarterly Summary", "to_page": "\ud83d\udc65 Client Dashboard"}, "timestamp": "2024-12-13T15:53:34.061124", "session_id": "20241213_155332"}
+{"type": "db_operation", "operation": "fetch_start", "table": "clients", "data": {"action": "list_all"}, "result": null, "timestamp": "2024-12-13T15:53:34.067950", "session_id": "20241213_155332"}
+{"type": "db_operation", "operation": "connect", "table": "system", "data": {"database": "401kDATABASE.db"}, "result": null, "timestamp": "2024-12-13T15:53:34.070491", "session_id": "20241213_155332"}
+{"type": "db_operation", "operation": "fetch_complete", "table": "clients", "data": {"action": "list_all"}, "result": {"count": 29}, "timestamp": "2024-12-13T15:53:34.078250", "session_id": "20241213_155332"}
+{"type": "ui_interaction", "action": "load_dashboard", "element": "client_dashboard", "data": {"client_id": null, "client_name": null}, "timestamp": "2024-12-13T15:53:34.081094", "session_id": "20241213_155332"}
+{"type": "db_operation", "operation": "connect", "table": "system", "data": {"database": "401kDATABASE.db"}, "result": null, "timestamp": "2024-12-13T15:53:34.085124", "session_id": "20241213_155332"}
+{"type": "ui_interaction", "action": "metrics_load_error", "element": "dashboard_metrics", "data": {"error": "no_client_data", "client_id": null}, "timestamp": "2024-12-13T15:53:34.089248", "session_id": "20241213_155332"}

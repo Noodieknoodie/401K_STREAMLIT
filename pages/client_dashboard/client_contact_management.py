@@ -6,6 +6,7 @@ from utils.utils import (
     validate_phone_number, delete_contact, update_contact, get_clients
 )
 from utils.ui_state_manager import UIStateManager
+from utils.debug_logger import debug
 
 def format_phone_on_change(phone_input: str) -> str:
     """Format phone number as user types"""
@@ -32,6 +33,12 @@ def show_contact_form():
     state = ui_manager._get_dialog_state('contact')
     mode = state['mode']
     action = "Edit" if mode == "edit" else "Add"
+    
+    debug.log_ui_interaction(
+        action=f"open_{mode}_contact_form",
+        element="contact_dialog",
+        data={"contact_type": state['contact_type']}
+    )
     
     st.subheader(f"{action} {state['contact_type']} Contact")
     
@@ -100,10 +107,20 @@ def show_contact_form():
     
     # Validate phone numbers
     if phone and not validate_phone_number(phone):
+        debug.log_ui_interaction(
+            action="validation_error",
+            element="contact_form",
+            data={"field": "phone", "error": "invalid_format"}
+        )
         st.error("Please enter a valid 10-digit phone number")
         return
     
     if fax and not validate_phone_number(fax):
+        debug.log_ui_interaction(
+            action="validation_error",
+            element="contact_form",
+            data={"field": "fax", "error": "invalid_format"}
+        )
         st.error("Please enter a valid 10-digit fax number")
         return
     
@@ -121,18 +138,38 @@ def show_contact_form():
     # Show validation errors
     if ui_manager.contact_dialog_has_errors:
         for error in ui_manager.contact_validation_errors:
+            debug.log_ui_interaction(
+                action="validation_error",
+                element="contact_form",
+                data={"error": error}
+            )
             st.error(error)
     
     # Show cancel confirmation if needed
     if state['show_cancel_confirm']:
+        debug.log_ui_interaction(
+            action="show_cancel_confirm",
+            element="contact_form",
+            data={"mode": mode}
+        )
         st.warning("You have unsaved changes. Are you sure you want to cancel?")
         col1, col2 = st.columns(2)
         with col1:
             if st.button("Yes, Discard Changes", type="primary", use_container_width=True):
+                debug.log_ui_interaction(
+                    action="confirm_cancel",
+                    element="contact_form",
+                    data={"mode": mode}
+                )
                 ui_manager.close_contact_dialog()
                 st.rerun()
         with col2:
             if st.button("No, Go Back", use_container_width=True):
+                debug.log_ui_interaction(
+                    action="cancel_discard",
+                    element="contact_form",
+                    data={"mode": mode}
+                )
                 state['show_cancel_confirm'] = False
                 st.rerun()
     else:
@@ -147,30 +184,71 @@ def show_contact_form():
                         if client[1] == st.session_state.client_selector_dashboard
                     )
                     
+                    debug.log_ui_interaction(
+                        action=f"attempt_{mode}_contact",
+                        element="contact_form",
+                        data={
+                            "client_id": client_id,
+                            "contact_type": state['contact_type']
+                        }
+                    )
+                    
                     if mode == "edit":
                         if update_contact(state['contact_id'], updated_data):
+                            debug.log_ui_interaction(
+                                action="contact_updated",
+                                element="contact_form",
+                                data={
+                                    "contact_id": state['contact_id'],
+                                    "contact_type": state['contact_type']
+                                }
+                            )
                             ui_manager.close_contact_dialog()
                             get_contacts.clear()
                             st.rerun()
                     else:
-                        if add_contact(
+                        new_contact_id = add_contact(
                             client_id,
                             state['contact_type'],
                             updated_data
-                        ):
+                        )
+                        if new_contact_id:
+                            debug.log_ui_interaction(
+                                action="contact_added",
+                                element="contact_form",
+                                data={
+                                    "contact_id": new_contact_id,
+                                    "contact_type": state['contact_type']
+                                }
+                            )
                             ui_manager.close_contact_dialog()
                             get_contacts.clear()
                             st.rerun()
                 else:
+                    debug.log_ui_interaction(
+                        action="validation_error",
+                        element="contact_form",
+                        data={"error": "empty_form"}
+                    )
                     ui_manager.set_contact_validation_errors(["Please fill in at least one field."])
                     st.rerun()
         
         with col2:
             if st.button("Cancel", use_container_width=True):
                 if any(value.strip() for value in updated_data.values()):
+                    debug.log_ui_interaction(
+                        action="show_cancel_confirm",
+                        element="contact_form",
+                        data={"mode": mode}
+                    )
                     state['show_cancel_confirm'] = True
                     st.rerun()
                 else:
+                    debug.log_ui_interaction(
+                        action="cancel_empty_form",
+                        element="contact_form",
+                        data={"mode": mode}
+                    )
                     ui_manager.close_contact_dialog()
                     st.rerun()
 
@@ -186,11 +264,27 @@ def render_contact_card(contact, ui_manager: UIStateManager):
     with st.container():
         # Show delete confirmation if this is the contact being deleted
         if st.session_state.show_delete_confirm and st.session_state.delete_contact_id == contact[7]:
+            debug.log_ui_interaction(
+                action="show_delete_confirm",
+                element="contact_card",
+                data={
+                    "contact_id": contact[7],
+                    "contact_type": contact[0]
+                }
+            )
             confirm_col1, confirm_col2, confirm_col3 = st.columns([2,1,1])
             with confirm_col1:
                 st.warning("Delete this contact?")
             with confirm_col2:
                 if st.button("Yes", key=f"confirm_delete_{contact[7]}", type="primary"):
+                    debug.log_ui_interaction(
+                        action="confirm_delete",
+                        element="contact_card",
+                        data={
+                            "contact_id": contact[7],
+                            "contact_type": contact[0]
+                        }
+                    )
                     if delete_contact(contact[7]):
                         st.session_state.delete_contact_id = None
                         st.session_state.show_delete_confirm = False
@@ -198,6 +292,14 @@ def render_contact_card(contact, ui_manager: UIStateManager):
                         st.rerun()
             with confirm_col3:
                 if st.button("No", key=f"cancel_delete_{contact[7]}"):
+                    debug.log_ui_interaction(
+                        action="cancel_delete",
+                        element="contact_card",
+                        data={
+                            "contact_id": contact[7],
+                            "contact_type": contact[0]
+                        }
+                    )
                     st.session_state.delete_contact_id = None
                     st.session_state.show_delete_confirm = False
                     st.rerun()
@@ -221,6 +323,14 @@ def render_contact_card(contact, ui_manager: UIStateManager):
         with action_col:
             # Action buttons stacked vertically, right-aligned
             if st.button("✏️", key=f"edit_{contact[7]}", help="Edit contact"):
+                debug.log_ui_interaction(
+                    action="click_edit",
+                    element="contact_card",
+                    data={
+                        "contact_id": contact[7],
+                        "contact_type": contact[0]
+                    }
+                )
                 ui_manager.open_contact_dialog(
                     contact_type=contact[0],
                     mode='edit',
@@ -237,6 +347,14 @@ def render_contact_card(contact, ui_manager: UIStateManager):
                 st.rerun()
             
             if st.button("🗑️", key=f"delete_{contact[7]}", help="Delete contact"):
+                debug.log_ui_interaction(
+                    action="click_delete",
+                    element="contact_card",
+                    data={
+                        "contact_id": contact[7],
+                        "contact_type": contact[0]
+                    }
+                )
                 st.session_state.delete_contact_id = contact[7]
                 st.session_state.show_delete_confirm = True
                 st.rerun()

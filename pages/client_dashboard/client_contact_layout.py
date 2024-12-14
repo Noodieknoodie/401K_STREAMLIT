@@ -1,65 +1,63 @@
-# pages\client_dashboard\client_contact_layout.py
-
 import streamlit as st
-from utils.utils import get_contacts
-from .client_contact_management import render_contact_card, show_contact_form
+from utils.client_data import get_contacts_optimized as get_contacts
+from .client_contact_management import render_contact_section, render_contact_card
+from utils.debug_logger import debug
 
-def render_contact_section(contact_type: str, contacts: list, ui_manager=None):
-    """Render a contact section with its contacts and add button
-    
-    Args:
-        contact_type: The type of contacts to display (Primary, Authorized, Provider)
-        contacts: List of contacts of this type
-        ui_manager: Optional UIStateManager instance for dialog coordination
-    """
-    with st.expander(f"{contact_type} Contact ({len(contacts)})", expanded=False):
-        if contacts:
-            for contact in contacts:
-                render_contact_card(contact, ui_manager)
-        else:
-            st.caption(f"No {contact_type.lower()} contacts")
-        
-        if st.button(f"Add {contact_type} Contact", key=f"add_{contact_type.lower()}", use_container_width=True):
-            if ui_manager:
-                st.session_state.ui_manager = ui_manager  # Store for dialog access
-                ui_manager.open_contact_dialog(
-                    contact_type=contact_type,
-                    mode='add'
-                )
-                show_contact_form()
-                st.rerun()
-
-def show_contact_sections(client_id: int, ui_manager=None):
-    """Display the contact sections in a three-column layout.
-    
-    Args:
-        client_id: The ID of the client whose contacts to display
-        ui_manager: Optional UIStateManager instance for dialog coordination
-    """
+def render_contact_sections(client_id):
+    """Display the contact sections in a three-column layout."""
     # Get contacts data
     contacts = get_contacts(client_id)
     contact_types = {'Primary': [], 'Authorized': [], 'Provider': []}
+    
+    debug.log_ui_interaction(
+        action="load_contact_sections",
+        element="contact_layout",
+        data={
+            "client_id": client_id,
+            "total_contacts": len(contacts) if contacts else 0
+        }
+    )
+    
     if contacts:
         for contact in contacts:
-            if contact[0] in contact_types:
-                contact_types[contact[0]].append(contact)
+            try:
+                contact_type = contact[0] if contact and len(contact) > 0 else None
+                if contact_type in contact_types:
+                    contact_types[contact_type].append(contact)
+            except (IndexError, TypeError) as e:
+                debug.log_ui_interaction(
+                    action="contact_processing_error",
+                    element="contact_layout",
+                    data={
+                        "error": str(e),
+                        "contact_data": str(contact)
+                    }
+                )
+                st.error(f"Error processing contact data: {str(e)}")
+                continue  # Skip invalid contact data
+    
+    # Log contact type distribution
+    debug.log_ui_interaction(
+        action="contact_distribution",
+        element="contact_layout",
+        data={
+            "primary_count": len(contact_types['Primary']),
+            "authorized_count": len(contact_types['Authorized']),
+            "provider_count": len(contact_types['Provider'])
+        }
+    )
     
     # Create three equal-width columns for contact cards
     c1, c2, c3 = st.columns(3)
     
     # Primary Contacts Card
     with c1:
-        render_contact_section('Primary', contact_types['Primary'], ui_manager)
+        render_contact_section('Primary', contact_types['Primary'])
     
     # Authorized Contacts Card
     with c2:
-        render_contact_section('Authorized', contact_types['Authorized'], ui_manager)
+        render_contact_section('Authorized', contact_types['Authorized'])
     
     # Provider Contacts Card
     with c3:
-        render_contact_section('Provider', contact_types['Provider'], ui_manager)
-    
-    # Show contact form dialog if open
-    if ui_manager and ui_manager.is_contact_dialog_open:
-        st.session_state.ui_manager = ui_manager  # Ensure ui_manager is in session state
-        show_contact_form()  # Call without parameters
+        render_contact_section('Provider', contact_types['Provider']) 
