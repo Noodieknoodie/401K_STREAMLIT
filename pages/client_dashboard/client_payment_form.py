@@ -64,7 +64,8 @@ from utils.utils import (
     validate_payment_data,
     add_payment,
     get_database_connection,
-    get_payment_history
+    get_payment_history,
+    get_unique_payment_methods
 )
 from .client_payment_utils import (
     get_current_period,
@@ -99,17 +100,6 @@ def get_cached_contract(client_id: int) -> Optional[Tuple]:
         result={'success': result is not None}
     )
     return result
-
-# Payment method options
-METHOD_OPTIONS = [
-    "None Specified",
-    "Auto - ACH",
-    "Auto - Check",
-    "Manual - ACH",
-    "Manual - Check",
-    "Wire",
-    "Other"
-]
 
 def init_payment_dialog(ui_manager: UIStateManager, client_id: Optional[int] = None) -> None:
     """Initialize payment dialog state using UIStateManager.
@@ -811,10 +801,20 @@ def show_payment_dialog(client_id: int) -> None:
     # Payment method selection
     col1, col2 = st.columns(2)
     with col1:
+        # Get fresh method options each time dialog shows
+        method_options = get_unique_payment_methods()
+        current_method = form_data.get('method')
+        
+        # If current method isn't in options, default to Other
+        try:
+            method_index = method_options.index(current_method or default_method or "None Specified")
+        except ValueError:
+            method_index = method_options.index("Other")
+            
         method = st.selectbox(
             "Payment Method",
-            options=METHOD_OPTIONS,
-            index=METHOD_OPTIONS.index(form_data.get('method', default_method)),
+            options=method_options,
+            index=method_index,
             key="method"
         )
         

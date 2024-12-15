@@ -878,3 +878,23 @@ def delete_payment(payment_id):
     finally:
         conn.close()
 
+def get_unique_payment_methods():
+    """Get all unique payment methods from the database, including 'None Specified' and 'Other'"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT DISTINCT method 
+            FROM payments 
+            WHERE method IS NOT NULL
+            UNION
+            SELECT 'None Specified'
+            ORDER BY method
+        """)
+        methods = [row[0] if row[0] is not None else 'None Specified' for row in cursor.fetchall()]
+        if 'Other' not in methods:
+            methods.append('Other')
+        return methods
+    finally:
+        conn.close()
+
