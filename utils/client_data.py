@@ -218,3 +218,4 @@ def get_contacts_optimized(client_id):
         for contact in data['contacts']
         if contact['type']  # Filter out null entries
     ] 
+

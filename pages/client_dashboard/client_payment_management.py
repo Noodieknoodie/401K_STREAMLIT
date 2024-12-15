@@ -202,11 +202,13 @@ def format_payment_data(payments):
         
         notes = payment[10] or ""
         payment_id = payment[11]
+        method = payment[12] or "N/A"
         
         formatted_payment = {
             "Provider": provider_name,
             "Period": period,
             "Frequency": frequency,
+            "Method": method,
             "Received": received_date,
             "Total Assets": total_assets,
             "Expected Fee": expected_fee,
@@ -554,8 +556,8 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
     st.markdown('<div class="payment-table">', unsafe_allow_html=True)
     
     # Display headers
-    header_cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1, 1])
-    headers = ["Provider", "Period", "Frequency", "Received", "Total Assets", 
+    header_cols = st.columns([1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1, 1])
+    headers = ["Provider", "Period", "Frequency", "Method", "Received", "Total Assets", 
               "Expected Fee", "Actual Fee", "Discrepancy", "Notes", "Actions"]
     
     for col, header in zip(header_cols, headers):
@@ -569,11 +571,11 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
     # Display data rows
     for row in table_data:
         with st.container():
-            cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1, 1])
+            cols = st.columns([1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1, 1])
             
             # Display payment data
             for i, (col, value) in enumerate(zip(cols[:-2], 
-                ["Provider", "Period", "Frequency", "Received", "Total Assets",
+                ["Provider", "Period", "Frequency", "Method", "Received", "Total Assets",
                  "Expected Fee", "Actual Fee", "Discrepancy"])):
                 with col:
                     st.markdown(f"<p style='margin: 0;'>{row[value]}</p>", 

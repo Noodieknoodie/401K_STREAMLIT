@@ -259,11 +259,6 @@ def format_payment_amount_on_change(ui_manager: UIStateManager, field_key: str) 
     Args:
         ui_manager: The UI state manager instance
         field_key: The field being updated ('total_assets' or 'actual_fee')
-        
-    Note:
-        - Clears validation errors on each change
-        - Updates expected fee when total_assets changes
-        - Auto-populates actual_fee with expected_fee when empty
     """
     debug.log_ui_interaction(
         action='format_payment',
@@ -277,23 +272,18 @@ def format_payment_amount_on_change(ui_manager: UIStateManager, field_key: str) 
         value = st.session_state[field_key]
         debug.log_state_change(
             component=field_key,
-            old_value=None,  # Original value not accessible here
+            old_value=None,
             new_value=value,
             context={'raw_input': True}
         )
         
         if value:
-            # More forgiving input
-            cleaned = ''.join(c for c in str(value) if c.isdigit() or c in '.,')
-            # Handle common input patterns
-            if '.' not in cleaned:
-                if len(cleaned) <= 2:  # Under $1
-                    cleaned = '0.' + cleaned.zfill(2)
-                else:  # Over $1
-                    cleaned = cleaned[:-2] + '.' + cleaned[-2:]
             try:
+                # Remove any existing formatting
+                cleaned = ''.join(c for c in str(value) if c.isdigit() or c == '.')
+                
+                # Convert to float and format
                 amount = float(cleaned)
-                # Format with thousands separator as they type
                 formatted = f"${amount:,.2f}"
                 st.session_state[field_key] = formatted
                 
@@ -769,8 +759,9 @@ def show_payment_dialog(client_id: int) -> None:
             value=form_data.get('total_assets') or default_assets,
             key="total_assets",
             on_change=lambda: format_payment_amount_on_change(ui_manager, "total_assets"),
-            placeholder="Enter amount (e.g. 1234.56)"
+            placeholder="Enter amount (e.g. 2000000)"
         )
+        st.caption("Enter the total amount without commas or $ symbol")
         
         debug.log_ui_interaction(
             action='input_assets',
@@ -784,9 +775,10 @@ def show_payment_dialog(client_id: int) -> None:
             label="Payment Amount",
             key="actual_fee",
             on_change=lambda: format_payment_amount_on_change(ui_manager, "actual_fee"),
-            placeholder="Enter amount (e.g. 1234.56)",
+            placeholder="Enter amount (e.g. 2000)",
             label_visibility="collapsed"
         )
+        st.caption("Enter the payment amount without commas or $ symbol")
         
         debug.log_ui_interaction(
             action='input_fee',

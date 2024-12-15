@@ -163,7 +163,8 @@ def get_payment_history(client_id, years=None, quarters=None):
             p.expected_fee,
             p.actual_fee,
             p.notes,
-            p.payment_id
+            p.payment_id,
+            p.method
         FROM payments p
         JOIN contracts c ON p.contract_id = c.contract_id
         WHERE p.client_id = ?
@@ -426,7 +427,8 @@ def get_paginated_payment_history(client_id, offset=0, limit=None, years=None, q
             p.expected_fee,
             p.actual_fee,
             p.notes,
-            p.payment_id
+            p.payment_id,
+            p.method
         FROM payments p
         JOIN contracts c ON p.contract_id = c.contract_id
         WHERE p.client_id = ?

@@ -1,7 +1,7 @@
 # app.py
 import streamlit as st
 from sidebar import render_sidebar
-from pages.quarterly_summary.summary import show_quarterly_summary
+from pages.main_summary.summary import show_main_summary
 from pages.client_dashboard.client_dashboard import show_client_dashboard
 from pages.manage_clients.client_management import show_manage_clients
 from pages.bulk_payment.bulk_entry import show_bulk_payment_entry
@@ -27,7 +27,7 @@ def main():
     # Main content area
     current_page = st.session_state.current_page
     if current_page == '📊 Quarterly Summary':
-        show_quarterly_summary()
+        show_main_summary()
     elif current_page == '👥 Client Dashboard':
         show_client_dashboard()
     elif current_page == '⚙️ Manage Clients':
