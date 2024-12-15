@@ -5,21 +5,15 @@ from typing import Dict, Any, Optional, Tuple
 from utils.utils import (
     get_payment_history,
     update_payment_note,
-    get_clients,
-    get_contacts,
-    get_client_details,
-    add_contact,
-    update_contact,
-    delete_contact,
     get_payment_year_quarters,
     get_payment_by_id,
     format_currency_ui,
-    get_client_dashboard_data,
     delete_payment
 )
 from utils.perf_logging import log_event
 from utils.ui_state_manager import UIStateManager
 from .client_payment_form import show_payment_dialog
+from utils.debug_logger import debug
 
 # ============================================================================
 # STATE MANAGEMENT
@@ -27,16 +21,38 @@ from .client_payment_form import show_payment_dialog
 
 def init_filter_state():
     """Initialize payment history filter state"""
+    debug.log_ui_interaction(
+        action='init_filter_state',
+        element='filter_state',
+        data={'initializing': True}
+    )
+    
     if 'filter_state' not in st.session_state:
-        st.session_state.filter_state = {
+        initial_state = {
             'time_filter': 'All Time',  # 'All Time', 'This Year', 'Custom'
             'year': datetime.now().year,
             'quarter': None,
             'current_filters': None
         }
+        st.session_state.filter_state = initial_state
+        
+        debug.log_state_change(
+            component='filter_state',
+            old_value=None,
+            new_value=initial_state,
+            context={'initialization': True}
+        )
 
 def update_filter_state(key: str, value: Any) -> None:
     """Update filter state and handle dependencies"""
+    debug.log_ui_interaction(
+        action='update_filter',
+        element='filter_state',
+        data={'key': key, 'new_value': value}
+    )
+    
+    old_state = st.session_state.filter_state.copy()
+    
     if key == 'time_filter':
         st.session_state.filter_state['time_filter'] = value
         if value == 'All Time':
@@ -47,32 +63,67 @@ def update_filter_state(key: str, value: Any) -> None:
             st.session_state.filter_state['quarter'] = None
     else:
         st.session_state.filter_state[key] = value
+    
+    debug.log_state_change(
+        component='filter_state',
+        old_value=old_state,
+        new_value=st.session_state.filter_state,
+        context={'update_key': key}
+    )
 
 def get_current_filters():
     """Get current year and quarter filters based on filter state"""
     filter_state = st.session_state.filter_state
     time_filter = filter_state['time_filter']
     
+    debug.log_ui_interaction(
+        action='get_filters',
+        element='filter_state',
+        data={'time_filter': time_filter}
+    )
+    
     if time_filter == 'All Time':
-        return None, None
+        result = (None, None)
     elif time_filter == 'This Year':
-        return [datetime.now().year], None
+        result = ([datetime.now().year], None)
     else:  # Custom
         year = filter_state['year']
         quarter = filter_state['quarter']
-        return (
+        result = (
             [year] if year else None,
             [int(quarter[1])] if quarter and quarter != "All Quarters" else None
         )
+    
+    debug.log_state_change(
+        component='current_filters',
+        old_value=filter_state.get('current_filters'),
+        new_value=result,
+        context={'time_filter': time_filter}
+    )
+    return result
 
 def init_notes_state():
     """Initialize centralized notes state management"""
+    debug.log_ui_interaction(
+        action='init_notes_state',
+        element='notes_state',
+        data={'initializing': True}
+    )
+    
     if 'notes_state' not in st.session_state:
-        st.session_state.notes_state = {
+        initial_state = {
             'active_note': None,
             'edited_notes': {},
             'temp_notes': {}
         }
+        st.session_state.notes_state = initial_state
+        
+        debug.log_state_change(
+            component='notes_state',
+            old_value=None,
+            new_value=initial_state,
+            context={'initialization': True}
+        )
 
 # ============================================================================
 # DATA FORMATTING AND DISPLAY
@@ -80,6 +131,12 @@ def init_notes_state():
 
 def format_payment_data(payments):
     """Format payment data for display with consistent formatting."""
+    debug.log_ui_interaction(
+        action='format_payments',
+        element='payment_table',
+        data={'payment_count': len(payments) if payments else 0}
+    )
+    
     table_data = []
     
     for payment in payments:
@@ -146,7 +203,7 @@ def format_payment_data(payments):
         notes = payment[10] or ""
         payment_id = payment[11]
         
-        table_data.append({
+        formatted_payment = {
             "Provider": provider_name,
             "Period": period,
             "Frequency": frequency,
@@ -157,7 +214,15 @@ def format_payment_data(payments):
             "Discrepancy": discrepancy_str,
             "Notes": notes,
             "payment_id": payment_id
-        })
+        }
+        
+        debug.log_ui_interaction(
+            action='format_payment',
+            element='payment_row',
+            data={'payment_id': payment_id, 'period': period}
+        )
+        
+        table_data.append(formatted_payment)
     
     return table_data
 
@@ -167,19 +232,52 @@ def format_payment_data(payments):
 
 def format_note_display(note):
     """Format note for display with caching."""
-    return bool(note), "🟢" if note else "◯", note if note else "Add note"
+    formatted = (bool(note), "🟢" if note else "◯", note if note else "Add note")
+    
+    debug.log_ui_interaction(
+        action='format_note',
+        element='note_display',
+        data={'has_note': bool(note)}
+    )
+    
+    return formatted
 
 def initialize_notes_state():
     """Initialize centralized note state management."""
+    debug.log_ui_interaction(
+        action='init_notes_state',
+        element='notes_management',
+        data={'initializing': True}
+    )
+    
     if 'notes_state' not in st.session_state:
-        st.session_state.notes_state = {
+        initial_state = {
             'active_note': None,
             'edited_notes': {}
         }
+        st.session_state.notes_state = initial_state
+        
+        debug.log_state_change(
+            component='notes_state',
+            old_value=None,
+            new_value=initial_state,
+            context={'initialization': True}
+        )
 
 def render_note_cell(payment_id, note, provider=None, period=None, ui_manager=None):
     """Render a note cell with edit functionality using centralized state."""
     initialize_notes_state()
+    
+    debug.log_ui_interaction(
+        action='render_note',
+        element='note_cell',
+        data={
+            'payment_id': payment_id,
+            'has_note': bool(note),
+            'provider': provider,
+            'period': period
+        }
+    )
     
     # Get cached note display format
     has_note = bool(note)
@@ -198,6 +296,16 @@ def render_note_cell(payment_id, note, provider=None, period=None, ui_manager=No
     ):
         notes_state = st.session_state.notes_state
         
+        debug.log_ui_interaction(
+            action='click_note',
+            element='note_button',
+            data={
+                'payment_id': payment_id,
+                'current_active': notes_state['active_note'],
+                'has_content': has_note
+            }
+        )
+        
         # Close any open forms when opening a note
         if ui_manager and not notes_state['active_note']:
             ui_manager.close_all_dialogs()
@@ -213,42 +321,73 @@ def render_note_cell(payment_id, note, provider=None, period=None, ui_manager=No
         if notes_state['active_note'] and notes_state['active_note'] != payment_id:
             prev_id = notes_state['active_note']
             if prev_id in notes_state['edited_notes']:
+                debug.log_db_operation(
+                    operation='update',
+                    table='payment_notes',
+                    data={
+                        'payment_id': prev_id,
+                        'note': notes_state['edited_notes'][prev_id]
+                    },
+                    result='auto_save'
+                )
                 update_payment_note(prev_id, notes_state['edited_notes'][prev_id])
                 notes_state['edited_notes'].pop(prev_id)
         
         # Toggle note state
+        old_active = notes_state['active_note']
         if notes_state['active_note'] == payment_id:
             if payment_id in notes_state['edited_notes']:
+                debug.log_db_operation(
+                    operation='update',
+                    table='payment_notes',
+                    data={
+                        'payment_id': payment_id,
+                        'note': notes_state['edited_notes'][payment_id]
+                    },
+                    result='save_on_close'
+                )
                 update_payment_note(payment_id, notes_state['edited_notes'][payment_id])
                 notes_state['edited_notes'].pop(payment_id)
             notes_state['active_note'] = None
         else:
             notes_state['active_note'] = payment_id
-
+        
+        debug.log_state_change(
+            component='active_note',
+            old_value=old_active,
+            new_value=notes_state['active_note'],
+            context={'payment_id': payment_id}
+        )
 
 def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
-    """Display payment history with efficient layout and smart navigation.
+    """Display payment history with efficient layout and smart navigation."""
+    debug.log_ui_interaction(
+        action='show_history',
+        element='payment_history',
+        data={'client_id': client_id}
+    )
     
-    Args:
-        client_id: The ID of the client whose payment history to show
-        ui_manager: UIStateManager instance for coordinating UI states
-    """
     # Initialize all required states
     init_notes_state()
     init_filter_state()
     
-    # Initialize delete confirmation state
-    if 'delete_payment_id' not in st.session_state:
-        st.session_state.delete_payment_id = None
-    if 'show_delete_confirm' not in st.session_state:
-        st.session_state.show_delete_confirm = False
-    
     # Get data first
     year_quarters = get_payment_year_quarters(client_id)
+    debug.log_db_operation(
+        operation='fetch',
+        table='payment_years',
+        data={'client_id': client_id},
+        result={'year_quarters_count': len(year_quarters) if year_quarters else 0}
+    )
     
     # Get available years
     years = sorted(list(set(yq[0] for yq in year_quarters)), reverse=True)
     if not years:
+        debug.log_ui_interaction(
+            action='check_history',
+            element='payment_history',
+            data={'status': 'no_data'}
+        )
         st.info("No payment history available.")
         return
     
@@ -256,7 +395,7 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
     left_col, middle_col, right_col = st.columns([4, 2, 4])
     
     with left_col:
-        st.radio(
+        selected_filter = st.radio(
             "Time Period Filter",
             options=["All Time", "This Year", "Custom"],
             key="filter_time_period",
@@ -265,10 +404,16 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
             on_change=lambda: update_filter_state('time_filter', st.session_state.filter_time_period)
         )
         
+        debug.log_ui_interaction(
+            action='select_filter',
+            element='time_filter',
+            data={'filter_type': selected_filter}
+        )
+        
         if st.session_state.filter_state['time_filter'] == "Custom":
             col1, col2, _ = st.columns([1, 1, 2])
             with col1:
-                st.selectbox(
+                selected_year = st.selectbox(
                     "Select Year",
                     options=years,
                     index=years.index(st.session_state.filter_state['year']) if st.session_state.filter_state['year'] in years else 0,
@@ -276,8 +421,15 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
                     label_visibility="collapsed",
                     on_change=lambda: update_filter_state('year', st.session_state.filter_year)
                 )
+                
+                debug.log_ui_interaction(
+                    action='select_year',
+                    element='year_filter',
+                    data={'year': selected_year}
+                )
+            
             with col2:
-                st.selectbox(
+                selected_quarter = st.selectbox(
                     "Select Quarter",
                     options=["All Quarters", "Q1", "Q2", "Q3", "Q4"],
                     index=0,
@@ -285,9 +437,20 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
                     label_visibility="collapsed",
                     on_change=lambda: update_filter_state('quarter', st.session_state.filter_quarter)
                 )
+                
+                debug.log_ui_interaction(
+                    action='select_quarter',
+                    element='quarter_filter',
+                    data={'quarter': selected_quarter}
+                )
     
     with middle_col:
         if st.button("Add Payment", type="primary", use_container_width=True):
+            debug.log_ui_interaction(
+                action='add_payment',
+                element='add_button',
+                data={'client_id': client_id}
+            )
             st.session_state.ui_manager = ui_manager
             initial_data = {
                 'received_date': datetime.now().strftime('%Y-%m-%d')
@@ -306,13 +469,36 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
              if filter_state['quarter'] and filter_state['quarter'] != "All Quarters" else "")
         )
         st.markdown(f"<div style='text-align: right'>{status_text}</div>", unsafe_allow_html=True)
+        
+        debug.log_ui_interaction(
+            action='display_filter_status',
+            element='filter_status',
+            data={'status': status_text}
+        )
     
     # Get filtered data using the helper function
     year_filters, quarter_filters = get_current_filters()
     
     # Load and format all payment data
     payments = get_payment_history(client_id, years=year_filters, quarters=quarter_filters)
+    
+    debug.log_db_operation(
+        operation='fetch',
+        table='payments',
+        data={
+            'client_id': client_id,
+            'years': year_filters,
+            'quarters': quarter_filters
+        },
+        result={'payment_count': len(payments) if payments else 0}
+    )
+    
     if not payments:
+        debug.log_ui_interaction(
+            action='check_filtered_data',
+            element='payment_history',
+            data={'status': 'no_filtered_data'}
+        )
         st.info("No payment history available for this client.", icon="ℹ️")
         return
     
@@ -365,10 +551,9 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
         </style>
     """, unsafe_allow_html=True)
     
-    # Wrap the payment table in a div with our specific class
     st.markdown('<div class="payment-table">', unsafe_allow_html=True)
     
-    # Display headers with minimal spacing
+    # Display headers
     header_cols = st.columns([2, 2, 1, 2, 2, 2, 2, 2, 1, 1])
     headers = ["Provider", "Period", "Frequency", "Received", "Total Assets", 
               "Expected Fee", "Actual Fee", "Discrepancy", "Notes", "Actions"]
@@ -378,7 +563,6 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
             st.markdown(f"<p style='font-weight: bold; margin: 0;'>{header}</p>", 
                        unsafe_allow_html=True)
     
-    # Single header divider with minimal spacing
     st.markdown("<hr style='margin: 0.1rem 0; border-color: #eee;'>", 
                 unsafe_allow_html=True)
     
@@ -409,42 +593,70 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
             with cols[-1]:
                 action_cols = st.columns([1, 1])
                 with action_cols[0]:
-                    if st.button("✏️", key=f"edit_{row['payment_id']}", 
-                               help="Edit payment"):
+                    if st.button("✏️", key=f"edit_{row['payment_id']}", help="Edit payment"):
+                        debug.log_ui_interaction(
+                            action='edit_payment',
+                            element='edit_button',
+                            data={'payment_id': row['payment_id']}
+                        )
                         payment_data = get_payment_by_id(row['payment_id'])
                         if payment_data:
+                            initial_data = {
+                                'payment_id': row['payment_id'],
+                                'received_date': payment_data[0],
+                                'applied_start_quarter': payment_data[1],
+                                'applied_start_year': payment_data[2],
+                                'applied_end_quarter': payment_data[3],
+                                'applied_end_year': payment_data[4],
+                                'total_assets': format_currency_ui(payment_data[5]),
+                                'actual_fee': format_currency_ui(payment_data[6]),
+                                'method': payment_data[7],
+                                'notes': payment_data[8]
+                            }
+                            debug.log_state_change(
+                                component='edit_payment',
+                                old_value=None,
+                                new_value=initial_data,
+                                context={'payment_id': row['payment_id']}
+                            )
                             ui_manager.open_payment_dialog(
                                 client_id=client_id,
                                 mode='edit',
-                                initial_data={
-                                    'payment_id': row['payment_id'],
-                                    'received_date': payment_data[0],
-                                    'applied_start_quarter': payment_data[1],
-                                    'applied_start_year': payment_data[2],
-                                    'applied_end_quarter': payment_data[3],
-                                    'applied_end_year': payment_data[4],
-                                    'total_assets': format_currency_ui(payment_data[5]),
-                                    'actual_fee': format_currency_ui(payment_data[6]),
-                                    'method': payment_data[7],
-                                    'notes': payment_data[8]
-                                }
+                                initial_data=initial_data
                             )
                             st.rerun()
                 
                 with action_cols[1]:
-                    if st.button("🗑️", key=f"delete_{row['payment_id']}", 
-                               help="Delete payment"):
-                        st.session_state.delete_payment_id = row['payment_id']
-                        st.session_state.show_delete_confirm = True
+                    if st.button("🗑️", key=f"delete_{row['payment_id']}", help="Delete payment"):
+                        st.session_state.showing_delete_confirm_for_id = row['payment_id']
                         st.rerun()
             
-            # If note is active for this payment, show the edit form below the row
+            # After the row, show confirmation if this is the row being deleted
+            if getattr(st.session_state, 'showing_delete_confirm_for_id', None) == row['payment_id']:
+                with st.container():
+                    cols = st.columns([6, 2, 2])
+                    with cols[0]:
+                        st.warning(f"Delete this payment for {row['Period']}?")
+                    with cols[1]:
+                        if st.button("Yes, Delete", key=f"confirm_delete_{row['payment_id']}", type="primary", use_container_width=True):
+                            if delete_payment(row['payment_id']):
+                                st.session_state.showing_delete_confirm_for_id = None
+                                get_payment_history.clear()
+                                st.success("Payment deleted successfully!")
+                                st.rerun()
+                            else:
+                                st.error("Failed to delete payment")
+                    with cols[2]:
+                        if st.button("Cancel", key=f"cancel_delete_{row['payment_id']}", use_container_width=True):
+                            st.session_state.showing_delete_confirm_for_id = None
+                            st.rerun()
+            
+            # Handle active note editing
             if (
                 'notes_state' in st.session_state 
                 and st.session_state.notes_state['active_note'] == row['payment_id']
             ):
-                # Create a new row for the expanded note that spans multiple columns
-                note_cols = st.columns([4, 12, 1])  # Indent from left, span most of width
+                note_cols = st.columns([4, 12, 1])
                 with note_cols[1]:
                     st.markdown("<div style='border-top: 1px solid #eee; padding-top: 0.5rem;'></div>", unsafe_allow_html=True)
                     edited_note = st.text_area(
@@ -455,46 +667,41 @@ def show_payment_history(client_id: int, ui_manager: UIStateManager) -> None:
                         placeholder="Enter note here..."
                     )
                     
-                    # Save button row
                     save_cols = st.columns([6, 2, 2])
                     with save_cols[1]:
                         if st.button("Save", key=f"save_note_{row['payment_id']}", type="primary"):
+                            debug.log_ui_interaction(
+                                action='save_note',
+                                element='note_save_button',
+                                data={'payment_id': row['payment_id']}
+                            )
+                            debug.log_db_operation(
+                                operation='update',
+                                table='payment_notes',
+                                data={'payment_id': row['payment_id'], 'note': edited_note},
+                                result='attempting'
+                            )
                             update_payment_note(row['payment_id'], edited_note)
                             st.session_state.notes_state['active_note'] = None
-                            # Clear the cache to force data refresh
                             get_payment_history.clear()
                             st.rerun()
                     with save_cols[2]:
                         if st.button("Cancel", key=f"cancel_note_{row['payment_id']}"):
+                            debug.log_ui_interaction(
+                                action='cancel_note',
+                                element='note_cancel_button',
+                                data={'payment_id': row['payment_id']}
+                            )
                             st.session_state.notes_state['active_note'] = None
                             st.rerun()
     
     st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Handle delete confirmation
-    if 'show_delete_confirm' in st.session_state and st.session_state.show_delete_confirm:
-        payment_id = st.session_state.delete_payment_id
-        st.warning("Are you sure you want to delete this payment? This action cannot be undone.")
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Yes, Delete", type="primary", use_container_width=True):
-                if delete_payment(payment_id):
-                    st.success("Payment deleted successfully!")
-                    # Clear the cache to force data refresh
-                    get_payment_history.clear()
-                    # Reset delete confirmation state
-                    st.session_state.show_delete_confirm = False
-                    del st.session_state.delete_payment_id
-                    st.rerun()
-                else:
-                    st.error("Failed to delete payment. Please try again.")
-        with col2:
-            if st.button("No, Cancel", use_container_width=True):
-                st.session_state.show_delete_confirm = False
-                del st.session_state.delete_payment_id
-                st.rerun()
 
 if __name__ == "__main__":
-    # Initialize UI manager when running directly
+    debug.log_ui_interaction(
+        action='main_execution',
+        element='payment_history',
+        data={'direct_execution': True}
+    )
     ui_manager = UIStateManager()
     show_payment_history(None, ui_manager)

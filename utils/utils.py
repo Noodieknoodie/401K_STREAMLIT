@@ -1,7 +1,8 @@
-# utils.py 
+# utils\utils.py
 import sqlite3
 import streamlit as st
 from datetime import datetime
+from utils.debug_logger import debug
 
 def get_database_connection():
     """Create and return a database connection"""
@@ -194,6 +195,13 @@ def get_payment_history(client_id, years=None, quarters=None):
 
 def update_payment_note(payment_id, new_note):
     """Update payment note"""
+    debug.log_db_operation(
+        operation='update',
+        table='payments',
+        data={'payment_id': payment_id, 'new_note': new_note},
+        result='attempting'
+    )
+    
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
@@ -207,10 +215,23 @@ def update_payment_note(payment_id, new_note):
         # Clear any cached data that might include this payment
         if 'get_payment_history' in st.session_state:
             st.session_state.get_payment_history.clear()
+        
+        debug.log_db_operation(
+            operation='update',
+            table='payments',
+            data={'payment_id': payment_id},
+            result='success'
+        )
+        debug.log_state_change(
+            component='payment_history_cache',
+            old_value='cached',
+            new_value='cleared',
+            context={'payment_id': payment_id}
+        )
     finally:
         conn.close()
     
-    return True  # Return success status
+    return True
 
 def format_phone_number_ui(number):
     """Format phone number for UI display: (XXX) XXX-XXXX"""
@@ -247,6 +268,17 @@ def validate_phone_number(number):
 
 def add_contact(client_id, contact_type, contact_data):
     """Add a new contact to the database"""
+    debug.log_db_operation(
+        operation='insert',
+        table='contacts',
+        data={
+            'client_id': client_id,
+            'contact_type': contact_type,
+            'contact_data': contact_data
+        },
+        result='attempting'
+    )
+    
     # Clean up contact type to match database values
     contact_type = contact_type.split()[0]  # Extract first word (Primary/Authorized/Provider)
     
@@ -269,23 +301,52 @@ def add_contact(client_id, contact_type, contact_data):
             contact_data.get('mailing_address')
         ))
         conn.commit()
-        return cursor.lastrowid
+        contact_id = cursor.lastrowid
+        
+        debug.log_db_operation(
+            operation='insert',
+            table='contacts',
+            data={'client_id': client_id, 'contact_id': contact_id},
+            result='success'
+        )
+        return contact_id
     finally:
-        conn.close()        
+        conn.close()    
 
 def delete_contact(contact_id):
     """Delete a contact from the database"""
+    debug.log_db_operation(
+        operation='delete',
+        table='contacts',
+        data={'contact_id': contact_id},
+        result='attempting'
+    )
+    
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM contacts WHERE contact_id = ?", (contact_id,))
         conn.commit()
+        
+        debug.log_db_operation(
+            operation='delete',
+            table='contacts',
+            data={'contact_id': contact_id},
+            result='success'
+        )
         return True
     finally:
         conn.close()
 
 def update_contact(contact_id, contact_data):
     """Update an existing contact in the database"""
+    debug.log_db_operation(
+        operation='update',
+        table='contacts',
+        data={'contact_id': contact_id, 'updates': contact_data},
+        result='attempting'
+    )
+    
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
@@ -308,6 +369,13 @@ def update_contact(contact_id, contact_data):
             contact_id
         ))
         conn.commit()
+        
+        debug.log_db_operation(
+            operation='update',
+            table='contacts',
+            data={'contact_id': contact_id},
+            result='success'
+        )
         return True
     finally:
         conn.close()
@@ -557,9 +625,22 @@ def validate_payment_data(data):
 
 def add_payment(client_id, payment_data):
     """Add a new payment to the database"""
+    debug.log_db_operation(
+        operation='insert',
+        table='payments',
+        data={'client_id': client_id, 'payment_data': payment_data},
+        result='attempting'
+    )
+    
     # Get active contract
     contract = get_active_contract(client_id)
     if not contract:
+        debug.log_db_operation(
+            operation='insert',
+            table='payments',
+            data={'client_id': client_id},
+            result={'error': 'no_active_contract'}
+        )
         return None
         
     conn = get_database_connection()
@@ -607,8 +688,26 @@ def add_payment(client_id, payment_data):
             payment_data.get('notes', '')
         ))
         conn.commit()
-        return cursor.lastrowid
+        payment_id = cursor.lastrowid
+        
+        debug.log_db_operation(
+            operation='insert',
+            table='payments',
+            data={
+                'client_id': client_id,
+                'payment_id': payment_id,
+                'schedule': schedule
+            },
+            result='success'
+        )
+        return payment_id
     except sqlite3.Error as e:
+        debug.log_db_operation(
+            operation='insert',
+            table='payments',
+            data={'client_id': client_id},
+            result={'error': str(e)}
+        )
         print(f"Database error: {e}")
         return None
     finally:
@@ -635,7 +734,14 @@ def get_payment_by_id(payment_id):
             JOIN contracts c ON p.contract_id = c.contract_id
             WHERE p.payment_id = ?
         """, (payment_id,))
-        return cursor.fetchone()
+        result = cursor.fetchone()
+        debug.log_db_operation(
+            operation='fetch',
+            table='payments',
+            data={'payment_id': payment_id},
+            result='success' if result else 'not_found'
+        )
+        return result
     finally:
         conn.close()
 
@@ -749,11 +855,25 @@ def get_client_dashboard_data(client_id):
 
 def delete_payment(payment_id):
     """Delete a payment from the database"""
+    debug.log_db_operation(
+        operation='delete',
+        table='payments',
+        data={'payment_id': payment_id},
+        result='attempting'
+    )
+    
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM payments WHERE payment_id = ?", (payment_id,))
         conn.commit()
+        
+        debug.log_db_operation(
+            operation='delete',
+            table='payments',
+            data={'payment_id': payment_id},
+            result='success'
+        )
         return True
     finally:
         conn.close()
