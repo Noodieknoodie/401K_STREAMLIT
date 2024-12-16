@@ -1,233 +1,293 @@
 import streamlit as st
 import pandas as pd
-import sqlite3
+import altair as alt
 from datetime import datetime
-from utils.utils import get_database_connection, calculate_rate_conversions
+from .summary_data import get_summary_year_data, get_available_years
+from .summary_utils import (
+    calculate_current_quarter, get_default_year,
+    format_currency, format_growth, calculate_trend_direction,
+    calculate_sparkline_data
+)
 
-def load_and_cache_data(year=None, refresh=False):
-    """Loads and caches payment data, optionally filtered by year."""
-    if refresh or 'cached_payments' not in st.session_state or (year and st.session_state.get('cached_year') != year):
-        conn = get_database_connection()
-        query = """
-            SELECT
-                p.payment_id,
-                c.display_name,
-                p.applied_start_quarter,
-                p.applied_start_year,
-                p.actual_fee,
-                p.received_date,
-                p.total_assets,
-                p.expected_fee,
-                p.notes,
-                ctr.fee_type,
-                ctr.flat_rate,
-                ctr.percent_rate,
-                ctr.payment_schedule
-            FROM payments p
-            JOIN clients c ON p.client_id = c.client_id
-            JOIN contracts ctr ON p.contract_id = ctr.contract_id
-        """
-
-        params = ()
-        if year:
-             query += " WHERE p.applied_start_year = ?"
-             params = (year,)
-            
-        payments_df = pd.read_sql_query(query, conn, params=params)
-        conn.close()
-
-        # Convert date columns and numerical columns
-        payments_df['received_date'] = pd.to_datetime(payments_df['received_date'], errors='coerce').dt.date
+def render_metrics_section(summary_data: dict) -> None:
+    """Render the top metrics section and trend charts."""
+    st.markdown("### Key Metrics")
+    
+    # Create a container for metrics
+    metrics_container = st.container()
+    with metrics_container:
+        metrics_cols = st.columns(3)
         
-        # Clean numeric columns - replace '-' with 0 and convert to float
-        numeric_columns = ['actual_fee', 'total_assets', 'expected_fee', 'flat_rate', 'percent_rate']
-        for col in numeric_columns:
-            payments_df[col] = payments_df[col].replace(['-', ''], 0)
-            payments_df[col] = pd.to_numeric(payments_df[col], errors='coerce').fillna(0)
-
-        st.session_state['cached_payments'] = payments_df
-        if year:
-            st.session_state['cached_year'] = year
-    return st.session_state['cached_payments'].copy()
-
-def calculate_quarterly_summary(payments_df, year):
-    """Calculates and aggregates quarterly payment summaries."""
-    if payments_df.empty:
-        return pd.DataFrame()
-    
-    # Filter for the specific year if provided
-    if year:
-        payments_df = payments_df[payments_df['applied_start_year'] == year]
-        
-    #Ensure 'applied_start_quarter' is numeric
-    payments_df['applied_start_quarter'] = pd.to_numeric(payments_df['applied_start_quarter'], errors='coerce').fillna(0).astype(int)
-   
-    # Aggregate quarterly payments
-    quarterly_payments = payments_df.groupby(['display_name', 'applied_start_quarter']).agg(
-        total_actual_fee = pd.NamedAgg(column='actual_fee', aggfunc='sum'),
-        total_expected_fee = pd.NamedAgg(column='expected_fee', aggfunc='sum'),
-        payment_count = pd.NamedAgg(column='payment_id', aggfunc='count')
-    ).reset_index()
-
-    # Convert quarter to a categorical type to ensure proper sorting
-    quarterly_payments['applied_start_quarter'] = pd.Categorical(quarterly_payments['applied_start_quarter'], categories=range(1, 5), ordered=True)
-    
-    # Create year-quarter string for sorting
-    quarterly_payments['year_quarter'] = quarterly_payments.apply(lambda row: f"{year}-Q{row['applied_start_quarter']}", axis=1)
-
-    # Sort the data by client name and then by quarter
-    quarterly_payments = quarterly_payments.sort_values(by=['display_name','year_quarter'])
-    
-    # Calculate discrepancies and apply formatting
-    quarterly_payments['discrepancy'] = quarterly_payments['total_actual_fee'] - quarterly_payments['total_expected_fee']
-    quarterly_payments.rename(columns={'applied_start_quarter': 'Quarter'}, inplace=True)
-
-    # Calculate full-year totals
-    full_year_totals = quarterly_payments.groupby('display_name').agg(
-        total_actual_fee_year = pd.NamedAgg(column='total_actual_fee', aggfunc='sum'),
-        total_expected_fee_year = pd.NamedAgg(column='total_expected_fee', aggfunc='sum'),
-        total_payments_year = pd.NamedAgg(column='payment_count', aggfunc='sum')
-    ).reset_index()
-    full_year_totals['discrepancy_year'] = full_year_totals['total_actual_fee_year'] - full_year_totals['total_expected_fee_year']
-
-    # Merge the full-year totals into the main quarterly summary
-    quarterly_payments = pd.merge(quarterly_payments, full_year_totals, on='display_name', how='left')
-
-    # Calculate the running totals
-    quarterly_payments['cumulative_actual_fee_year'] = quarterly_payments.groupby('display_name')['total_actual_fee'].cumsum()
-    quarterly_payments['cumulative_expected_fee_year'] = quarterly_payments.groupby('display_name')['total_expected_fee'].cumsum()
-    quarterly_payments['cumulative_discrepancy_year'] = quarterly_payments['cumulative_actual_fee_year'] - quarterly_payments['cumulative_expected_fee_year']
-
-    # Create formatted columns
-    quarterly_payments['total_actual_fee'] = quarterly_payments['total_actual_fee'].apply(lambda x: f"${x:,.2f}")
-    quarterly_payments['total_expected_fee'] = quarterly_payments['total_expected_fee'].apply(lambda x: f"${x:,.2f}")
-    quarterly_payments['discrepancy'] = quarterly_payments['discrepancy'].apply(lambda x: f"${x:,.2f}")
-    
-    quarterly_payments['total_actual_fee_year'] = quarterly_payments['total_actual_fee_year'].apply(lambda x: f"${x:,.2f}")
-    quarterly_payments['total_expected_fee_year'] = quarterly_payments['total_expected_fee_year'].apply(lambda x: f"${x:,.2f}")
-    quarterly_payments['discrepancy_year'] = quarterly_payments['discrepancy_year'].apply(lambda x: f"${x:,.2f}")
-    
-    quarterly_payments['cumulative_actual_fee_year'] = quarterly_payments['cumulative_actual_fee_year'].apply(lambda x: f"${x:,.2f}")
-    quarterly_payments['cumulative_expected_fee_year'] = quarterly_payments['cumulative_expected_fee_year'].apply(lambda x: f"${x:,.2f}")
-    quarterly_payments['cumulative_discrepancy_year'] = quarterly_payments['cumulative_discrepancy_year'].apply(lambda x: f"${x:,.2f}")
-    
-    return quarterly_payments
-
-def display_summary_metrics(quarterly_summary, year):
-    """Displays key summary metrics in a clean layout."""
-    st.header(f"Financial Summary for {year}", divider='blue')
-
-    if quarterly_summary.empty:
-         st.info(f"No payment data available for {year}.")
-         return
-
-    # Calculate totals for the selected year
-    total_actual_fees = quarterly_summary['total_actual_fee'].str.replace(r'[$,]', '', regex=True).astype(float).sum()
-    total_expected_fees = quarterly_summary['total_expected_fee'].str.replace(r'[$,]', '', regex=True).astype(float).sum()
-    total_discrepancy = total_actual_fees - total_expected_fees
-    
-    # Display metrics using Streamlit columns for a compact layout
-    col1, col2, col3 = st.columns(3)
-    col1.metric(label="Total Actual Fees", value=f"${total_actual_fees:,.2f}")
-    col2.metric(label="Total Expected Fees", value=f"${total_expected_fees:,.2f}")
-    col3.metric(label="Total Discrepancy", value=f"${total_discrepancy:,.2f}")
-
-def display_quarterly_table(quarterly_summary):
-    """Displays a table of quarterly summary data."""
-    if quarterly_summary.empty:
-        st.info("No data to display.")
-        return
-    
-    # Define what to display and set the column order
-    columns_to_display = [
-        'display_name', 'Quarter', 'total_actual_fee', 'total_expected_fee', 'discrepancy',
-        'total_actual_fee_year', 'total_expected_fee_year', 'discrepancy_year',
-        'cumulative_actual_fee_year', 'cumulative_expected_fee_year', 'cumulative_discrepancy_year'
-    ]
-
-    # Display the DataFrame with specified columns and formatting
-    st.dataframe(
-        quarterly_summary[columns_to_display],
-        column_config={
-            'display_name': st.column_config.TextColumn(
-                "Client",
-                width="medium",
-                help="Client name"
-            ),
-            'Quarter': st.column_config.NumberColumn(
-                "Quarter",
-                width="small",
-                help="Quarter number (1-4)"
-            ),
-            'total_actual_fee': st.column_config.TextColumn(
-                "Actual Fee",
-                width="medium"
-            ),
-            'total_expected_fee': st.column_config.TextColumn(
-                "Expected Fee",
-                width="medium"
-            ),
-            'discrepancy': st.column_config.TextColumn(
-                "Discrepancy",
-                width="medium"
-            ),
-            'total_actual_fee_year': st.column_config.TextColumn(
-                "Total Actual Fee (Year)",
-                width="medium"
-            ),
-            'total_expected_fee_year': st.column_config.TextColumn(
-                "Total Expected Fee (Year)",
-                width="medium"
-            ),
-            'discrepancy_year': st.column_config.TextColumn(
-                'Total Discrepancy (Year)',
-                width="medium"
-            ),
-            'cumulative_actual_fee_year': st.column_config.TextColumn(
-                "Cumulative Actual Fee",
-                width="medium"
-            ),
-            'cumulative_expected_fee_year': st.column_config.TextColumn(
-                "Cumulative Expected Fee",
-                width="medium"
-            ),
-            'cumulative_discrepancy_year': st.column_config.TextColumn(
-                "Cumulative Discrepancy",
-                width="medium"
+        with metrics_cols[0]:
+            st.metric(
+                "Total Revenue",
+                format_currency(summary_data['overall_metrics']['total_fees']),
+                format_growth(summary_data['overall_metrics']['yoy_growth'])
             )
-        },
-        hide_index=True,
-        use_container_width=True
-    )
+            
+        with metrics_cols[1]:
+            st.metric(
+                "Active Clients",
+                str(summary_data['overall_metrics']['active_clients']),
+                None
+            )
+            
+        with metrics_cols[2]:
+            st.metric(
+                "Avg Fee per Client",
+                format_currency(summary_data['overall_metrics']['avg_fee_per_client']),
+                None
+            )
+
+    # Revenue Analysis Section
+    st.markdown("### Revenue Analysis")
+    trend_cols = st.columns([2, 1])
+    
+    with trend_cols[0]:
+        trend_data = []
+        for client_id, quarterly in summary_data['quarterly_totals'].items():
+            for q in range(1, 5):
+                if quarterly.get(f'Q{q}', 0) > 0:
+                    trend_data.append({
+                        'Quarter': f'Q{q}',
+                        'Revenue': quarterly[f'Q{q}'],
+                        'Client': quarterly['name']
+                    })
+        
+        if trend_data:
+            trend_df = pd.DataFrame(trend_data)
+            chart = alt.Chart(trend_df).mark_bar().encode(
+                x='Quarter:N',
+                y=alt.Y('sum(Revenue):Q', title='Revenue'),
+                color=alt.Color('Client:N', legend=None),
+                tooltip=['Quarter', 'Client', alt.Tooltip('Revenue:Q', format='$,.2f')]
+            ).properties(
+                height=300,
+                title='Quarterly Revenue Distribution'
+            )
+            st.altair_chart(chart, use_container_width=True)
+        else:
+            st.info("No revenue data available for selected year.")
+            
+    with trend_cols[1]:
+        fee_types = {}
+        for client_data in summary_data['quarterly_totals'].values():
+            fee_type = client_data['fee_type']
+            if fee_type:
+                fee_types[fee_type] = fee_types.get(fee_type, 0) + 1
+                
+        if fee_types:
+            pie_data = pd.DataFrame(
+                {'Type': list(fee_types.keys()), 'Count': list(fee_types.values())}
+            )
+            pie_chart = alt.Chart(pie_data).mark_arc().encode(
+                theta='Count:Q',
+                color='Type:N',
+                tooltip=['Type', 'Count']
+            ).properties(
+                height=200,
+                title='Fee Type Distribution'
+            )
+            st.altair_chart(pie_chart, use_container_width=True)
+
+def create_client_dataframe(summary_data: dict) -> pd.DataFrame:
+    """Create a DataFrame for the client performance table."""
+    rows = []
+    for client_id, quarterly in summary_data['quarterly_totals'].items():
+        metrics = summary_data['client_metrics'][client_id]
+        row = {
+            'Client': quarterly['name'],
+            'Q1': quarterly.get('Q1', 0),
+            'Q2': quarterly.get('Q2', 0),
+            'Q3': quarterly.get('Q3', 0),
+            'Q4': quarterly.get('Q4', 0),
+            'Total': metrics['total_fees'],
+            'YoY Change': metrics.get('yoy_growth', 0),
+            # Store additional data for expansion
+            '_provider': quarterly.get('provider', 'N/A'),
+            '_contract_number': quarterly.get('contract_number', 'N/A'),
+            '_schedule': quarterly.get('schedule', 'N/A'),
+            '_rate': quarterly.get('rate', 0),
+            '_fee_type': quarterly.get('fee_type', 'N/A'),
+            '_participants': metrics.get('avg_participants', 'N/A'),
+            '_aum': metrics.get('avg_aum', 0)
+        }
+        rows.append(row)
+    return pd.DataFrame(rows)
 
 def show_main_summary():
-    """Main function to display the quarterly summary dashboard."""
-    st.title("📊 Payment Analytics Dashboard")
-
-    # Get available years from the data
-    all_data = load_and_cache_data()
-    available_years = sorted(all_data['applied_start_year'].dropna().unique(), reverse=True)
+    """Display the main summary page."""
+    # Initialize session state
+    if 'expanded_rows' not in st.session_state:
+        st.session_state.expanded_rows = set()
     
+    # Top controls section
+    col1, col2, _ = st.columns([2, 3, 2])
+    
+    # Get available years and default year
+    available_years = get_available_years()
     if not available_years:
-        st.warning("No payment data found in the database.")
+        st.info("No payment data available.")
         return
         
-    # Default to the most recent year with data
-    current_year = datetime.now().year
-    default_year = available_years[0] if available_years else current_year
+    default_year = get_default_year()
+    if default_year not in available_years:
+        default_year = max(available_years)
     
-    # Year selector
-    year = st.selectbox(
-        "Select Year",
-        options=available_years,
-        index=0,
-        help="Select a year to view payment data"
-    )
+    with col1:
+        selected_year = st.selectbox(
+            "Select Year",
+            options=available_years,
+            index=available_years.index(default_year),
+            label_visibility="collapsed"
+        )
     
-    # Load data for the selected year
-    payments_df = all_data[all_data['applied_start_year'] == year].copy()
+    with col2:
+        current_quarter = calculate_current_quarter()
+        st.info(f"Currently collecting Q{current_quarter} {datetime.now().year} payments")
+    
+    # Get data
+    summary_data = get_summary_year_data(selected_year)
+    
+    # Render metrics section using the existing function
+    render_metrics_section(summary_data)
+    
+    # Client Performance section
+    st.markdown("### Client Performance")
+    
+    # Create DataFrame with proper structure
+    df = create_client_dataframe(summary_data)
+    df = df.sort_values('Total', ascending=False)
+    
+    # Add minimal CSS for table styling
+    st.markdown("""
+        <style>
+        div[data-testid="column"] {
+            border-right: 1px solid #262730;
+            padding: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        div[data-testid="column"]:last-child {
+            border-right: none;
+        }
+        div.stButton > button {
+            width: 100%;
+            text-align: left;
+            padding: 0.5rem;
+            background: none;
+            border: none;
+            line-height: 1.2;
+            height: auto;
+            min-height: 0;
+            justify-content: flex-start;
+        }
+        div.stButton > button:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .header-text {
+            font-weight: bold;
+            padding: 0.5rem;
+            line-height: 1.2;
+        }
+        .header-text.left-align {
+            text-align: left;
+        }
+        .number-cell {
+            text-align: right;
+            line-height: 1.2;
+            padding: 0.5rem;
+        }
+        hr {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        /* Fix vertical alignment */
+        div[data-testid="column"] > div {
+            width: 100%;
+        }
+        div.stMarkdown p {
+            margin: 0;
+            line-height: 1.2;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    # Table headers
+    header_cols = st.columns([1.5, 1, 1, 1, 1, 1])
+    header_cols[0].markdown('<div class="header-text left-align">Client</div>', unsafe_allow_html=True)
+    header_cols[1].markdown('<div class="header-text number-cell">Q1</div>', unsafe_allow_html=True)
+    header_cols[2].markdown('<div class="header-text number-cell">Q2</div>', unsafe_allow_html=True)
+    header_cols[3].markdown('<div class="header-text number-cell">Q3</div>', unsafe_allow_html=True)
+    header_cols[4].markdown('<div class="header-text number-cell">Q4</div>', unsafe_allow_html=True)
+    header_cols[5].markdown('<div class="header-text number-cell">Total</div>', unsafe_allow_html=True)
+    
+    st.markdown("<hr/>", unsafe_allow_html=True)
+    
+    # Display rows
+    for _, row in df.iterrows():
+        cols = st.columns([1.5, 1, 1, 1, 1, 1])
+        
+        # Client name and expand button
+        with cols[0]:
+            if st.button(
+                f"{'▼' if row['Client'] in st.session_state.expanded_rows else '▶'} {row['Client']}", 
+                key=f"btn_{row['Client']}"
+            ):
+                if row['Client'] in st.session_state.expanded_rows:
+                    st.session_state.expanded_rows.remove(row['Client'])
+                else:
+                    st.session_state.expanded_rows.add(row['Client'])
+                st.rerun()
+        
+        # Quarterly values
+        cols[1].markdown(f'<div class="number-cell">{format_currency(row["Q1"]) if row["Q1"] > 0 else "-"}</div>', unsafe_allow_html=True)
+        cols[2].markdown(f'<div class="number-cell">{format_currency(row["Q2"]) if row["Q2"] > 0 else "-"}</div>', unsafe_allow_html=True)
+        cols[3].markdown(f'<div class="number-cell">{format_currency(row["Q3"]) if row["Q3"] > 0 else "-"}</div>', unsafe_allow_html=True)
+        cols[4].markdown(f'<div class="number-cell">{format_currency(row["Q4"]) if row["Q4"] > 0 else "-"}</div>', unsafe_allow_html=True)
+        cols[5].markdown(f'<div class="number-cell">{format_currency(row["Total"])}</div>', unsafe_allow_html=True)
+        
+        # Show expanded details if row is expanded
+        if row['Client'] in st.session_state.expanded_rows:
+            with st.expander("", expanded=True):
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    st.metric(
+                        "Total Revenue",
+                        format_currency(row['Total']),
+                        format_growth(row['YoY Change'])
+                    )
+                
+                with col2:
+                    st.metric(
+                        "Contract Details",
+                        f"{row['_fee_type'].title()}",
+                        f"{row['_rate']*100:.1f}%" if row['_fee_type'] == 'percentage' else format_currency(row['_rate'])
+                    )
+                
+                with col3:
+                    st.metric(
+                        "Participants",
+                        str(row['_participants']),
+                        f"AUM: {format_currency(row['_aum'])}"
+                    )
+                
+                # Show quarterly trend
+                quarterly_data = pd.DataFrame({
+                    'Quarter': ['Q1', 'Q2', 'Q3', 'Q4'],
+                    'Revenue': [row['Q1'], row['Q2'], row['Q3'], row['Q4']]
+                })
+                
+                chart = alt.Chart(quarterly_data).mark_bar().encode(
+                    x=alt.X('Quarter:N', axis=alt.Axis(labelAngle=0)),
+                    y=alt.Y('Revenue:Q', axis=alt.Axis(format='$,.0f')),
+                    color=alt.value('#0068C9')
+                ).properties(
+                    height=200
+                )
+                
+                st.altair_chart(chart, use_container_width=True)
 
-    # Calculate and display summary data
-    quarterly_summary = calculate_quarterly_summary(payments_df, year)
-    display_summary_metrics(quarterly_summary, year)
-    display_quarterly_table(quarterly_summary)
+if __name__ == "__main__":
+    show_main_summary()
