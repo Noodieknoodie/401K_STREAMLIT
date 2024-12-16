@@ -1,3 +1,5 @@
+# utils/client_data.py
+
 """
 CRITICAL!!! Performance optimization module for client data.
 This module provides consolidated database queries to replace multiple separate calls.
@@ -7,11 +9,9 @@ The original functions in utils.py remain unchanged for safety and backward comp
 import streamlit as st
 import json
 from .utils import get_database_connection
-from .perf_logging import log_db_call, log_event
 import time
 from typing import Dict, Optional, Any, Tuple
 
-# CRITICAL!!! Cache implementation to prevent redundant DB calls
 # Cache structure: {client_id: (data, timestamp)}
 _client_cache: Dict[int, Tuple[Dict[str, Any], float]] = {}
 CACHE_TTL_SECONDS = 5  # Cache data for 5 seconds
@@ -21,20 +21,16 @@ def _get_cached_client_data(client_id: int) -> Optional[Dict[str, Any]]:
     if client_id in _client_cache:
         data, timestamp = _client_cache[client_id]
         if time.time() - timestamp <= CACHE_TTL_SECONDS:
-            log_event("cache_hit", {"client_id": client_id})
             return data
         # Clear expired cache entry
         del _client_cache[client_id]
-        log_event("cache_expired", {"client_id": client_id})
-    log_event("cache_miss", {"client_id": client_id})
     return None
 
 def _cache_client_data(client_id: int, data: Dict[str, Any]) -> None:
     """Cache client data with current timestamp."""
     _client_cache[client_id] = (data, time.time())
-    log_event("cache_store", {"client_id": client_id})
 
-@log_db_call
+@st.cache_data
 def get_consolidated_client_data(client_id: int) -> Dict[str, Any]:
     """Get consolidated client data with caching."""
     # Check cache first
@@ -114,8 +110,8 @@ def get_consolidated_client_data(client_id: int) -> Dict[str, Any]:
         for row in rows:
             if row[15]:  # if contact_type exists
                 contacts.append({
-                    'type': row[15],
-                    'name': row[16],
+                    'contact_type': row[15],
+                    'contact_name': row[16],
                     'phone': row[17],
                     'email': row[18],
                     'fax': row[19],
@@ -206,8 +202,8 @@ def get_contacts_optimized(client_id):
         return []
     return [
         (
-            contact['type'],
-            contact['name'],
+            contact['contact_type'],
+            contact['contact_name'],
             contact['phone'],
             contact['email'],
             contact['fax'],
@@ -216,6 +212,5 @@ def get_contacts_optimized(client_id):
             contact['contact_id']
         )
         for contact in data['contacts']
-        if contact['type']  # Filter out null entries
+        if contact['contact_type']  # Filter out null entries
     ] 
-
