@@ -26,13 +26,11 @@ def show_contract_management_dialog(client_id: int):
     form_data = ui_manager.contract_form_data
     mode = form_data.get('mode', 'add')
 
-    st.subheader("Contract Management")
-    if contract:
-        st.markdown("""
-            <div style='padding: 0.5em; background-color: #E8F0FE; border-radius: 4px; margin-bottom: 1em;'>
-                ℹ️ Current Active Contract
-            </div>
-        """, unsafe_allow_html=True)
+    st.markdown("""
+        <div style='padding: 0.5em; background-color: #E8F0FE; border-radius: 4px; margin-bottom: 1em; color: #1e1e1e;'>
+            ℹ️ Current Active Contract
+        </div>
+    """, unsafe_allow_html=True)
     
     # Contract form
     with st.form("contract_form", clear_on_submit=False):
