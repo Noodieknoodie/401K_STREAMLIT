@@ -43,6 +43,36 @@ def get_active_contract(client_id):
         conn.close()
 
 @st.cache_data
+def get_client_contracts(client_id: int):
+    """Get all contracts for a client ordered by active status and start date."""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT 
+                contract_id,
+                client_id,
+                active,
+                contract_number,
+                provider_name,
+                contract_start_date,
+                fee_type,
+                percent_rate,
+                flat_rate,
+                payment_schedule,
+                notes,
+                num_people
+            FROM contracts 
+            WHERE client_id = ?
+            ORDER BY 
+                CASE WHEN active = 'TRUE' THEN 0 ELSE 1 END,
+                contract_start_date DESC
+        """, (client_id,))
+        return cursor.fetchall()
+    finally:
+        conn.close()
+
+@st.cache_data
 def get_latest_payment(client_id):
     """Get latest payment for a client"""
     conn = get_database_connection()

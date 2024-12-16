@@ -21,6 +21,11 @@ class ContactDialogState(BaseDialogState):
     contact_type: Optional[str]
     contact_id: Optional[int]
 
+class ContractDialogState(BaseDialogState):
+    """Contract dialog specific state"""
+    client_id: Optional[int]
+    contract_id: Optional[int]
+
 class UIStateManager:
     """
     Central manager for dialog (modal) states in Streamlit applications.
@@ -72,6 +77,15 @@ class UIStateManager:
                     mode='add',
                     contact_type=None,
                     contact_id=None,
+                    validation_errors=[],
+                    show_cancel_confirm=False,
+                    form_data={}
+                ),
+                'contract_dialog': ContractDialogState(
+                    is_open=False,
+                    mode='add',
+                    client_id=None,
+                    contract_id=None,
                     validation_errors=[],
                     show_cancel_confirm=False,
                     form_data={}
@@ -186,6 +200,49 @@ class UIStateManager:
             state['show_cancel_confirm'] = False
             state['form_data'] = {}
             state['validation_errors'] = {}
+
+    def open_contract_dialog(
+        self,
+        client_id: Optional[int] = None,
+        mode: Literal['add', 'edit'] = 'add',
+        contract_id: Optional[int] = None,
+        initial_data: Optional[Dict[str, Any]] = None
+    ) -> None:
+        """Open the contract dialog with specified parameters."""
+        state = self._get_dialog_state('contract')
+        state['is_open'] = True
+        state['mode'] = mode
+        state['client_id'] = client_id
+        state['contract_id'] = contract_id
+        state['validation_errors'] = []
+        state['show_cancel_confirm'] = False
+        state['form_data'] = initial_data or {}
+
+    def update_contract_form_data(self, data: Dict[str, Any]) -> None:
+        """Update contract form data, preserving existing values."""
+        state = self._get_dialog_state('contract')
+        state['form_data'].update(data)
+
+    def set_contract_validation_errors(self, errors: List[str]) -> None:
+        """Set validation errors for the contract dialog."""
+        state = self._get_dialog_state('contract')
+        state['validation_errors'] = errors
+
+    def clear_contract_validation_errors(self) -> None:
+        """Clear all validation errors from the contract dialog."""
+        state = self._get_dialog_state('contract')
+        state['validation_errors'] = []
+
+    def close_contract_dialog(self, clear_data: bool = True) -> None:
+        """Close the contract dialog and optionally clear its data."""
+        state = self._get_dialog_state('contract')
+        state['is_open'] = False
+        state['show_cancel_confirm'] = False
+        if clear_data:
+            state['form_data'] = {}
+            state['validation_errors'] = []
+
+
     
     # Properties for state checking
     @property
@@ -238,3 +295,23 @@ class UIStateManager:
             The dialog state dictionary
         """
         return st.session_state.ui_state[f'{dialog_type}_dialog'] 
+
+    @property
+    def is_contract_dialog_open(self) -> bool:
+        """Check if contract dialog is open."""
+        return self._get_dialog_state('contract')['is_open']
+
+    @property
+    def contract_dialog_has_errors(self) -> bool:
+        """Check if contract dialog has validation errors."""
+        return bool(self._get_dialog_state('contract')['validation_errors'])
+
+    @property
+    def contract_validation_errors(self) -> List[str]:
+        """Get current contract dialog validation errors."""
+        return self._get_dialog_state('contract')['validation_errors']
+
+    @property
+    def contract_form_data(self) -> Dict[str, Any]:
+        """Get current contract form data."""
+        return self._get_dialog_state('contract')['form_data']
