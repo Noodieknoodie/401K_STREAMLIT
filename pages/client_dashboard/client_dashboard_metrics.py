@@ -7,6 +7,7 @@ from utils.client_data import (
     get_latest_payment_optimized as get_latest_payment
 )
 from utils.utils import calculate_rate_conversions  # Still need this utility
+from streamlit_extras.metric_cards import style_metric_cards
 
 def show_client_metrics(client_id):
     """Display the client metrics section of the dashboard."""
@@ -14,6 +15,34 @@ def show_client_metrics(client_id):
     data = get_consolidated_client_data(client_id)
     if not data:
         return
+
+    # Add CSS for consistent metric card styling
+    st.markdown("""
+        <style>
+        div[data-testid="stMetric"] {
+            background: rgba(38, 39, 48, 0.2);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        div[data-testid="stMetricLabel"] {
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        div[data-testid="stMetricValue"] {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        div[data-testid="stMetricDelta"] {
+            min-height: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
     # Compact container for metrics
     with st.container():
@@ -28,17 +57,20 @@ def show_client_metrics(client_id):
         with col2:
             st.metric(
                 "Provider",
-                data['active_contract']['provider_name'] if data['active_contract'] else "N/A"
+                data['active_contract']['provider_name'] if data['active_contract'] else "N/A",
+                None  # Reserve delta space
             )
         with col3:
             st.metric(
                 "Contract #",
-                data['active_contract']['contract_number'] if data['active_contract'] else "N/A"
+                data['active_contract']['contract_number'] if data['active_contract'] else "N/A",
+                None  # Reserve delta space
             )
         with col4:
             st.metric(
                 "Participants",
-                data['active_contract']['num_people'] if data['active_contract'] else "N/A"
+                data['active_contract']['num_people'] if data['active_contract'] else "N/A",
+                None  # Reserve delta space
             )
 
         # Second row - 4 columns
@@ -72,7 +104,8 @@ def show_client_metrics(client_id):
         with col2:
             st.metric(
                 "Payment Schedule",
-                data['active_contract']['payment_schedule'].title() if data['active_contract'] and data['active_contract']['payment_schedule'] else "N/A"
+                data['active_contract']['payment_schedule'].title() if data['active_contract'] and data['active_contract']['payment_schedule'] else "N/A",
+                None  # Reserve delta space
             )
         with col3:
             last_payment = 'No payments'
@@ -84,51 +117,26 @@ def show_client_metrics(client_id):
                     payment_date = payment['received_date']
             st.metric("Last Payment", last_payment, payment_date)
         
-        # Modified last metric card with edit button
         with col4:
-            container = st.container()
-            # Use columns for the metric and button
-            metric_col, button_col = st.columns([5, 1])
-            
-            # Metric in left column
-            with metric_col:
-                aum_value = 'Not available'
-                aum_date = None
-                if data['latest_payment']:
-                    payment = data['latest_payment']
-                    if payment['total_assets']:
-                        aum_value = f"${payment['total_assets']:,.2f}"
-                        aum_date = f"Q{payment['quarter']} {payment['year']}"
-                st.metric(
-                    "Last Recorded AUM",
-                    aum_value,
-                    aum_date
-                )
-            
-            # Edit button in right column, aligned with metric
-            with button_col:
-                st.write("")  # Add spacing to align with metric
-                st.write("")  # Add spacing to align with metric
-                if st.button("✏️", key="edit_contract", help="Manage Contract"):
-                    if 'ui_manager' in st.session_state:
-                        ui_manager = st.session_state.ui_manager
-                        if data['active_contract']:
-                            # Populate form with current contract data
-                            ui_manager.open_contract_dialog(
-                                client_id=client_id,
-                                mode='edit',
-                                contract_id=data['active_contract']['contract_id'],
-                                initial_data={
-                                    'provider_name': data['active_contract']['provider_name'],
-                                    'contract_number': data['active_contract']['contract_number'],
-                                    'payment_schedule': data['active_contract']['payment_schedule'],
-                                    'fee_type': data['active_contract']['fee_type'],
-                                    'percent_rate': data['active_contract']['percent_rate'],
-                                    'flat_rate': data['active_contract']['flat_rate'],
-                                    'num_people': data['active_contract']['num_people']
-                                }
-                            )
-                        else:
-                            # Open empty form for new contract
-                            ui_manager.open_contract_dialog(client_id=client_id)
-                        st.rerun()
+            aum_value = 'Not available'
+            aum_date = None
+            if data['latest_payment']:
+                payment = data['latest_payment']
+                if payment['total_assets']:
+                    aum_value = f"${payment['total_assets']:,.2f}"
+                    aum_date = f"Q{payment['quarter']} {payment['year']}"
+            st.metric(
+                "Last Recorded AUM",
+                aum_value,
+                aum_date
+            )
+
+        # Apply the metric cards styling for dark theme
+        style_metric_cards(
+            background_color="rgba(38, 39, 48, 0.2)",
+            border_size_px=1,
+            border_color="rgba(128, 128, 128, 0.2)",
+            border_radius_px=5,
+            border_left_color="#00b0ff",
+            box_shadow=True
+        )

@@ -24,16 +24,47 @@ def get_selected_client():
     if 'previous_client' not in st.session_state:
         st.session_state.previous_client = None
     
-    # Client selector
-    clients = get_clients()
+    # Client selector with edit button container
+    st.markdown("""
+        <style>
+        .client-select-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .client-select-container > div {
+            flex: 1;
+        }
+        .edit-contract-button {
+            margin-top: -1rem;  /* Align with dropdown */
+        }
+        </style>
+    """, unsafe_allow_html=True)
     
-    client_options = ["Select a client..."] + [client[1] for client in clients]
-    selected_client_name = st.selectbox(
-        "🔍 Search or select a client",
-        options=client_options,
-        key="client_selector_dashboard",
-        label_visibility="collapsed"
-    )
+    with st.container():
+        col1, col2 = st.columns([6, 1])
+        
+        with col1:
+            # Client selector
+            clients = get_clients()
+            client_options = ["Select a client..."] + [client[1] for client in clients]
+            selected_client_name = st.selectbox(
+                "🔍 Search or select a client",
+                options=client_options,
+                key="client_selector_dashboard",
+                label_visibility="collapsed"
+            )
+        
+        with col2:
+            if selected_client_name != "Select a client...":
+                if st.button("✏️", key="edit_contract", help="Manage Contract", use_container_width=True):
+                    if 'ui_manager' in st.session_state:
+                        client_id = next(
+                            client[0] for client in clients if client[1] == selected_client_name
+                        )
+                        ui_manager = st.session_state.ui_manager
+                        ui_manager.open_contract_dialog(client_id=client_id)
+                        st.rerun()
     
     if selected_client_name == "Select a client...":
         return None, None

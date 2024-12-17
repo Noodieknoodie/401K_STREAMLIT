@@ -101,25 +101,6 @@ def show_main_summary():
             padding: 0.5rem;
             font-size: 0.9rem;
         }
-        .number-cell {
-            text-align: right;
-            line-height: 1.2;
-            padding: 0.25rem;
-            font-family: monospace;
-            font-size: 0.9rem;
-            white-space: nowrap;
-            min-width: 90px;
-        }
-        .header-text {
-            font-weight: 600;
-            padding: 0.25rem;
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.8);
-        }
-        .header-text.left-align {
-            text-align: left;
-            padding-left: 0.5rem;
-        }
         .info-banner {
             background: rgba(38, 39, 48, 0.1);
             padding: 0.4rem 0.8rem;
@@ -192,7 +173,23 @@ def show_main_summary():
         .table-rows {
             margin-top: 0.5rem;
         }
-
+        div[data-testid="column"] > div[data-testid="stMarkdown"] {
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+        div.stButton > button:disabled {
+            width: 100%;
+            text-align: right !important;
+            justify-content: flex-end !important;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+            font-family: monospace;
+            background: none !important;
+            border: none !important;
+            color: white !important;
+            cursor: default !important;
+        }
         </style>
     """, unsafe_allow_html=True)
     
@@ -316,12 +313,12 @@ def show_main_summary():
         
         # Headers first
         header_cols = st.columns([2, 1, 1, 1, 1, 1.2])
-        header_cols[0].markdown('<div class="header-text left-align">Client</div>', unsafe_allow_html=True)
-        header_cols[1].markdown('<div class="header-text number-cell">Q1</div>', unsafe_allow_html=True)
-        header_cols[2].markdown('<div class="header-text number-cell">Q2</div>', unsafe_allow_html=True)
-        header_cols[3].markdown('<div class="header-text number-cell">Q3</div>', unsafe_allow_html=True)
-        header_cols[4].markdown('<div class="header-text number-cell">Q4</div>', unsafe_allow_html=True)
-        header_cols[5].markdown('<div class="header-text number-cell">Total</div>', unsafe_allow_html=True)
+        header_cols[0].markdown('<div style="text-align: left;">Client</div>', unsafe_allow_html=True)
+        header_cols[1].markdown('<div style="text-align: right;">Q1</div>', unsafe_allow_html=True)
+        header_cols[2].markdown('<div style="text-align: right;">Q2</div>', unsafe_allow_html=True)
+        header_cols[3].markdown('<div style="text-align: right;">Q3</div>', unsafe_allow_html=True)
+        header_cols[4].markdown('<div style="text-align: right;">Q4</div>', unsafe_allow_html=True)
+        header_cols[5].markdown('<div style="text-align: right;">Total</div>', unsafe_allow_html=True)
         
         # Divider immediately after headers
         st.markdown("<hr/>", unsafe_allow_html=True)
@@ -346,11 +343,11 @@ def show_main_summary():
                         st.session_state.expanded_rows.add(row['Client'])
                     st.rerun()
             
-            cols[1].markdown(f'<div class="number-cell">{format_currency(row["Q1"]) if row["Q1"] > 0 else "-"}</div>', unsafe_allow_html=True)
-            cols[2].markdown(f'<div class="number-cell">{format_currency(row["Q2"]) if row["Q2"] > 0 else "-"}</div>', unsafe_allow_html=True)
-            cols[3].markdown(f'<div class="number-cell">{format_currency(row["Q3"]) if row["Q3"] > 0 else "-"}</div>', unsafe_allow_html=True)
-            cols[4].markdown(f'<div class="number-cell">{format_currency(row["Q4"]) if row["Q4"] > 0 else "-"}</div>', unsafe_allow_html=True)
-            cols[5].markdown(f'<div class="number-cell">{format_currency(row["Total"])}</div>', unsafe_allow_html=True)
+            cols[1].button(format_currency(row["Q1"]) if row["Q1"] > 0 else "-", key=f"q1_{row['Client']}", disabled=True)
+            cols[2].button(format_currency(row["Q2"]) if row["Q2"] > 0 else "-", key=f"q2_{row['Client']}", disabled=True)
+            cols[3].button(format_currency(row["Q3"]) if row["Q3"] > 0 else "-", key=f"q3_{row['Client']}", disabled=True)
+            cols[4].button(format_currency(row["Q4"]) if row["Q4"] > 0 else "-", key=f"q4_{row['Client']}", disabled=True)
+            cols[5].button(format_currency(row["Total"]), key=f"total_{row['Client']}", disabled=True)
             
             if row['Client'] in st.session_state.expanded_rows:
                 with st.expander("", expanded=True):

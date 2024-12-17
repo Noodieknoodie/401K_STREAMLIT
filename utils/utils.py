@@ -2,6 +2,7 @@
 import sqlite3
 import streamlit as st
 from datetime import datetime
+from typing import Dict, Any
 
 def get_database_connection():
     """Create and return a database connection"""
@@ -810,5 +811,58 @@ def get_unique_payment_methods():
         if 'Other' not in methods:
             methods.append('Other')
         return methods
+    finally:
+        conn.close()
+
+def update_payment(payment_id: int, form_data: Dict[str, Any]) -> bool:
+    """Update an existing payment in the database.
+    
+    Args:
+        payment_id: The ID of the payment to update
+        form_data: Dictionary containing the updated payment data
+        
+    Returns:
+        bool: True if update was successful, False otherwise
+    """
+    try:
+        # Clean currency values
+        total_assets = format_currency_db(form_data.get('total_assets'))
+        actual_fee = format_currency_db(form_data.get('actual_fee'))
+        
+        conn = get_database_connection()
+        cursor = conn.cursor()
+        
+        # Update the payment record
+        cursor.execute("""
+            UPDATE payments
+            SET received_date = ?,
+                applied_start_quarter = ?,
+                applied_start_year = ?,
+                applied_end_quarter = ?,
+                applied_end_year = ?,
+                total_assets = ?,
+                actual_fee = ?,
+                method = ?,
+                notes = ?
+            WHERE payment_id = ?
+        """, (
+            form_data['received_date'],
+            form_data['applied_start_period'],
+            form_data['applied_start_year'],
+            form_data['applied_end_period'] if form_data.get('applied_end_period') != form_data['applied_start_period'] else None,
+            form_data['applied_end_year'] if form_data.get('applied_end_year') != form_data['applied_start_year'] else None,
+            total_assets,
+            actual_fee,
+            form_data.get('method'),
+            form_data.get('notes'),
+            payment_id
+        ))
+        
+        conn.commit()
+        return True
+        
+    except Exception as e:
+        st.error(f"Error updating payment: {str(e)}")
+        return False
     finally:
         conn.close()

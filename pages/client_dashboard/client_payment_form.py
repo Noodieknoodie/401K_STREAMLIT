@@ -11,7 +11,8 @@ from utils.utils import (
     add_payment,
     get_database_connection,
     get_payment_history,
-    get_unique_payment_methods
+    get_unique_payment_methods,
+    update_payment
 )
 from .client_payment_utils import (
     get_current_period,
@@ -334,10 +335,13 @@ def show_payment_dialog(client_id: int) -> None:
             st.rerun()
         return
     
-    st.subheader("Add Payment")
+    # Get form data and determine if we're in edit mode
+    form_data = ui_manager.payment_form_data.copy()
+    is_edit_mode = form_data.get('payment_id') is not None
+    
+    st.subheader("Edit Payment" if is_edit_mode else "Add Payment")
     
     # Update form data with active contract
-    form_data = ui_manager.payment_form_data.copy()
     form_data['active_contract'] = contract
     ui_manager.update_payment_form_data(form_data)
     
@@ -387,10 +391,17 @@ def show_payment_dialog(client_id: int) -> None:
         st.error(f"No valid {period_label.lower()}s available for payment")
         return
     
+    # For edit mode, construct the period option string
+    if is_edit_mode:
+        start_period_str = f"Q{form_data['applied_start_quarter']} {form_data['applied_start_year']}"
+        if start_period_str not in period_options:
+            period_options.append(start_period_str)
+            period_options.sort(reverse=True)
+    
     selected_period = st.selectbox(
         label=f"Payment {period_label}",
         options=period_options,
-        index=0,  # First option is always previous period
+        index=period_options.index(start_period_str) if is_edit_mode else 0,
         key="applied_period",
         label_visibility="collapsed"
     )
@@ -398,10 +409,11 @@ def show_payment_dialog(client_id: int) -> None:
     # Parse selected period
     start_period, start_year = parse_period_option(selected_period, contract[3])
     
-    # Custom range selection
+    # Custom range selection - set initial value based on edit mode
+    has_end_period = is_edit_mode and form_data.get('applied_end_quarter') is not None
     is_custom_range = st.checkbox(
         f"Payment covers multiple {period_label.lower()}s",
-        value=False,
+        value=has_end_period,
         key="is_custom_range"
     )
     
@@ -438,10 +450,17 @@ def show_payment_dialog(client_id: int) -> None:
                 st.error(f"No valid end {period_label.lower()}s available")
                 return
             
+            # For edit mode, construct the end period option string
+            if is_edit_mode and form_data.get('applied_end_quarter'):
+                end_period_str = f"Q{form_data['applied_end_quarter']} {form_data['applied_end_year']}"
+                if end_period_str not in valid_end_options:
+                    valid_end_options.append(end_period_str)
+                    valid_end_options.sort(reverse=True)
+            
             end_period_option = st.selectbox(
                 label=f"End {period_label}",
                 options=valid_end_options,
-                index=0,
+                index=valid_end_options.index(end_period_str) if is_edit_mode and has_end_period else 0,
                 key="custom_end_period",
                 label_visibility="collapsed"
             )
@@ -478,6 +497,7 @@ def show_payment_dialog(client_id: int) -> None:
         st.markdown("Payment Amount<span style='color: red'>*</span>", unsafe_allow_html=True)
         actual_fee_input = st.text_input(
             label="Payment Amount",
+            value=form_data.get('actual_fee', ''),
             key="actual_fee",
             on_change=lambda: format_payment_amount_on_change(ui_manager, "actual_fee"),
             placeholder="Enter amount (e.g. 2000)",
@@ -570,15 +590,26 @@ def show_payment_dialog(client_id: int) -> None:
             if st.button("Save", type="primary", use_container_width=True):
                 validation_errors = validate_payment_data(form_data)
                 if not validation_errors:
-                    payment_id = add_payment(client_id, form_data)
-                    if payment_id:
-                        st.success("Payment added successfully!")
-                        ui_manager.close_payment_dialog()
-                        # Clear payment history cache to force refresh
-                        get_payment_history.clear()
-                        st.rerun()
+                    if is_edit_mode:
+                        success = update_payment(form_data['payment_id'], form_data)
+                        if success:
+                            st.success("Payment updated successfully!")
+                            ui_manager.close_payment_dialog()
+                            # Clear payment history cache to force refresh
+                            get_payment_history.clear()
+                            st.rerun()
+                        else:
+                            st.error("Failed to update payment. Please try again.")
                     else:
-                        st.error("Failed to add payment. Please try again.")
+                        payment_id = add_payment(client_id, form_data)
+                        if payment_id:
+                            st.success("Payment added successfully!")
+                            ui_manager.close_payment_dialog()
+                            # Clear payment history cache to force refresh
+                            get_payment_history.clear()
+                            st.rerun()
+                        else:
+                            st.error("Failed to add payment. Please try again.")
                 else:
                     ui_manager.set_payment_validation_errors(validation_errors)
                     st.rerun()
