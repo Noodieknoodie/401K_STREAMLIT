@@ -866,3 +866,113 @@ def update_payment(payment_id: int, form_data: Dict[str, Any]) -> bool:
         return False
     finally:
         conn.close()
+
+def save_contract(client_id: int, contract_data: Dict[str, Any], mode: str = 'add') -> bool:
+    """Save contract to database.
+    
+    Args:
+        client_id: The ID of the client
+        contract_data: Dictionary containing contract data
+        mode: Either 'add' for new contract or 'edit' for updating existing
+        
+    Returns:
+        bool: True if save was successful, False otherwise
+    """
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        
+        # If adding new contract, deactivate current active contract
+        if mode == 'add':
+            cursor.execute("""
+                UPDATE contracts 
+                SET active = 'FALSE' 
+                WHERE client_id = ? AND active = 'TRUE'
+            """, (client_id,))
+        
+        # Insert new contract or update existing
+        if mode == 'add':
+            cursor.execute("""
+                INSERT INTO contracts (
+                    client_id, active, contract_number, provider_name,
+                    contract_start_date, fee_type, percent_rate, flat_rate,
+                    payment_schedule, num_people, notes
+                ) VALUES (?, 'TRUE', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                client_id,
+                contract_data.get('contract_number'),
+                contract_data.get('provider_name'),
+                contract_data.get('contract_start_date'),
+                contract_data.get('fee_type'),
+                contract_data.get('percent_rate'),
+                contract_data.get('flat_rate'),
+                contract_data.get('payment_schedule'),
+                contract_data.get('num_people'),
+                contract_data.get('notes')
+            ))
+        else:
+            cursor.execute("""
+                UPDATE contracts SET
+                    contract_number = ?,
+                    provider_name = ?,
+                    contract_start_date = ?,
+                    fee_type = ?,
+                    percent_rate = ?,
+                    flat_rate = ?,
+                    payment_schedule = ?,
+                    num_people = ?,
+                    notes = ?
+                WHERE contract_id = ? AND active = 'TRUE'
+            """, (
+                contract_data.get('contract_number'),
+                contract_data.get('provider_name'),
+                contract_data.get('contract_start_date'),
+                contract_data.get('fee_type'),
+                contract_data.get('percent_rate'),
+                contract_data.get('flat_rate'),
+                contract_data.get('payment_schedule'),
+                contract_data.get('num_people'),
+                contract_data.get('notes'),
+                contract_data.get('contract_id')
+            ))
+        
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error saving contract: {e}")
+        return False
+    finally:
+        conn.close()
+
+def validate_contract_data(data: Dict[str, Any]) -> list:
+    """Validate contract data before saving.
+    
+    Args:
+        data: Dictionary containing contract data to validate
+        
+    Returns:
+        list: List of validation error messages, empty if valid
+    """
+    errors = []
+    
+    if not data.get('provider_name', '').strip():
+        errors.append("Provider name is required")
+    
+    if data.get('fee_type') == 'percentage':
+        if not data.get('percent_rate') or data.get('percent_rate') <= 0:
+            errors.append("Please enter a valid rate percentage greater than 0")
+    else:
+        if not data.get('flat_rate') or data.get('flat_rate') <= 0:
+            errors.append("Please enter a valid flat rate amount greater than 0")
+    
+    if not data.get('payment_schedule'):
+        errors.append("Payment schedule is required")
+    
+    try:
+        start_date = datetime.strptime(data.get('contract_start_date', ''), '%Y-%m-%d')
+        if start_date > datetime.now():
+            errors.append("Contract start date cannot be in the future")
+    except ValueError:
+        errors.append("Invalid contract start date")
+    
+    return errors
