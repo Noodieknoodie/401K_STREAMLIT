@@ -1,0 +1,194 @@
+# =============================================
+# 401K Payment Tracker - State Management Guide
+# =============================================
+
+"""
+This guide explains the state management patterns and requirements for the 401K Payment
+Tracker application. Following these patterns is critical for maintaining consistency
+and preventing state conflicts.
+
+Core Concept:
+------------
+The app uses a centralized UIStateManager class to handle all dialog/modal states
+and their associated data. This prevents overlapping dialogs and ensures clean
+state transitions.
+
+Key Classes:
+-----------
+UIStateManager:
+    - Singleton instance stored in st.session_state.ui_manager
+    - Manages all dialog states (payment, contact, contract)
+    - Handles form data persistence and validation states
+    - Controls dialog lifecycle (open, close, validation, confirmation)
+
+Dialog State Types:
+-----------------
+BaseDialogState:
+    is_open: bool                    # Dialog visibility
+    mode: Literal['add', 'edit']     # Current operation mode
+    validation_errors: List[str]     # Current validation errors
+    show_cancel_confirm: bool        # Unsaved changes confirmation
+    form_data: Dict[str, Any]        # Current form data
+
+PaymentDialogState(BaseDialogState):
+    client_id: Optional[int]         # Current client
+    expected_fee: Optional[float]    # Calculated expected fee
+
+ContactDialogState(BaseDialogState):
+    contact_type: Optional[str]      # Contact category
+    contact_id: Optional[int]        # Contact being edited
+
+ContractDialogState(BaseDialogState):
+    client_id: Optional[int]         # Current client
+    contract_id: Optional[int]       # Contract being edited
+
+Dialog Lifecycle:
+---------------
+1. Opening a Dialog:
+   - Always use UIStateManager methods (never set state directly)
+   - Clear any previous validation errors
+   - Initialize form data with defaults or existing data
+   Example:
+   
+   ui_manager.open_payment_dialog(
+       client_id=client_id,
+       mode='edit',
+       initial_data={...}
+   )
+   
+
+2. During Dialog:
+   - Update form data through UIStateManager
+   - Handle validation through UIStateManager
+   - Check for unsaved changes before closing
+   Example:
+   
+   ui_manager.update_payment_form_data(new_data)
+   ui_manager.set_payment_validation_errors(errors)
+   
+
+3. Closing a Dialog:
+   - Always use UIStateManager close methods
+   - Handle unsaved changes confirmation
+   - Clear form data and errors on close
+   Example:
+   
+   ui_manager.close_payment_dialog(clear_data=True)
+   
+
+Implementation Requirements:
+-------------------------
+1. Dialog Mutual Exclusivity:
+   - Only one dialog can be open at a time
+   - Check dialog states in order of priority:
+     payment -> contact -> contract
+
+2. Form Data Management:
+   - Always update through UIStateManager methods
+   - Store all form field values in form_data
+   - Include original values for change detection
+
+3. Validation:
+   - Store validation errors in state
+   - Clear errors when fields change
+   - Show errors in UI using stored state
+
+4. Change Detection:
+   - Compare current form data with original
+   - Show confirmation dialog for unsaved changes
+   - Handle cancel/continue appropriately
+
+Common Pitfalls:
+--------------
+1. Direct State Modification:
+   DON'T:
+   
+   st.session_state.ui_state['payment_dialog']['is_open'] = True
+   
+   DO:
+   
+   ui_manager.open_payment_dialog(...)
+   
+
+2. Missing Error Cleanup:
+   DON'T:
+   
+   if submit_button:
+       validate_and_save()
+   
+   DO:
+   
+   if submit_button:
+       ui_manager.clear_validation_errors()
+       errors = validate_data()
+       if errors:
+           ui_manager.set_validation_errors(errors)
+   
+
+3. Incomplete Dialog Closure:
+   DON'T:
+   
+   if cancel_button:
+       st.session_state.dialog_open = False
+   
+   DO:
+   
+   if cancel_button:
+       if has_unsaved_changes():
+           show_confirmation()
+       else:
+           ui_manager.close_dialog()
+   
+
+Implementation Pattern:
+--------------------
+1. Get UIStateManager instance:
+   
+   if 'ui_manager' not in st.session_state:
+       return
+   ui_manager = st.session_state.ui_manager
+   
+
+2. Check dialog state:
+   
+   if not ui_manager.is_payment_dialog_open:
+       return
+   
+
+3. Handle form data:
+   
+   form_data = ui_manager.payment_form_data
+   # Update form data
+   ui_manager.update_payment_form_data(updated_data)
+   
+
+4. Handle validation:
+   
+   if ui_manager.payment_dialog_has_errors:
+       for error in ui_manager.payment_validation_errors:
+           st.error(error)
+   
+
+5. Close dialog:
+   
+   ui_manager.close_payment_dialog()
+   st.rerun()
+   
+
+Cache Considerations:
+------------------
+- Use @st.cache_data for database queries
+- Clear relevant caches when data changes
+- Don't cache dialog state or form data
+
+Testing Dialog Implementation:
+---------------------------
+1. Verify dialog doesn't conflict with others
+2. Test unsaved changes detection
+3. Verify validation error display/clearing
+4. Check form data persistence
+5. Ensure proper cache invalidation
+6. Test all close/cancel scenarios
+
+This implementation pattern ensures consistent behavior across all dialogs
+and prevents state conflicts that could break the application.
