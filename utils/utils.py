@@ -609,13 +609,14 @@ def validate_payment_data(data):
     errors = []
     
     # Check required fields with friendly messages
-    if 'received_date' not in data or not data.get('received_date'):
+    if not data.get('received_date'):
         errors.append("Please enter when the payment was received")
     
     # Validate payment amount
-    if 'actual_fee' not in data or not data.get('actual_fee'):
+    actual_fee = data.get('actual_fee', '')
+    if not actual_fee:
         errors.append("Please enter the payment amount")
-    elif data.get('actual_fee') == "$0.00":  # Check for default value
+    elif actual_fee == "$0.00":  # Check for default value
         errors.append("Please enter a payment amount")
     
     # Get schedule-specific terms for error messages
@@ -635,11 +636,6 @@ def validate_payment_data(data):
     
     if not schedule:
         errors.append("Payment schedule must be set in the contract before adding payments")
-        return errors
-    
-    # Validate required period fields
-    if start_period is None or start_year is None:
-        errors.append(f"Please select a payment {period_term}")
         return errors
     
     # Convert to absolute periods for comparison

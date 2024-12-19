@@ -108,6 +108,7 @@ From client_payment_utils.py:
 - parse_period_option: Parses period string into components
 - calculate_expected_fee: Calculates expected fee based on contract
 - get_period_options: Gets period options based on schedule
+- format_period_display: Formats period display consistently
 
 Testing Checklist:
 ----------------
@@ -159,8 +160,7 @@ from .client_payment_utils import (
     validate_period_range,
     calculate_expected_fee,
     get_current_period,
-    get_previous_quarter,
-    get_current_quarter
+    format_period_display
 )
 
 # ============================================================================
@@ -230,294 +230,295 @@ from .client_payment_utils import (
 
 
 
+
+
 # ============================================================================
 # Payment Form State Management
 # ============================================================================
 
+
+### THE ONLY REQUIRED FIELDS ARE: Payment Date, Payment Amount
+
 def init_payment_state():
-    """Initialize payment-related session state variables."""
-    if 'show_payment_form' not in st.session_state:
-        st.session_state.show_payment_form = False
-    if 'payment_form_data' not in st.session_state:
-        current_quarter = get_current_quarter()
-        current_year = datetime.now().year
-        prev_quarter, prev_year = get_previous_quarter(current_quarter, current_year)
-        
-        st.session_state.payment_form_data = {
-            'received_date': datetime.now().strftime('%Y-%m-%d'),
-            'applied_start_quarter': prev_quarter,
-            'applied_start_year': prev_year,
-            'applied_end_quarter': None,
-            'applied_end_year': None,
-            'total_assets': '',
-            'actual_fee': '',
-            'expected_fee': None,
-            'method': 'None Specified',
-            'other_method': '',
-            'notes': '',
-            'active_contract': None
+    """Initialize minimal payment-related session state variables."""
+    if 'editing_payment_id' not in st.session_state:
+        st.session_state.editing_payment_id = None
+    if 'editing_note_id' not in st.session_state:
+        st.session_state.editing_note_id = None
+    if 'delete_confirm_id' not in st.session_state:
+        st.session_state.delete_confirm_id = None
+    if 'payment_filter' not in st.session_state:
+        st.session_state.payment_filter = {
+            'time_filter': 'All Time',
+            'year': datetime.now().year,
+            'quarter': None
         }
-    if 'payment_edit_id' not in st.session_state:
-        st.session_state.payment_edit_id = None
-    if 'show_delete_confirm' not in st.session_state:
-        st.session_state.show_delete_confirm = False
-
-def reset_payment_form():
-    """Reset payment form state."""
-    st.session_state.show_payment_form = False
-    st.session_state.payment_form_data = {}
-    st.session_state.payment_edit_id = None
-
-# ============================================================================
-# Payment Form Display
-# ============================================================================
-
-def format_payment_amount_on_change(field_key: str) -> None:
-    """Format currency amount on input change."""
-    if field_key in st.session_state:
-        value = st.session_state[field_key]
-        if value:
-            try:
-                # Remove any existing formatting
-                cleaned = ''.join(c for c in str(value) if c.isdigit() or c == '.')
-                # Convert to float and format
-                amount = float(cleaned)
-                st.session_state[field_key] = f"${amount:,.2f}"
-            except ValueError:
-                pass
 
 def show_payment_form(client_id: int, contract: Tuple):
     """Display the payment form for adding/editing payments."""
-    # Load existing payment data if editing
-    if st.session_state.payment_edit_id:
-        payment_data = get_payment_by_id(st.session_state.payment_edit_id)
-        if payment_data:
-            st.session_state.payment_form_data = {
-                'received_date': payment_data[0],
-                'start_period': payment_data[1],
-                'start_year': payment_data[2],
-                'end_period': payment_data[3],
-                'end_year': payment_data[4],
-                'total_assets': format_currency_ui(payment_data[5]),
-                'actual_fee': format_currency_ui(payment_data[6]),
-                'method': payment_data[7],
-                'notes': payment_data[8]
-            }
+    st.subheader("Add Payment" if st.session_state.editing_payment_id == 0 else "Edit Payment")
     
-    with st.form("payment_form", clear_on_submit=False):
-        st.subheader("Add Payment" if not st.session_state.payment_edit_id else "Edit Payment")
-        
-        # Contract info display
-        if not display_contract_info(contract):
-            return
-        
-        # Payment Date
-        st.markdown("Payment Date<span style='color: red'>*</span>", unsafe_allow_html=True)
-        received_date = st.date_input(
-            "Payment Date",
-            value=datetime.strptime(st.session_state.payment_form_data.get('received_date', datetime.now().strftime('%Y-%m-%d')), '%Y-%m-%d'),
-            format="MM/DD/YYYY",
-            label_visibility="collapsed"
-        )
-        
-        # Period selection based on contract schedule
-        schedule = contract[3].lower() if contract[3] else ""
-        period_label = "Month" if schedule == "monthly" else "Quarter"
-        
-        print(f"\n=== PERIOD SELECTION DIAGNOSTICS ===")
-        print(f"Schedule: {schedule}")
-        print(f"Period Label: {period_label}")
-        print(f"Current Form Data: {st.session_state.payment_form_data}")
-        
-        st.markdown(f"Payment {period_label}<span style='color: red'>*</span>", unsafe_allow_html=True)
-        period_options = get_period_options(schedule)
-        print(f"Available Period Options: {period_options}")
-        
-        if not period_options:
-            print("ERROR: No period options available!")
-            st.error(f"No valid {period_label.lower()}s available for payment")
-            
-        # Get current period for validation
-        current_period = get_current_period(schedule)
-        print(f"Current Period: {current_period}")
-        
-        selected_period = st.selectbox(
-            f"Payment {period_label}",
-            options=period_options,
-            label_visibility="collapsed"
-        )
-        print(f"Selected Period: {selected_period}")
-        
-        # Parse period but don't validate yet
-        start_period, start_year = parse_period_option(selected_period, schedule)
-        print(f"Parsed Start Period: {start_period}, Start Year: {start_year}")
-        
-        # Multi-period payment option
-        has_end_period = st.session_state.payment_edit_id and st.session_state.payment_form_data.get('applied_end_quarter') is not None
-        is_multi_period = st.checkbox(
-            f"Payment covers multiple {period_label.lower()}s",
-            value=has_end_period,
-            key="is_custom_range"
-        )
-        
-        if is_multi_period:
-            st.markdown(f"##### Select {period_label} Range")
-            col1, col2 = st.columns(2)
-            with col1:
-                st.markdown("From")
-                start_period_option = st.selectbox(
-                    label=f"Start {period_label}",
-                    options=period_options,
-                    index=period_options.index(selected_period),
-                    key="custom_start_period",
-                    label_visibility="collapsed"
-                )
-                start_period, start_year = parse_period_option(start_period_option, contract[3])
-            
-            with col2:
-                st.markdown("To")
-                valid_end_options = [
-                    opt for opt in period_options
-                    if validate_period_range(
-                        start_period, start_year,
-                        *parse_period_option(opt, contract[3]),
-                        contract[3]
-                    )
-                ]
-                
-                if not valid_end_options:
-                    st.error(f"No valid end {period_label.lower()}s available")
-                    return
-                
-                end_period = st.selectbox(
-                    "End Period",
-                    options=valid_end_options,
-                    key="end_period",
-                    label_visibility="collapsed"
-                )
-        
-        # Amount fields
+    # Load existing payment data if editing
+    if st.session_state.editing_payment_id and st.session_state.editing_payment_id != 0:
+        payment_data = get_payment_by_id(st.session_state.editing_payment_id)
+        current_payment = payment_data if payment_data else None
+    else:
+        current_payment = None
+
+    # Display contract info
+    if not display_contract_info(contract):
+        return
+
+    # 1. INTERACTIVE INPUTS (Outside form)
+    # Payment Date
+    st.markdown("Payment Date<span style='color: red'>*</span>", unsafe_allow_html=True)
+    received_date = st.date_input(
+        "Payment Date",
+        value=datetime.strptime(current_payment[0], '%Y-%m-%d') if current_payment else datetime.now(),
+        format="MM/DD/YYYY",
+        label_visibility="collapsed"
+    )
+
+    # Period selection based on contract schedule
+    schedule = contract[3].lower() if contract[3] else ""
+    is_monthly = schedule == "monthly"
+    period_label = "Month" if is_monthly else "Quarter"
+
+    st.markdown(f"Payment {period_label}<span style='color: red'>*</span>", unsafe_allow_html=True)
+    
+    # Get period options from utils
+    period_options = get_period_options(schedule)
+    if not period_options:
+        st.error(f"No valid {period_label.lower()}s available for payment")
+        return
+    
+    # Get current period for validation
+    current_period = get_current_period(schedule)
+    
+    # Default to most recent period for new payments
+    if current_payment:
+        default_period = format_period_display(current_payment[1], current_payment[2], schedule)
+        default_index = period_options.index(default_period) if default_period in period_options else 0
+    else:
+        default_index = 0  # Most recent period
+
+    selected_period = st.selectbox(
+        f"Payment {period_label}",
+        options=period_options,
+        index=default_index,
+        label_visibility="collapsed"
+    )
+
+    # Parse period immediately for real-time validation
+    start_period, start_year = parse_period_option(selected_period, schedule)
+
+    # Multi-period payment option with instant feedback
+    has_end_period = current_payment and current_payment[3] is not None
+    is_multi_period = st.checkbox(
+        f"Payment covers multiple {period_label.lower()}s",
+        value=has_end_period
+    )
+
+    if is_multi_period:
+        st.markdown(f"##### Select {period_label} Range")
         col1, col2 = st.columns(2)
-        with col1:
-            total_assets = st.text_input(
-                "Assets Under Management",
-                value=st.session_state.payment_form_data.get('total_assets', ''),
-                key="total_assets",
-                placeholder="Enter amount (e.g. 2000000)"
-            )
-            st.caption("Enter the total amount without commas or $ symbol")
         
-        with col2:
-            st.markdown("Payment Amount<span style='color: red'>*</span>", unsafe_allow_html=True)
-            actual_fee = st.text_input(
-                "Payment Amount",
-                value=st.session_state.payment_form_data.get('actual_fee', ''),
-                key="actual_fee",
-                placeholder="Enter amount (e.g. 2000)",
+        with col1:
+            st.markdown("From")
+            start_period_option = st.selectbox(
+                f"Start {period_label}",
+                options=period_options,
+                index=period_options.index(selected_period),
+                key="range_start",
                 label_visibility="collapsed"
             )
-            st.caption("Enter the payment amount without commas or $ symbol")
+            
+            # Parse start period using utils
+            start_period, start_year = parse_period_option(start_period_option, schedule)
+
+        with col2:
+            st.markdown("To")
+            # Only show valid end periods using utils validation
+            valid_end_options = [
+                opt for opt in period_options
+                if validate_period_range(
+                    start_period, start_year,
+                    *parse_period_option(opt, schedule),
+                    schedule
+                )
+            ]
+
+            if not valid_end_options:
+                st.error(f"No valid end {period_label.lower()}s available")
+                return
+
+            end_period_option = st.selectbox(
+                f"End {period_label}",
+                options=valid_end_options,
+                key="range_end",
+                label_visibility="collapsed"
+            )
+            
+            # Parse end period using utils
+            end_period, end_year = parse_period_option(end_period_option, schedule)
+    else:
+        # Single period payment
+        end_period = start_period
+        end_year = start_year
+
+    # Amount fields with real-time calculation
+    col1, col2 = st.columns(2)
+    with col1:
+        total_assets = st.text_input(
+            "Assets Under Management",
+            value=format_currency_ui(current_payment[5]) if current_payment else "",
+            key="total_assets",
+            placeholder="Enter amount (e.g. 2000000)"
+        )
+        st.caption("Enter the total amount without commas or $ symbol")
+
+        # Initialize expected fee as None
+        expected = None
         
-        # Show expected fee if we can calculate it
+        # Show expected fee calculation immediately
         if total_assets:
             try:
                 assets = float(total_assets.replace('$', '').replace(',', ''))
                 expected = calculate_expected_fee(contract, assets)
                 if expected is not None:
-                    formatted_fee = f"${expected:,.2f}"
-                    st.session_state.payment_form_data['expected_fee'] = formatted_fee
-                    st.info(f"Expected Fee: {formatted_fee}")
-                    
-                    # Auto-fill actual fee if empty
-                    if not actual_fee:
-                        st.session_state.actual_fee = formatted_fee
-                        st.session_state.payment_form_data['actual_fee'] = formatted_fee
-                        st.rerun()
+                    st.info(f"Expected Fee: ${expected:,.2f}")
             except ValueError:
-                pass
-        
-        # Payment method
-        col1, col2 = st.columns(2)
-        with col1:
-            method_options = get_unique_payment_methods()
-            method = st.selectbox("Payment Method", options=method_options)
-        
-        if method == "Other":
-            with col2:
-                other_method = st.text_input("Specify Method")
-        
-        # Notes
-        notes = st.text_area(
-            "Notes",
-            placeholder="Add any additional notes here..." if not is_multi_period else
-                       "Add any additional notes here (e.g., reason for multi-period payment)..."
+                st.warning("Please enter a valid number for assets")
+
+    with col2:
+        st.markdown("Payment Amount<span style='color: red'>*</span>", unsafe_allow_html=True)
+        actual_fee = st.text_input(
+            "Payment Amount",
+            value=format_currency_ui(current_payment[6]) if current_payment else "",
+            key="actual_fee",
+            placeholder="Enter amount (e.g. 2000)",
+            label_visibility="collapsed"
         )
+        st.caption("Enter the payment amount without commas or $ symbol")
+
+    # Payment method
+    col1, col2 = st.columns(2)
+    with col1:
+        method_options = get_unique_payment_methods()
+        current_method = current_payment[7] if current_payment else "None Specified"
+        method = st.selectbox(
+            "Payment Method",
+            options=method_options,
+            index=method_options.index(current_method) if current_method in method_options else 0
+        )
+
+    if method == "Other":
+        with col2:
+            other_method = st.text_input(
+                "Specify Method",
+                value=current_payment[7] if current_payment else ""
+            )
+    else:
+        other_method = None
+
+
+
+# Notes field
+    notes = st.text_area(
+        "Notes",
+        value=current_payment[8] if current_payment else "",
+        placeholder=("Add any additional notes here..." if not is_multi_period else
+                    "Add any additional notes here (e.g., reason for multi-period payment)...")
+    )
+
+    # For period handling, ensure end_period and end_year are properly defined
+    if is_multi_period:
+        end_period, end_year = parse_period_option(end_period_option, schedule)
+    else:
+        end_period = start_period
+        end_year = start_year
+
+    # Review and Submit Form
+    with st.form("submit_only"):
+        st.markdown("### Review and Submit")
         
-        # Submit/Cancel buttons
+        # Display comprehensive summary
+        st.markdown("#### Payment Details")
+        st.write(f"Date Received: {received_date.strftime('%m/%d/%Y')}")
+        st.write(f"Period: {selected_period}")
+        if is_multi_period:
+            st.write(f"Period Range: {start_period_option} to {end_period_option}")
+        
+        st.markdown("#### Financial Details")
+        if total_assets:
+            st.write(f"Total Assets: {format_currency_ui(total_assets)}")
+            if expected:
+                st.write(f"Expected Fee: ${expected:,.2f}")
+        st.write(f"Payment Amount: {format_currency_ui(actual_fee)}")
+        
+        st.markdown("#### Additional Information")
+        st.write(f"Payment Method: {method if method != 'Other' else other_method}")
+        if notes:
+            st.write(f"Notes: {notes}")
+
+        # Submit buttons in columns
         col1, col2 = st.columns(2)
         with col1:
-            submitted = st.form_submit_button("Save", type="primary", use_container_width=True)
+            submitted = st.form_submit_button("Save Payment", type="primary", use_container_width=True)
         with col2:
             cancelled = st.form_submit_button("Cancel", use_container_width=True)
+
+    # Handle form submission
+    if submitted:
+        # Clean currency values for database storage
+        db_total_assets = format_currency_db(total_assets) if total_assets else None
+        db_actual_fee = format_currency_db(actual_fee) if actual_fee else None
         
-        if submitted:
-            # Clean currency values for database storage
-            db_total_assets = format_currency_db(total_assets) if total_assets else None
-            db_actual_fee = format_currency_db(actual_fee) if actual_fee else None
-            
-            # Prepare form data
-            form_data = {
-                'received_date': received_date.strftime('%Y-%m-%d'),
-                'total_assets': db_total_assets,
-                'actual_fee': db_actual_fee,
-                'method': other_method if method == "Other" else method,
-                'notes': notes,
-                'payment_schedule': schedule
-            }
-            
-            # Add period data
-            if is_multi_period:
-                form_data.update({
-                    'start_period': start_period,
-                    'end_period': end_period
-                })
+        # Parse the selected period into quarter and year
+        start_quarter, start_year = parse_period_option(selected_period, schedule)
+        
+        # Prepare form data with correct database field names
+        form_data = {
+            'received_date': received_date.strftime('%Y-%m-%d'),
+            'applied_start_quarter': start_quarter,
+            'applied_start_year': start_year,
+            'applied_end_quarter': end_period if is_multi_period else start_quarter,
+            'applied_end_year': end_year if is_multi_period else start_year,
+            'total_assets': db_total_assets,
+            'actual_fee': db_actual_fee,
+            'expected_fee': expected,
+            'method': other_method if method == "Other" else method,
+            'notes': notes
+        }
+
+        # Validate and save
+        validation_errors = validate_payment_data(form_data)
+        if validation_errors:
+            for error in validation_errors:
+                st.error(error)
+        else:
+            if st.session_state.editing_payment_id and st.session_state.editing_payment_id != 0:
+                success = update_payment(st.session_state.editing_payment_id, form_data)
+                if success:
+                    st.success("Payment updated successfully!")
+                    st.session_state.editing_payment_id = None
+                    st.rerun()
             else:
-                form_data.update({
-                    'start_period': selected_period,
-                    'end_period': selected_period
-                })
-            
-            # Validate and save
-            validation_errors = validate_payment_data(form_data)
-            if validation_errors:
-                for error in validation_errors:
-                    st.error(error)
-            else:
-                if st.session_state.payment_edit_id:
-                    success = update_payment(st.session_state.payment_edit_id, form_data)
-                    if success:
-                        st.success("Payment updated successfully!")
-                        st.session_state.show_payment_form = False
-                        st.rerun()
+                payment_id = add_payment(client_id, form_data)
+                if payment_id:
+                    st.success("Payment added successfully!")
+                    st.session_state.editing_payment_id = None
+                    st.rerun()
                 else:
-                    payment_id = add_payment(client_id, form_data)
-                    if payment_id:
-                        st.success("Payment added successfully!")
-                        st.session_state.show_payment_form = False
-                        st.rerun()
-                    else:
-                        st.error("Failed to add payment. Please try again.")
-        
-        elif cancelled:
-            st.session_state.show_payment_form = False
-            st.rerun()
+                    st.error("Failed to add payment. Please try again.")
+
+    # Handle cancellation
+    if cancelled:
+        st.session_state.editing_payment_id = None
+        st.rerun()
 
 def display_contract_info(contract: Tuple):
     """Display contract information above the payment form."""
-    if not contract:
-        st.error("No active contract found. Please set up a contract first.")
-        return False
-    
     fee_type = contract[4].title() if contract[4] else "N/A"
     rate = (
         f"{contract[5]*100:.3f}%" if contract[4] == 'percentage' and contract[5]
@@ -544,6 +545,9 @@ def show_payment_history(client_id: int):
             'year': datetime.now().year,
             'quarter': None
         }
+    
+    # Get active contract first
+    contract = get_active_contract(client_id)
     
     # Filter controls
     left_col, middle_col, right_col = st.columns([4, 2, 4])
@@ -574,9 +578,13 @@ def show_payment_history(client_id: int):
                 )
     
     with middle_col:
-        if st.button("Add Payment", type="primary", use_container_width=True):
-            st.session_state.show_payment_form = True
-            st.rerun()
+        # Only show Add Payment button if contract has payment schedule
+        if not contract or not contract[3]:
+            st.error("Payment schedule must be set in the contract before adding payments.")
+        else:
+            if st.button("Add Payment", type="primary", use_container_width=True):
+                st.session_state.editing_payment_id = 0  # 0 indicates new payment
+                st.rerun()
     
     with right_col:
         filter_text = (
@@ -675,8 +683,7 @@ def display_payment_table(payments: list):
                 action_cols = st.columns([1, 1])
                 with action_cols[0]:
                     if st.button("✏️", key=f"edit_{payment['payment_id']}", help="Edit payment"):
-                        st.session_state.payment_edit_id = payment['payment_id']
-                        st.session_state.show_payment_form = True
+                        st.session_state.editing_payment_id = payment['payment_id']
                         st.rerun()
                 
                 with action_cols[1]:
@@ -742,8 +749,17 @@ def display_payments_section(client_id: int):
     # Get active contract
     contract = get_active_contract(client_id)
     
-    # Show form or history
-    if st.session_state.show_payment_form:
+    # Check for valid contract and payment schedule before proceeding
+    if not contract:
+        st.error("No active contract found. Please set up a contract first.")
+        return
+    
+    if not contract[3]:  # payment_schedule is index 3 in contract tuple
+        st.error("Payment schedule must be set in the contract before adding payments.")
+        return
+    
+    # Show form or history based on editing state
+    if st.session_state.editing_payment_id is not None:
         show_payment_form(client_id, contract)
     else:
         show_payment_history(client_id)
