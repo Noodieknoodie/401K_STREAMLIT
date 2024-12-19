@@ -75,60 +75,8 @@ Library_Documentation_Latest\streamlitextras_docs.md
 
 # FILE HIERARCHY (PLEASE KEEP THIS UP TO DATE)
 
-401K_STREAMLIT
-.
-├── __pycache__
-├── DATABASE
-│   ├── IGNORE
-│   ├── 401kDATABASE.db
-│   └── 401kDATABASE.sqbpro
-├── Library_Documentation_Latest
-│   ├── Architecture_and_Execution_SL_README.md
-│   ├── Concepts_SL.ReadME.md
-│   ├── FUNDEMENTALS_SL.ReadME.md
-│   ├── SLEXTRAS_README.md
-│   ├── Streamlit-docs-2024.md
-│   └── streamlitextras_docs.md
-├── pages
-│   ├── __pycache__
-│   ├── bulk_payment
-│   │   ├── __pycache__
-│   │   └── bulk_entry.py
-│   ├── client_dashboard
-│   │   ├── __pycache__
-│   │   ├── __init__.py
-│   │   ├── client_contact_layout.py
-│   │   ├── client_contact_management.py
-│   │   ├── client_contract_management.py
-│   │   ├── client_dashboard_metrics.py
-│   │   ├── client_dashboard.py
-│   │   ├── client_payment_form.py
-│   │   ├── client_payment_management.py
-│   │   ├── client_payment_utils.py
-│   │   └── client_selection.py
-│   ├── main_summary
-│   │   ├── __pycache__
-│   │   ├── summary_data.py
-│   │   ├── summary_utils.py
-│   │   └── summary.py
-│   ├── manage_clients
-│   │   ├── __pycache__
-│   │   └── client_management.py
-│   └── __init__.py
-├── utils
-│   ├── __pycache__
-│   ├── __init__.py
-│   ├── client_data.py
-│   ├── ui_state_manager.py
-│   └── utils.py
-├── __init__.py
-├── .cursorignore
-├── app.py
-├── ReadMe_Database.md
-├── ReadMe_Project.md
-├── ReadMe_StateManagement
-├── requirements.txt
-├── sidebar.py
+
+
 
 
 
@@ -160,7 +108,7 @@ The application uses a centralized UIStateManager class that provides:
 - Clean separation between dialog types
 - Automatic state cleanup on dialog close
 
-The UIStateManager ensures:
+((( REMOVING ))) The UIStateManager ensures:
 - Type safety through TypedDict definitions
 - Consistent dialog lifecycle management
 - Proper validation state handling
