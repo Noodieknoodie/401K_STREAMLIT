@@ -9,6 +9,40 @@ and display requirements.
 Key Components & Behaviors to Verify:
 -----------------------------------
 
+Contract Table Structure:
+CREATE TABLE "contracts" (
+    "contract_id" INTEGER NOT NULL,
+    "client_id" INTEGER NOT NULL,
+    "active" TEXT,
+    "contract_number" TEXT,
+    "provider_name" TEXT,
+    "contract_start_date" TEXT,
+    "fee_type" TEXT,
+    "percent_rate" REAL,
+    "flat_rate" REAL,
+    "payment_schedule" TEXT,
+    "num_people" INTEGER,
+    "notes" TEXT
+)
+
+Payment Table Structure:
+CREATE TABLE "payments" (
+    "payment_id" INTEGER NOT NULL,
+    "contract_id" INTEGER NOT NULL,
+    "client_id" INTEGER NOT NULL,
+    "received_date" TEXT,
+    "applied_start_quarter" INTEGER,
+    "applied_start_year" INTEGER,
+    "applied_end_quarter" INTEGER,
+    "applied_end_year" INTEGER,
+    "total_assets" INTEGER,
+    "expected_fee" REAL,
+    "actual_fee" REAL,
+    "method" TEXT,
+    "notes" TEXT
+)
+
+
 1. Payment Form Requirements:
    - Contract info must be displayed above form
    - Date picker must use MM/DD/YYYY format
@@ -124,8 +158,77 @@ from .client_payment_utils import (
     parse_period_option,
     validate_period_range,
     calculate_expected_fee,
-    get_current_period
+    get_current_period,
+    get_previous_quarter,
+    get_current_quarter
 )
+
+# ============================================================================
+# DOCS: Table Structures
+# ============================================================================
+
+# Client Table Structure:
+# CREATE TABLE "clients" (
+#     "client_id" INTEGER NOT NULL,
+#     "display_name" TEXT NOT NULL,
+#     "full_name" TEXT,
+#     "ima_signed_date" TEXT,
+#     "file_path_account_documentation" TEXT,
+#     "file_path_consulting_fees" TEXT,
+#     "file_path_meetings" INTEGER,
+#     PRIMARY KEY("client_id" AUTOINCREMENT)
+# )
+
+# Contact Table Structure:
+# CREATE TABLE "contacts" (
+#     "contact_id" INTEGER NOT NULL,
+#     "client_id" INTEGER NOT NULL,
+#     "contact_type" TEXT NOT NULL,
+#     "contact_name" TEXT,
+#     "phone" TEXT,
+#     "email" TEXT,
+#     "fax" TEXT,
+#     "physical_address" TEXT,
+#     "mailing_address" TEXT,
+#     PRIMARY KEY("contact_id" AUTOINCREMENT),
+#     FOREIGN KEY("client_id") REFERENCES "clients"("client_id")
+# )
+
+# Contract Table Structure:
+# CREATE TABLE "contracts" (
+#     "contract_id" INTEGER NOT NULL,
+#     "client_id" INTEGER NOT NULL,
+#     "active" TEXT,
+#     "contract_number" TEXT,
+#     "provider_name" TEXT,
+#     "contract_start_date" TEXT,
+#     "fee_type" TEXT,
+#     "percent_rate" REAL,
+#     "flat_rate" REAL,
+#     "payment_schedule" TEXT,
+#     "num_people" INTEGER,
+#     "notes" TEXT
+# )
+
+# Payment Table Structure:
+# CREATE TABLE "payments" (
+#     "payment_id" INTEGER NOT NULL,
+#     "contract_id" INTEGER NOT NULL,
+#     "client_id" INTEGER NOT NULL,
+#     "received_date" TEXT,
+#     "applied_start_quarter" INTEGER,
+#     "applied_start_year" INTEGER,
+#     "applied_end_quarter" INTEGER,
+#     "applied_end_year" INTEGER,
+#     "total_assets" INTEGER,
+#     "expected_fee" REAL,
+#     "actual_fee" REAL,
+#     "method" TEXT,
+#     "notes" TEXT
+# )
+
+
+
 
 # ============================================================================
 # Payment Form State Management
@@ -136,7 +239,24 @@ def init_payment_state():
     if 'show_payment_form' not in st.session_state:
         st.session_state.show_payment_form = False
     if 'payment_form_data' not in st.session_state:
-        st.session_state.payment_form_data = {}
+        current_quarter = get_current_quarter()
+        current_year = datetime.now().year
+        prev_quarter, prev_year = get_previous_quarter(current_quarter, current_year)
+        
+        st.session_state.payment_form_data = {
+            'received_date': datetime.now().strftime('%Y-%m-%d'),
+            'applied_start_quarter': prev_quarter,
+            'applied_start_year': prev_year,
+            'applied_end_quarter': None,
+            'applied_end_year': None,
+            'total_assets': '',
+            'actual_fee': '',
+            'expected_fee': None,
+            'method': 'None Specified',
+            'other_method': '',
+            'notes': '',
+            'active_contract': None
+        }
     if 'payment_edit_id' not in st.session_state:
         st.session_state.payment_edit_id = None
     if 'show_delete_confirm' not in st.session_state:
@@ -204,50 +324,64 @@ def show_payment_form(client_id: int, contract: Tuple):
         schedule = contract[3].lower() if contract[3] else ""
         period_label = "Month" if schedule == "monthly" else "Quarter"
         
+        print(f"\n=== PERIOD SELECTION DIAGNOSTICS ===")
+        print(f"Schedule: {schedule}")
+        print(f"Period Label: {period_label}")
+        print(f"Current Form Data: {st.session_state.payment_form_data}")
+        
         st.markdown(f"Payment {period_label}<span style='color: red'>*</span>", unsafe_allow_html=True)
         period_options = get_period_options(schedule)
+        print(f"Available Period Options: {period_options}")
+        
         if not period_options:
+            print("ERROR: No period options available!")
             st.error(f"No valid {period_label.lower()}s available for payment")
-            return
             
         # Get current period for validation
         current_period = get_current_period(schedule)
+        print(f"Current Period: {current_period}")
         
         selected_period = st.selectbox(
             f"Payment {period_label}",
             options=period_options,
             label_visibility="collapsed"
         )
+        print(f"Selected Period: {selected_period}")
         
-        # Validate period is in arrears
+        # Parse period but don't validate yet
         start_period, start_year = parse_period_option(selected_period, schedule)
-        if not validate_period_range(start_period, start_year, current_period, datetime.now().year, schedule):
-            st.error(f"Payment must be for a previous {period_label.lower()} (in arrears)")
-            return
+        print(f"Parsed Start Period: {start_period}, Start Year: {start_year}")
         
         # Multi-period payment option
-        is_multi_period = st.checkbox(f"Payment covers multiple {period_label.lower()}s")
+        has_end_period = st.session_state.payment_edit_id and st.session_state.payment_form_data.get('applied_end_quarter') is not None
+        is_multi_period = st.checkbox(
+            f"Payment covers multiple {period_label.lower()}s",
+            value=has_end_period,
+            key="is_custom_range"
+        )
         
         if is_multi_period:
+            st.markdown(f"##### Select {period_label} Range")
             col1, col2 = st.columns(2)
             with col1:
                 st.markdown("From")
-                start_period = st.selectbox(
-                    "Start Period",
+                start_period_option = st.selectbox(
+                    label=f"Start {period_label}",
                     options=period_options,
-                    key="start_period",
+                    index=period_options.index(selected_period),
+                    key="custom_start_period",
                     label_visibility="collapsed"
                 )
+                start_period, start_year = parse_period_option(start_period_option, contract[3])
             
             with col2:
                 st.markdown("To")
-                # Filter end period options to only show valid ranges
                 valid_end_options = [
                     opt for opt in period_options
                     if validate_period_range(
-                        *parse_period_option(start_period, schedule),
-                        *parse_period_option(opt, schedule),
-                        schedule
+                        start_period, start_year,
+                        *parse_period_option(opt, contract[3]),
+                        contract[3]
                     )
                 ]
                 
@@ -269,7 +403,6 @@ def show_payment_form(client_id: int, contract: Tuple):
                 "Assets Under Management",
                 value=st.session_state.payment_form_data.get('total_assets', ''),
                 key="total_assets",
-                on_change=lambda: format_payment_amount_on_change("total_assets"),
                 placeholder="Enter amount (e.g. 2000000)"
             )
             st.caption("Enter the total amount without commas or $ symbol")
@@ -280,7 +413,6 @@ def show_payment_form(client_id: int, contract: Tuple):
                 "Payment Amount",
                 value=st.session_state.payment_form_data.get('actual_fee', ''),
                 key="actual_fee",
-                on_change=lambda: format_payment_amount_on_change("actual_fee"),
                 placeholder="Enter amount (e.g. 2000)",
                 label_visibility="collapsed"
             )
@@ -292,10 +424,14 @@ def show_payment_form(client_id: int, contract: Tuple):
                 assets = float(total_assets.replace('$', '').replace(',', ''))
                 expected = calculate_expected_fee(contract, assets)
                 if expected is not None:
-                    st.info(f"Expected Fee: ${expected:,.2f}")
+                    formatted_fee = f"${expected:,.2f}"
+                    st.session_state.payment_form_data['expected_fee'] = formatted_fee
+                    st.info(f"Expected Fee: {formatted_fee}")
+                    
                     # Auto-fill actual fee if empty
                     if not actual_fee:
-                        st.session_state.actual_fee = f"${expected:,.2f}"
+                        st.session_state.actual_fee = formatted_fee
+                        st.session_state.payment_form_data['actual_fee'] = formatted_fee
                         st.rerun()
             except ValueError:
                 pass
@@ -325,11 +461,15 @@ def show_payment_form(client_id: int, contract: Tuple):
             cancelled = st.form_submit_button("Cancel", use_container_width=True)
         
         if submitted:
+            # Clean currency values for database storage
+            db_total_assets = format_currency_db(total_assets) if total_assets else None
+            db_actual_fee = format_currency_db(actual_fee) if actual_fee else None
+            
             # Prepare form data
             form_data = {
                 'received_date': received_date.strftime('%Y-%m-%d'),
-                'total_assets': total_assets,
-                'actual_fee': actual_fee,
+                'total_assets': db_total_assets,
+                'actual_fee': db_actual_fee,
                 'method': other_method if method == "Other" else method,
                 'notes': notes,
                 'payment_schedule': schedule

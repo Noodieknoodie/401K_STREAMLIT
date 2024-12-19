@@ -3,5 +3,17 @@
 Cursor_MemoryBank/Cursor_Changelog_and_Decisions.md
 Cursor_MemoryBank/Cursor_MUST_REMEMBER.md
 README/ReadMe_Project.md
+C:\401K_Payment_Tracker\TEST_FILES\test_client_payments.py
+utils\ui_state_manager.py
+pages_new\client_dashboard_LEGACY
+pages_new\client_dashboard_LEGACY\client_contact_layout.py
+pages_new\client_dashboard_LEGACY\client_contact_management.py
+pages_new\client_dashboard_LEGACY\client_contract_management.py
+pages_new\client_dashboard_LEGACY\client_dashboard_metrics.py
+pages_new\client_dashboard_LEGACY\client_dashboard.py
+pages_new\client_dashboard_LEGACY\client_payment_form.py
+pages_new\client_dashboard_LEGACY\client_payment_management.py
+pages_new\client_dashboard_LEGACY\client_payment_utils.py
+pages_new\client_dashboard_LEGACY\client_selection.py
 IGNORE/
 

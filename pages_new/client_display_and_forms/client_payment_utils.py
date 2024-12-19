@@ -2,6 +2,71 @@ from datetime import datetime
 import streamlit as st
 from utils.utils import format_currency_ui, get_database_connection
 
+# ============================================================================
+# DOCS: Table Structures
+# ============================================================================
+
+# Client Table Structure:
+# CREATE TABLE "clients" (
+#     "client_id" INTEGER NOT NULL,
+#     "display_name" TEXT NOT NULL,
+#     "full_name" TEXT,
+#     "ima_signed_date" TEXT,
+#     "file_path_account_documentation" TEXT,
+#     "file_path_consulting_fees" TEXT,
+#     "file_path_meetings" INTEGER,
+#     PRIMARY KEY("client_id" AUTOINCREMENT)
+# )
+
+# Contact Table Structure:
+# CREATE TABLE "contacts" (
+#     "contact_id" INTEGER NOT NULL,
+#     "client_id" INTEGER NOT NULL,
+#     "contact_type" TEXT NOT NULL,
+#     "contact_name" TEXT,
+#     "phone" TEXT,
+#     "email" TEXT,
+#     "fax" TEXT,
+#     "physical_address" TEXT,
+#     "mailing_address" TEXT,
+#     PRIMARY KEY("contact_id" AUTOINCREMENT),
+#     FOREIGN KEY("client_id") REFERENCES "clients"("client_id")
+# )
+
+# Contract Table Structure:
+# CREATE TABLE "contracts" (
+#     "contract_id" INTEGER NOT NULL,
+#     "client_id" INTEGER NOT NULL,
+#     "active" TEXT,
+#     "contract_number" TEXT,
+#     "provider_name" TEXT,
+#     "contract_start_date" TEXT,
+#     "fee_type" TEXT,
+#     "percent_rate" REAL,
+#     "flat_rate" REAL,
+#     "payment_schedule" TEXT,
+#     "num_people" INTEGER,
+#     "notes" TEXT
+# )
+
+# Payment Table Structure:
+# CREATE TABLE "payments" (
+#     "payment_id" INTEGER NOT NULL,
+#     "contract_id" INTEGER NOT NULL,
+#     "client_id" INTEGER NOT NULL,
+#     "received_date" TEXT,
+#     "applied_start_quarter" INTEGER,
+#     "applied_start_year" INTEGER,
+#     "applied_end_quarter" INTEGER,
+#     "applied_end_year" INTEGER,
+#     "total_assets" INTEGER,
+#     "expected_fee" REAL,
+#     "actual_fee" REAL,
+#     "method" TEXT,
+#     "notes" TEXT
+# )
+
+
 def get_current_period(schedule):
     """Get the current period (month or quarter) based on schedule"""
     current_month = datetime.now().month
@@ -22,11 +87,13 @@ def get_period_options(schedule):
     
     # Start from previous period
     if is_monthly:
+        # For monthly, start from last month
         prev_period = current_month - 1 if current_month > 1 else 12
         prev_year = current_year if current_month > 1 else current_year - 1
         periods_to_show = 24  # Show last 24 months
         period_format = lambda p, y: f"{datetime(y, p, 1).strftime('%b')} {y}"
     else:
+        # For quarterly, start from last quarter
         prev_period = current_period - 1 if current_period > 1 else 4
         prev_year = current_year if current_period > 1 else current_year - 1
         periods_to_show = 8  # Show last 8 quarters
@@ -75,16 +142,24 @@ def validate_period_range(start_period, start_year, end_period, end_year, schedu
     is_monthly = schedule.lower() == 'monthly'
     periods_per_year = 12 if is_monthly else 4
     
-    current_period = datetime.now().month if is_monthly else (datetime.now().month - 1) // 3 + 1
+    current_month = datetime.now().month
     current_year = datetime.now().year
+    
+    # For monthly payments, the current period is the current month
+    # For quarterly payments, it's the current quarter
+    current_period = current_month if is_monthly else (current_month - 1) // 3 + 1
     
     # Convert to absolute periods for comparison
     start_absolute = start_year * periods_per_year + start_period
     end_absolute = end_year * periods_per_year + end_period
     current_absolute = current_year * periods_per_year + current_period
     
-    # Ensure both start and end periods are in arrears
-    if start_absolute >= current_absolute or end_absolute >= current_absolute:
+    # For arrears, the payment period should be less than the current period
+    # Allow payment for the previous period
+    if start_absolute >= current_absolute:
+        return False
+    
+    if end_absolute >= current_absolute:
         return False
     
     # Ensure end is not before start
