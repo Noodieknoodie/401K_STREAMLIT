@@ -46,7 +46,7 @@ which is weird cause if you recall in the Contract Table there is:
 which is either "quarterly" or "monthly".
 
 
-so if the client in whom we are adding a payment to their payment table happens to have a MONTHLY payment schedule... then a few things happen - FIRST, the payment form dynamically shifts to present information in a way that fits their schedule. the "applied" field will be presented as "Applied Quarter." it’s a dropdown showing valid quarters and years, starting with the PRIOR quarter (arrears). no clients have been around longer than 5 years, and backpayments greater than a year or two are super rare, so we don’t need a crazy-long list. let’s keep it simple. for this example client, whom we’re discussing entering a payment for... their payment frequency is monthly. they open the add payment form and see the current date in the "date received" field, which they can change as needed, but it’s the obvious default. the PRIOR QUARTER shows up in the "APPLIED PERIOD" dropdown, and I’m calling it "period" since it applies to all clients regardless of whether they’re monthly or quarterly.
+the user openes the add payment form and see the current date in the "date received" field, which they can change as needed, but it’s the obvious default. the PRIOR QUARTER shows up in the "APPLIED QUARTER" dropdown, 
 
 there really isn’t a WAY for the user to submit the form without selecting something in this field... it’s a dropdown with no option for "NOTHING." once they select the applied period, the backend uses python to convert that into:
 #     "applied_start_quarter" INTEGER,
@@ -56,7 +56,20 @@ so if we received a check from the example mock client we’ve been discussing i
 #     applied_start_quarter = 4
 #     applied_start_year = 2024
 
-
+for ADD PAYMENTS the monthly vs quarterly distinction is purely presentational.
+Looking at the form logic:
+For monthly clients:
+Shows months in dropdown (e.g. "Jan 2024")
+But converts to quarters before saving (start_quarter = (payment_data['applied_start_period'] - 1) // 3 + 1)
+2. For quarterly clients:
+Shows quarters directly (e.g. "Q1 2024")
+Saves directly as quarters
+The database ALWAYS stores quarters. The only difference is how we display the options to the user based on their payment frequency.
+So no, there's no fundamental need for the "period" abstraction. We could:
+Keep the UI display logic (showing months vs quarters)
+But internally always work with quarters
+Have clear conversion functions for monthly->quarterly
+Name everything consistently with "quarter" since that's what we're actually storing
 Almost all payments directly apply to a single quarter, which is why the `applied_end_quarter` and `applied_end_year` fields have such a large number of NULL values. For the common case where a payment applies to just one specific quarter, the user doesn’t need to enter anything for the "end" quarter or year. The system automatically copies the start selection into these fields since the payment only covers that one quarter.
 
 HOWEVER, for rare multi-quarter scenarios (like backpayments or other unusual situations), the payment form includes a checkbox dropdown labeled "Payment covers multiple quarters." Clicking this gives the user the ability to select both a START QUARTER and an END QUARTER. These selections populate the database appropriately with the specified range.

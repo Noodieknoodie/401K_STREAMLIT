@@ -84,7 +84,6 @@ def get_clients():
     finally:
         conn.close()
 
-@st.cache_data
 def get_active_contract(client_id):
     """Get active contract for a client"""
     conn = get_database_connection()
@@ -108,7 +107,6 @@ def get_active_contract(client_id):
     finally:
         conn.close()
 
-@st.cache_data
 def get_client_contracts(client_id: int):
     """Get all contracts for a client ordered by active status and start date."""
     conn = get_database_connection()
@@ -138,7 +136,6 @@ def get_client_contracts(client_id: int):
     finally:
         conn.close()
 
-@st.cache_data
 def get_latest_payment(client_id):
     """Get latest payment for a client"""
     conn = get_database_connection()
@@ -198,7 +195,6 @@ def calculate_rate_conversions(rate_value, fee_type, schedule):
     except:
         return rate_value, None
 
-@st.cache_data
 def get_contacts(client_id):
     """Get all contacts for a client"""
     conn = get_database_connection()
@@ -222,7 +218,6 @@ def get_contacts(client_id):
     finally:
         conn.close()
 
-@st.cache_data
 def get_all_contracts(client_id):
     """Get all contracts for a client"""
     conn = get_database_connection()
@@ -242,7 +237,6 @@ def get_all_contracts(client_id):
     finally:
         conn.close()
 
-@st.cache_data
 def get_payment_history(client_id, years=None, quarters=None):
     """Get payment history for a client with optional year/quarter filters"""
     base_query = """
@@ -367,9 +361,16 @@ def add_contact(client_id, contact_type, contact_data):
         ))
         conn.commit()
         contact_id = cursor.lastrowid
+        
+        # Clear contact-related caches
+        if hasattr(st.session_state, 'get_contacts'):
+            st.session_state.get_contacts.clear()
+        if hasattr(st.session_state, 'get_client_dashboard_data'):
+            st.session_state.get_client_dashboard_data.clear()
+            
         return contact_id
     finally:
-        conn.close()    
+        conn.close()
 
 def delete_contact(contact_id):
     """Delete a contact from the database"""
@@ -656,90 +657,106 @@ def validate_payment_data(data):
 
 def add_payment(client_id, payment_data):
     """Add a new payment to the database"""
-    print("\n=== PAYMENT DEBUG ===")
+    print("\n=== DEBUG ADD PAYMENT ===")
     print(f"Client ID: {client_id}")
     print(f"Payment Data: {payment_data}")
     
     # Get active contract
     contract = get_active_contract(client_id)
+    print(f"Active Contract: {contract}")
     if not contract:
-        print("ERROR: No active contract found")
+        print("No active contract found!")
         return None
-    print(f"Contract Found: {contract}")
         
-    conn = get_database_connection()
-    try:
-        cursor = conn.cursor()
-        
-        # Convert period fields to quarter fields for database storage
-        schedule = payment_data.get('payment_schedule', '').lower()
-        print(f"Schedule: {schedule}")
-        
-        if schedule == 'monthly':
-            # Convert months to quarters
-            start_quarter = (payment_data['applied_start_period'] - 1) // 3 + 1
-            end_quarter = (payment_data['applied_end_period'] - 1) // 3 + 1
-            print(f"Converting monthly to quarters: {payment_data['applied_start_period']} -> {start_quarter}")
-        else:
-            # Already in quarters
-            start_quarter = payment_data['applied_start_period']
-            end_quarter = payment_data['applied_end_period']
-            print(f"Using quarters directly: {start_quarter}")
-        
-        print("\nAttempting database insert with values:")
-        print(f"client_id: {client_id}")
-        print(f"contract_id: {contract[0]}")
-        print(f"received_date: {payment_data['received_date']}")
-        print(f"start_quarter: {start_quarter}")
-        print(f"start_year: {payment_data['applied_start_year']}")
-        print(f"end_quarter: {end_quarter}")
-        print(f"end_year: {payment_data['applied_end_year']}")
-        print(f"total_assets: {format_currency_db(payment_data.get('total_assets'))}")
-        print(f"expected_fee: {format_currency_db(payment_data.get('expected_fee'))}")
-        print(f"actual_fee: {format_currency_db(payment_data.get('actual_fee'))}")
-        print(f"method: {payment_data.get('method')}")
-        print(f"notes: {payment_data.get('notes', '')}")
-        
-        cursor.execute("""
-            INSERT INTO payments (
+    # Add retry logic for database locks
+    max_retries = 3
+    retry_count = 0
+    
+    while retry_count < max_retries:
+        try:
+            conn = get_database_connection()
+            cursor = conn.cursor()
+            
+            # Convert period fields to quarter fields for database storage
+            schedule = payment_data.get('payment_schedule', '').lower()
+            if schedule == 'monthly':
+                # Convert months to quarters
+                start_quarter = (payment_data['applied_start_period'] - 1) // 3 + 1
+                end_quarter = (payment_data['applied_end_period'] - 1) // 3 + 1
+            else:
+                # Already in quarters
+                start_quarter = payment_data['applied_start_period']
+                end_quarter = payment_data['applied_end_period']
+            
+            print(f"Inserting payment with quarters: {start_quarter} - {end_quarter}")
+            
+            # Prepare values for insertion
+            values = (
                 client_id,
-                contract_id,
-                received_date,
-                applied_start_quarter,
-                applied_start_year,
-                applied_end_quarter,
-                applied_end_year,
-                total_assets,
-                expected_fee,
-                actual_fee,
-                method,
-                notes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            client_id,
-            contract[0],  # contract_id from active contract
-            payment_data['received_date'],
-            start_quarter,
-            payment_data['applied_start_year'],
-            end_quarter,
-            payment_data['applied_end_year'],
-            format_currency_db(payment_data.get('total_assets')),
-            format_currency_db(payment_data.get('expected_fee')),
-            format_currency_db(payment_data.get('actual_fee')),
-            payment_data.get('method'),
-            payment_data.get('notes', '')
-        ))
-        conn.commit()
-        payment_id = cursor.lastrowid
-        print(f"\nSuccess! Payment ID: {payment_id}")
-        return payment_id
-    except sqlite3.Error as e:
-        print(f"\nDatabase error: {e}")
-        print("Full error details:", str(e))
-        return None
-    finally:
-        conn.close()
-        print("=== END PAYMENT DEBUG ===\n")
+                contract[0],  # contract_id from active contract
+                payment_data['received_date'],
+                start_quarter,
+                payment_data['applied_start_year'],
+                end_quarter,
+                payment_data['applied_end_year'],
+                format_currency_db(payment_data.get('total_assets')),
+                format_currency_db(payment_data.get('expected_fee')),
+                format_currency_db(payment_data.get('actual_fee')),
+                payment_data.get('method'),
+                payment_data.get('notes', '')
+            )
+            print("\nInserting values:", values)
+            
+            cursor.execute("""
+                INSERT INTO payments (
+                    client_id,
+                    contract_id,
+                    received_date,
+                    applied_start_quarter,
+                    applied_start_year,
+                    applied_end_quarter,
+                    applied_end_year,
+                    total_assets,
+                    expected_fee,
+                    actual_fee,
+                    method,
+                    notes
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, values)
+            
+            conn.commit()
+            payment_id = cursor.lastrowid
+            print(f"Successfully added payment with ID: {payment_id}")
+            
+            # Verify the payment was added
+            cursor.execute("SELECT * FROM payments WHERE payment_id = ?", (payment_id,))
+            verification = cursor.fetchone()
+            print("\nVerification - Payment in database:", verification)
+            
+            conn.close()
+            
+            # Clear all payment-related caches
+            if hasattr(st.session_state, 'get_payment_history'):
+                st.session_state.get_payment_history.clear()
+            if hasattr(st.session_state, 'get_paginated_payment_history'):
+                st.session_state.get_paginated_payment_history.clear()
+            if hasattr(st.session_state, 'get_payment_year_quarters'):
+                st.session_state.get_payment_year_quarters.clear()
+            if hasattr(st.session_state, 'get_latest_payment'):
+                st.session_state.get_latest_payment.clear()
+                
+            return payment_id
+            
+        except sqlite3.Error as e:
+            print(f"Database error (attempt {retry_count + 1}): {e}")
+            if conn:
+                conn.close()
+            retry_count += 1
+            if retry_count < max_retries:
+                import time
+                time.sleep(0.5)  # Wait half a second before retrying
+            
+    return None  # Return None if all retries failed
 
 def get_payment_by_id(payment_id):
     """Get complete payment data for editing"""
@@ -767,7 +784,7 @@ def get_payment_by_id(payment_id):
     finally:
         conn.close()
 
-@st.cache_data(ttl=300)  # Cache for 5 minutes
+@st.cache_data(ttl=60)  # Cache dashboard data for 1 minute only
 def get_client_dashboard_data(client_id):
     """Get all necessary client data for the dashboard in a single database call"""
     conn = get_database_connection()
