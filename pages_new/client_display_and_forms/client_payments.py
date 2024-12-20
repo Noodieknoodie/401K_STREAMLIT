@@ -480,15 +480,16 @@ def show_payment_form(client_id: int, contract: Tuple):
         # Prepare form data with correct database field names
         form_data = {
             'received_date': received_date.strftime('%Y-%m-%d'),
-            'applied_start_quarter': start_quarter,
+            'applied_start_period': start_quarter,
             'applied_start_year': start_year,
-            'applied_end_quarter': end_period if is_multi_period else start_quarter,
+            'applied_end_period': end_period if is_multi_period else start_quarter,
             'applied_end_year': end_year if is_multi_period else start_year,
             'total_assets': db_total_assets,
             'actual_fee': db_actual_fee,
             'expected_fee': expected,
             'method': other_method if method == "Other" else method,
-            'notes': notes
+            'notes': notes,
+            'payment_schedule': schedule
         }
 
         # Validate and save

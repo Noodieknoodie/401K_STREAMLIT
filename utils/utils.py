@@ -656,10 +656,16 @@ def validate_payment_data(data):
 
 def add_payment(client_id, payment_data):
     """Add a new payment to the database"""
+    print("\n=== PAYMENT DEBUG ===")
+    print(f"Client ID: {client_id}")
+    print(f"Payment Data: {payment_data}")
+    
     # Get active contract
     contract = get_active_contract(client_id)
     if not contract:
+        print("ERROR: No active contract found")
         return None
+    print(f"Contract Found: {contract}")
         
     conn = get_database_connection()
     try:
@@ -667,14 +673,32 @@ def add_payment(client_id, payment_data):
         
         # Convert period fields to quarter fields for database storage
         schedule = payment_data.get('payment_schedule', '').lower()
+        print(f"Schedule: {schedule}")
+        
         if schedule == 'monthly':
             # Convert months to quarters
             start_quarter = (payment_data['applied_start_period'] - 1) // 3 + 1
             end_quarter = (payment_data['applied_end_period'] - 1) // 3 + 1
+            print(f"Converting monthly to quarters: {payment_data['applied_start_period']} -> {start_quarter}")
         else:
             # Already in quarters
             start_quarter = payment_data['applied_start_period']
             end_quarter = payment_data['applied_end_period']
+            print(f"Using quarters directly: {start_quarter}")
+        
+        print("\nAttempting database insert with values:")
+        print(f"client_id: {client_id}")
+        print(f"contract_id: {contract[0]}")
+        print(f"received_date: {payment_data['received_date']}")
+        print(f"start_quarter: {start_quarter}")
+        print(f"start_year: {payment_data['applied_start_year']}")
+        print(f"end_quarter: {end_quarter}")
+        print(f"end_year: {payment_data['applied_end_year']}")
+        print(f"total_assets: {format_currency_db(payment_data.get('total_assets'))}")
+        print(f"expected_fee: {format_currency_db(payment_data.get('expected_fee'))}")
+        print(f"actual_fee: {format_currency_db(payment_data.get('actual_fee'))}")
+        print(f"method: {payment_data.get('method')}")
+        print(f"notes: {payment_data.get('notes', '')}")
         
         cursor.execute("""
             INSERT INTO payments (
@@ -707,12 +731,15 @@ def add_payment(client_id, payment_data):
         ))
         conn.commit()
         payment_id = cursor.lastrowid
+        print(f"\nSuccess! Payment ID: {payment_id}")
         return payment_id
     except sqlite3.Error as e:
-        print(f"Database error: {e}")
+        print(f"\nDatabase error: {e}")
+        print("Full error details:", str(e))
         return None
     finally:
         conn.close()
+        print("=== END PAYMENT DEBUG ===\n")
 
 def get_payment_by_id(payment_id):
     """Get complete payment data for editing"""

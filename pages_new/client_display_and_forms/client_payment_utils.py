@@ -135,34 +135,32 @@ def parse_period_option(period_option, schedule):
         return None, None
 
 def validate_period_range(start_period, start_year, end_period, end_year, schedule):
-    """Validate that the period range is in arrears and logically valid"""
-    if not schedule:
-        return False
-        
+    """Validate that the period range is in arrears and logically valid."""
+    if schedule is None or schedule.strip() == "":
+        raise ValueError("Schedule is required for period validation.")
+    
     is_monthly = schedule.lower() == 'monthly'
     periods_per_year = 12 if is_monthly else 4
     
     current_month = datetime.now().month
     current_year = datetime.now().year
     
-    # For monthly payments, the current period is the current month
-    # For quarterly payments, it's the current quarter
+    # Determine the current period
     current_period = current_month if is_monthly else (current_month - 1) // 3 + 1
     
-    # Convert to absolute periods for comparison
+    # Convert periods to an absolute value for comparison
     start_absolute = start_year * periods_per_year + start_period
     end_absolute = end_year * periods_per_year + end_period
     current_absolute = current_year * periods_per_year + current_period
     
-    # For arrears, the payment period should be less than the current period
-    # Allow payment for the previous period
+    # Validate arrears logic
     if start_absolute >= current_absolute:
         return False
     
     if end_absolute >= current_absolute:
         return False
     
-    # Ensure end is not before start
+    # Ensure the end period is not before the start period
     if end_absolute < start_absolute:
         return False
     
