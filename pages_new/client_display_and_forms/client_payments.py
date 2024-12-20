@@ -277,172 +277,202 @@ def show_payment_form(client_id: int, contract: Tuple):
     is_monthly = schedule == "monthly"
     period_label = "Month" if is_monthly else "Quarter"
 
-    # === MAIN FORM LAYOUT ===
-    # Top row grid: Date | Period | Multi-Quarter Toggle
-    top_row = grid([1.2, 1.5, 1], gap="small", vertical_align="bottom")
-    
-    with top_row.container():
-        st.markdown("Payment Date<span style='color: red'>*</span>", unsafe_allow_html=True)
-        received_date = st.date_input(
-            "Payment Date",
-            value=datetime.strptime(current_payment[0], '%Y-%m-%d') if current_payment else datetime.now(),
-            format="MM/DD/YYYY",
-            label_visibility="collapsed"
-        )
-
-    with top_row.container():
-        st.markdown(f"Payment {period_label}<span style='color: red'>*</span>", unsafe_allow_html=True)
-        period_options = get_period_options(schedule)
-        if not period_options:
-            st.error(f"No valid {period_label.lower()}s available for payment")
-            return
-        
-        current_period = get_current_period(schedule)
-        if current_payment:
-            default_period = format_period_display(current_payment[1], current_payment[2], schedule)
-            default_index = period_options.index(default_period) if default_period in period_options else 0
-        else:
-            default_index = 0
-
-        selected_period = st.selectbox(
-            f"Payment {period_label}",
-            options=period_options,
-            index=default_index,
-            label_visibility="collapsed"
-        )
-        start_period, start_year = parse_period_option(selected_period, schedule)
-
-    with top_row.container():
-        st.markdown("&nbsp;", unsafe_allow_html=True)  # Creates same spacing as other labels
-        has_end_period = current_payment and current_payment[3] is not None
-        is_multi_period = st.checkbox(
-            f"Payment covers multiple {period_label.lower()}s",
-            value=has_end_period,
-            label_visibility="visible"
-        )
-
-    # Multi-period selection (only shown if checkbox checked)
-    if is_multi_period:
-        period_grid = grid([1, 1], gap="small")
-        with period_grid.container():
-            st.markdown("From")
-            start_period_option = st.selectbox(
-                f"Start {period_label}",
-                options=period_options,
-                index=period_options.index(selected_period),
-                key="range_start",
-                label_visibility="collapsed"
-            )
-            start_period, start_year = parse_period_option(start_period_option, schedule)
-
-        with period_grid.container():
-            st.markdown("To")
-            valid_end_options = [
-                opt for opt in period_options
-                if validate_period_range(
-                    start_period, start_year,
-                    *parse_period_option(opt, schedule),
-                    schedule
+    # Create a centered container for the form
+    col1, col2, col3 = st.columns([1, 3, 1])
+    with col2:
+        with st.form(key="payment_form"):
+            # === MAIN FORM LAYOUT ===
+            # Top row grid: Date | Period | Multi-Quarter Toggle
+            top_row = grid([1.2, 1.5, 1], gap="small", vertical_align="bottom")
+            
+            with top_row.container():
+                st.markdown("Payment Date<span style='color: red'>*</span>", unsafe_allow_html=True)
+                received_date = st.date_input(
+                    "Payment Date",
+                    value=datetime.strptime(current_payment[0], '%Y-%m-%d') if current_payment else datetime.now(),
+                    format="MM/DD/YYYY",
+                    label_visibility="collapsed"
                 )
-            ]
-            if not valid_end_options:
-                st.error(f"No valid end {period_label.lower()}s available")
-                return
-            end_period_option = st.selectbox(
-                f"End {period_label}",
-                options=valid_end_options,
-                key="range_end",
-                label_visibility="collapsed"
-            )
-            end_period, end_year = parse_period_option(end_period_option, schedule)
-    else:
-        end_period = start_period
-        end_year = start_year
-        
-            # Financial Details Row
-    finance_grid = grid([1, 1, 1], gap="small", vertical_align="top")
-    
-    with finance_grid.container():
-        st.markdown("Assets Under Management")
-        total_assets = st.text_input(
-            "Assets",
-            value=format_currency_ui(current_payment[5]) if current_payment else "",
-            key="total_assets",
-            label_visibility="collapsed"
-        )
-        if total_assets:
-            try:
-                assets = float(total_assets.replace('$', '').replace(',', ''))
-                expected = calculate_expected_fee(contract, assets)
-                if expected is not None:
-                    st.info(f"Expected Fee: ${expected:,.2f}")
-            except ValueError:
-                st.warning("Please enter a valid number for assets")
 
-    with finance_grid.container():
-        st.markdown("Payment Amount<span style='color: red'>*</span>", unsafe_allow_html=True)
-        actual_fee = st.text_input(
-            "Payment",
-            value=format_currency_ui(current_payment[6]) if current_payment else "",
-            key="actual_fee",
-            label_visibility="collapsed"
-        )
+            with top_row.container():
+                st.markdown(f"Payment {period_label}<span style='color: red'>*</span>", unsafe_allow_html=True)
+                period_options = get_period_options(schedule)
+                if not period_options:
+                    st.error(f"No valid {period_label.lower()}s available for payment")
+                    return
+                
+                current_period = get_current_period(schedule)
+                if current_payment:
+                    default_period = format_period_display(current_payment[1], current_payment[2], schedule)
+                    default_index = period_options.index(default_period) if default_period in period_options else 0
+                else:
+                    default_index = 0
 
-    with finance_grid.container():
-        st.markdown("Payment Method")
-        method_options = get_unique_payment_methods()
-        current_method = current_payment[7] if current_payment else "None Specified"
-        method = st.selectbox(
-            "Method",
-            options=method_options,
-            index=method_options.index(current_method) if current_method in method_options else 0,
-            label_visibility="collapsed"
-        )
-        if method == "Other":
-            other_method = st.text_input(
-                "Specify Method",
-                value=current_payment[7] if current_payment else "",
-                label_visibility="collapsed"
-            )
-        else:
-            other_method = None
+                selected_period = st.selectbox(
+                    f"Payment {period_label}",
+                    options=period_options,
+                    index=default_index,
+                    label_visibility="collapsed"
+                )
+                start_period, start_year = parse_period_option(selected_period, schedule)
 
-    # Notes field (full width but compact)
-    notes = st.text_area(
-        "Notes",
-        value=current_payment[8] if current_payment else "",
-        placeholder=("Add any additional notes here..." if not is_multi_period else
-                    "Add any additional notes here (e.g., reason for multi-period payment)..."),
-        height=75
-    )
+            with top_row.container():
+                st.markdown("&nbsp;", unsafe_allow_html=True)  # Creates same spacing as other labels
+                has_end_period = current_payment and current_payment[3] is not None
+                is_multi_period = st.checkbox(
+                    f"Payment covers multiple {period_label.lower()}s",
+                    value=has_end_period,
+                    label_visibility="visible"
+                )
 
-    # Submit Form
-    with st.form("submit_only"):
-        # Compact summary section
-        summary_grid = grid([1, 1], gap="small", vertical_align="top")
-        
-        with summary_grid.container():
-            st.markdown("#### Payment Details")
-            st.write(f"• Date: {received_date.strftime('%m/%d/%Y')}")
-            st.write(f"• Period: {selected_period}")
+            # Multi-period selection (only shown if checkbox checked)
             if is_multi_period:
-                st.write(f"• Range: {start_period_option} to {end_period_option}")
+                period_grid = grid([1, 1], gap="small")
+                with period_grid.container():
+                    st.markdown("From")
+                    start_period_option = st.selectbox(
+                        f"Start {period_label}",
+                        options=period_options,
+                        index=period_options.index(selected_period),
+                        key="range_start",
+                        label_visibility="collapsed"
+                    )
+                    start_period, start_year = parse_period_option(start_period_option, schedule)
 
-        with summary_grid.container():
-            st.markdown("#### Financial Details")
+                with period_grid.container():
+                    st.markdown("To")
+                    valid_end_options = [
+                        opt for opt in period_options
+                        if validate_period_range(
+                            start_period, start_year,
+                            *parse_period_option(opt, schedule),
+                            schedule
+                        )
+                    ]
+                    if not valid_end_options:
+                        st.error(f"No valid end {period_label.lower()}s available")
+                        return
+                    end_period_option = st.selectbox(
+                        f"End {period_label}",
+                        options=valid_end_options,
+                        key="range_end",
+                        label_visibility="collapsed"
+                    )
+                    end_period, end_year = parse_period_option(end_period_option, schedule)
+            else:
+                end_period = start_period
+                end_year = start_year
+                
+            # Financial Details Row
+            finance_grid = grid([1, 1, 1], gap="small", vertical_align="top")
+            
+            with finance_grid.container():
+                st.markdown("Assets Under Management")
+                total_assets = st.text_input(
+                    "Assets",
+                    value=format_currency_ui(current_payment[5]) if current_payment else "",
+                    key="total_assets",
+                    label_visibility="collapsed"
+                )
+
+            with finance_grid.container():
+                st.markdown("Payment Amount<span style='color: red'>*</span>", unsafe_allow_html=True)
+                actual_fee = st.text_input(
+                    "Payment",
+                    value=format_currency_ui(current_payment[6]) if current_payment else "",
+                    key="actual_fee",
+                    label_visibility="collapsed"
+                )
+
+            with finance_grid.container():
+                st.markdown("Payment Method")
+                method_options = get_unique_payment_methods()
+                current_method = current_payment[7] if current_payment else "None Specified"
+                method = st.selectbox(
+                    "Method",
+                    options=method_options,
+                    index=method_options.index(current_method) if current_method in method_options else 0,
+                    label_visibility="collapsed"
+                )
+                if method == "Other":
+                    other_method = st.text_input(
+                        "Specify Method",
+                        value=current_payment[7] if current_payment else "",
+                        label_visibility="collapsed"
+                    )
+                else:
+                    other_method = None
+
+            # Notes field (full width but compact)
+            notes = st.text_area(
+                "Notes",
+                value=current_payment[8] if current_payment else "",
+                placeholder=("Add any additional notes here..." if not is_multi_period else
+                            "Add any additional notes here (e.g., reason for multi-period payment)..."),
+                height=75
+            )
+
+            # Calculate expected fee
+            expected = None
             if total_assets:
-                st.write(f"• Assets: {format_currency_ui(total_assets)}")
-                if expected:
-                    st.write(f"• Expected: ${expected:,.2f}")
-            st.write(f"• Amount: {format_currency_ui(actual_fee)}")
-            st.write(f"• Method: {method if method != 'Other' else other_method}")
+                try:
+                    assets = float(total_assets.replace('$', '').replace(',', ''))
+                    expected = calculate_expected_fee(contract, assets)
+                    st.info(f"Expected Fee: ${expected:,.2f}")
+                except ValueError:
+                    st.warning("Please enter a valid number for assets")
 
-        # Buttons
-        button_grid = grid([1, 1, 2], gap="small")
-        with button_grid.container():
-            submitted = st.form_submit_button("Save Payment", type="primary", use_container_width=True)
-        with button_grid.container():
-            cancelled = st.form_submit_button("Cancel", use_container_width=True)
+            # Add CSS for compact preview
+            st.markdown("""
+                <style>
+                .preview-container {
+                    background-color: #f0f2f6;
+                    border-radius: 4px;
+                    padding: 12px 20px;
+                    margin: 15px 0 10px 0;
+                }
+                .preview-container p {
+                    margin: 0;
+                    padding: 2px 0;
+                    line-height: 1.3;
+                }
+                .button-row {
+                    display: flex;
+                    gap: 10px;
+                    margin-top: 10px;
+                }
+                </style>
+            """, unsafe_allow_html=True)
+
+            # Preview section using grid like the rest of the form
+            preview_grid = grid([1], gap="small")
+            with preview_grid.container():
+                # Date and Period line
+                period_info = f"Date: {received_date.strftime('%m/%d/%Y')} | Period: {selected_period}"
+                if is_multi_period:
+                    period_info += f" (Range: {start_period_option} → {end_period_option})"
+                st.write(period_info)
+                
+                # Financial details line
+                financial_info = []
+                if total_assets:
+                    financial_info.append(f"Assets: {format_currency_ui(total_assets)}")
+                if expected is not None:
+                    financial_info.append(f"Expected: ${expected:,.2f}")
+                if actual_fee:
+                    financial_info.append(f"Payment: {format_currency_ui(actual_fee)}")
+                if financial_info:
+                    st.write(' | '.join(financial_info))
+                
+                # Method line
+                st.write(f"Method: {method if method != 'Other' else other_method}")
+            
+            # Buttons using grid like other sections
+            button_grid = grid([1, 1], gap="small")
+            with button_grid.container():
+                submitted = st.form_submit_button("Save Payment", type="primary", use_container_width=True)
+            with button_grid.container():
+                cancelled = st.form_submit_button("Cancel", use_container_width=True)
 
     # Handle form submission
     if submitted:
@@ -503,8 +533,9 @@ def display_contract_info(contract: Tuple):
     schedule = contract[3].title() if contract[3] else "N/A"
     provider = contract[1] or "N/A"
     
-    st.info(f"Provider: {provider} | Fee Type: {fee_type} | Rate: {rate} | Schedule: {schedule}")
-    st.caption("All payments are processed in arrears")
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.info(f"Provider: {provider} | Fee Type: {fee_type} | Rate: {rate} | Schedule: {schedule} | All payments processed in arrears")
     return True
 
 # ============================================================================
