@@ -79,7 +79,7 @@ def show_main_summary():
         <style>
         .block-container {
             padding: 3rem 1rem 10rem;  
-            max-width: 1200px !important;  
+            max-width: 1300px !important;  
         }
         .table-container {
             width: 100%;
@@ -231,76 +231,35 @@ def show_main_summary():
     render_metrics_section(summary_data)
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Revenue Analysis section
+    # Revenue Analysis: Top 5 Clients by Annual Revenue
     st.markdown('<div class="section-container">', unsafe_allow_html=True)
     with st.container():
-        st.markdown('<div class="section-header">Revenue Analysis</div>', unsafe_allow_html=True)
-        chart_cols = st.columns([2, 1])
+        st.markdown('<div class="section-header">Top 5 Clients by Annual Revenue</div>', unsafe_allow_html=True)
         
-        with chart_cols[0]:
-            trend_data = []
-            for client_id, quarterly in summary_data['quarterly_totals'].items():
-                for q in range(1, 5):
-                    if quarterly.get(f'Q{q}', 0) > 0:
-                        trend_data.append({
-                            'Quarter': f'Q{q}',
-                            'Revenue': quarterly[f'Q{q}'],
-                            'Client': quarterly['name']
-                        })
-            
-            if trend_data:
-                trend_df = pd.DataFrame(trend_data)
-                # Create base chart with proper configuration
-                base = alt.Chart(trend_df).encode(
-                    x=alt.X('Quarter:N', axis=alt.Axis(labelAngle=0)),
-                    y=alt.Y('sum(Revenue):Q', title='Revenue'),
-                    color=alt.Color('Client:N', legend=None),
-                    tooltip=['Quarter', 'Client', alt.Tooltip('Revenue:Q', format='$,.2f')]
-                )
-                
-                # Apply the bar mark and configure the chart
-                revenue_chart = base.mark_bar().properties(
-                    height=250
-                ).configure_view(
-                    strokeWidth=0
-                ).configure_axis(
-                    grid=False,
-                    domainColor='#57575740',
-                    tickColor='#57575740'
-                )
-                
-                st.altair_chart(revenue_chart, use_container_width=True)
-            else:
-                st.info("No revenue data available for selected year.")
+        # Calculate total annual revenue for each client
+        annual_revenue = []
+        for client_id, quarterly in summary_data['quarterly_totals'].items():
+            total_revenue = sum(quarterly.get(f'Q{q}', 0) for q in range(1, 5))
+            annual_revenue.append({'Client': quarterly['name'], 'Annual Revenue': total_revenue})
         
-        with chart_cols[1]:
-            fee_types = {}
-            for client_data in summary_data['quarterly_totals'].values():
-                fee_type = client_data['fee_type']
-                if fee_type:
-                    fee_types[fee_type] = fee_types.get(fee_type, 0) + 1
-            
-            if fee_types:
-                pie_data = pd.DataFrame({
-                    'Type': list(fee_types.keys()),
-                    'Count': list(fee_types.values())
-                })
-                
-                # Create base pie chart with proper configuration
-                base = alt.Chart(pie_data).encode(
-                    theta='Count:Q',
-                    color=alt.Color('Type:N', scale=alt.Scale(scheme='category10')),
-                    tooltip=['Type', 'Count']
-                )
-                
-                # Apply the arc mark and configure the chart
-                pie_chart = base.mark_arc().properties(
-                    height=250
-                ).configure_view(
-                    strokeWidth=0
-                )
-                
-                st.altair_chart(pie_chart, use_container_width=True)
+        # Create a DataFrame and filter for the top 5 clients
+        annual_revenue_df = pd.DataFrame(annual_revenue)
+        top_clients_df = annual_revenue_df.nlargest(5, 'Annual Revenue')
+        
+        if not top_clients_df.empty:
+            # Create a bar chart for the top 5 clients
+            top_clients_chart = alt.Chart(top_clients_df).encode(
+                x=alt.X('Annual Revenue:Q', title='Annual Revenue', axis=alt.Axis(format='$,.0f')),
+                y=alt.Y('Client:N', sort='-x', title=None),
+                tooltip=['Client', alt.Tooltip('Annual Revenue:Q', format='$,.2f')]
+            ).mark_bar().properties(
+                height=250
+            ).configure_view(
+                strokeWidth=0
+            )
+            st.altair_chart(top_clients_chart, use_container_width=True)
+        else:
+            st.info("No revenue data available for the selected year.")
     st.markdown('</div>', unsafe_allow_html=True)
     
     # Client Performance section
