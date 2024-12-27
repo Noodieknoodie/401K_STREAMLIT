@@ -9,6 +9,7 @@ from .summary_utils import (
     calculate_sparkline_data
 )
 from streamlit_extras.metric_cards import style_metric_cards
+from ..components.collapsible_panel import create_collapsible_panel
 
 def render_metrics_section(summary_data: dict) -> None:
     """Render the top metrics section and trend charts."""
@@ -68,6 +69,11 @@ def create_client_dataframe(summary_data: dict) -> pd.DataFrame:
         }
         rows.append(row)
     return pd.DataFrame(rows)
+
+def render_panel_content():
+    """Render the panel content for the summary page."""
+    st.markdown("### Detailed Analysis")
+    st.write("This is where detailed analytics will go")
 
 def show_main_summary():
     """Display the main summary page."""
@@ -193,166 +199,173 @@ def show_main_summary():
         </style>
     """, unsafe_allow_html=True)
     
-    # Page container for consistent spacing
-    with st.container():
-        # Top controls in a clean layout
-        controls_cols = st.columns([1.5, 2.5, 1])
-        
-        available_years = get_available_years()
-        if not available_years:
-            st.info("No payment data available.")
-            return
+    def main_content():
+        # Page container for consistent spacing
+        with st.container():
+            # Top controls in a clean layout
+            controls_cols = st.columns([1.5, 2.5, 1])
             
-        default_year = get_default_year()
-        if default_year not in available_years:
-            default_year = max(available_years)
-        
-        with controls_cols[0]:
-            selected_year = st.selectbox(
-                "Select Year",
-                options=available_years,
-                index=available_years.index(default_year),
-                label_visibility="collapsed"
-            )
-        
-        with controls_cols[1]:
-            current_quarter = calculate_current_quarter()
-            st.markdown(
-                f'<div class="info-banner">Currently collecting Q{current_quarter} {datetime.now().year} payments</div>',
-                unsafe_allow_html=True
-            )
-    
-    # Get and render data with spacing
-    summary_data = get_summary_year_data(selected_year)
-    st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
-    
-    # Key Metrics section
-    st.markdown('<div class="section-container">', unsafe_allow_html=True)
-    render_metrics_section(summary_data)
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Revenue Analysis: Top 5 Clients by Annual Revenue
-    st.markdown('<div class="section-container">', unsafe_allow_html=True)
-    with st.container():
-        st.markdown('<div class="section-header">Top 5 Clients by Annual Revenue</div>', unsafe_allow_html=True)
-        
-        # Calculate total annual revenue for each client
-        annual_revenue = []
-        for client_id, quarterly in summary_data['quarterly_totals'].items():
-            total_revenue = sum(quarterly.get(f'Q{q}', 0) for q in range(1, 5))
-            annual_revenue.append({'Client': quarterly['name'], 'Annual Revenue': total_revenue})
-        
-        # Create a DataFrame and filter for the top 5 clients
-        annual_revenue_df = pd.DataFrame(annual_revenue)
-        top_clients_df = annual_revenue_df.nlargest(5, 'Annual Revenue')
-        
-        if not top_clients_df.empty:
-            # Create a bar chart for the top 5 clients
-            top_clients_chart = alt.Chart(top_clients_df).encode(
-                x=alt.X('Annual Revenue:Q', title='Annual Revenue', axis=alt.Axis(format='$,.0f')),
-                y=alt.Y('Client:N', sort='-x', title=None),
-                tooltip=['Client', alt.Tooltip('Annual Revenue:Q', format='$,.2f')]
-            ).mark_bar().properties(
-                height=250
-            ).configure_view(
-                strokeWidth=0
-            )
-            st.altair_chart(top_clients_chart, use_container_width=True)
-        else:
-            st.info("No revenue data available for the selected year.")
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Client Performance section
-    st.markdown('<div class="section-container">', unsafe_allow_html=True)
-    with st.container():
-        st.markdown('<div class="section-header">Client Performance</div>', unsafe_allow_html=True)
-        
-        # Table container
-        st.markdown('<div class="table-container">', unsafe_allow_html=True)
-        
-        # Headers first
-        header_cols = st.columns([2, 1, 1, 1, 1, 1.2])
-        header_cols[0].markdown('<div style="text-align: left;">Client</div>', unsafe_allow_html=True)
-        header_cols[1].markdown('<div style="text-align: right;">Q1</div>', unsafe_allow_html=True)
-        header_cols[2].markdown('<div style="text-align: right;">Q2</div>', unsafe_allow_html=True)
-        header_cols[3].markdown('<div style="text-align: right;">Q3</div>', unsafe_allow_html=True)
-        header_cols[4].markdown('<div style="text-align: right;">Q4</div>', unsafe_allow_html=True)
-        header_cols[5].markdown('<div style="text-align: right;">Total</div>', unsafe_allow_html=True)
-        
-        # Divider immediately after headers
-        st.markdown("<hr/>", unsafe_allow_html=True)
-        
-        # Create DataFrame with proper structure
-        df = create_client_dataframe(summary_data)
-        df = df.sort_values('Total', ascending=False)
-        
-        # Table rows with proper spacing
-        st.markdown('<div class="table-rows">', unsafe_allow_html=True)
-        for _, row in df.iterrows():
-            cols = st.columns([2, 1, 1, 1, 1, 1.2])
+            available_years = get_available_years()
+            if not available_years:
+                st.info("No payment data available.")
+                return
             
-            with cols[0]:
-                if st.button(
-                    f"{'▼' if row['Client'] in st.session_state.expanded_rows else '▶'} {row['Client']}", 
-                    key=f"btn_{row['Client']}"
-                ):
-                    if row['Client'] in st.session_state.expanded_rows:
-                        st.session_state.expanded_rows.remove(row['Client'])
-                    else:
-                        st.session_state.expanded_rows.add(row['Client'])
-                    st.rerun()
+            default_year = get_default_year()
+            if default_year not in available_years:
+                default_year = max(available_years)
             
-            cols[1].button(format_currency(row["Q1"]) if row["Q1"] > 0 else "-", key=f"q1_{row['Client']}", disabled=True)
-            cols[2].button(format_currency(row["Q2"]) if row["Q2"] > 0 else "-", key=f"q2_{row['Client']}", disabled=True)
-            cols[3].button(format_currency(row["Q3"]) if row["Q3"] > 0 else "-", key=f"q3_{row['Client']}", disabled=True)
-            cols[4].button(format_currency(row["Q4"]) if row["Q4"] > 0 else "-", key=f"q4_{row['Client']}", disabled=True)
-            cols[5].button(format_currency(row["Total"]), key=f"total_{row['Client']}", disabled=True)
+            with controls_cols[0]:
+                selected_year = st.selectbox(
+                    "Select Year",
+                    options=available_years,
+                    index=available_years.index(default_year),
+                    label_visibility="collapsed"
+                )
             
-            if row['Client'] in st.session_state.expanded_rows:
-                with st.expander("", expanded=True):
-                    detail_cols = st.columns(3)
-                    
-                    with detail_cols[0]:
-                        st.metric(
-                            "Total Revenue",
-                            format_currency(row['Total']),
-                            format_growth(row['YoY Change'])
+            with controls_cols[1]:
+                current_quarter = calculate_current_quarter()
+                st.markdown(
+                    f'<div class="info-banner">Currently collecting Q{current_quarter} {datetime.now().year} payments</div>',
+                    unsafe_allow_html=True
+                )
+        
+        # Get and render data with spacing
+        summary_data = get_summary_year_data(selected_year)
+        st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
+        
+        # Key Metrics section
+        st.markdown('<div class="section-container">', unsafe_allow_html=True)
+        render_metrics_section(summary_data)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Revenue Analysis: Top 5 Clients by Annual Revenue
+        st.markdown('<div class="section-container">', unsafe_allow_html=True)
+        with st.container():
+            st.markdown('<div class="section-header">Top 5 Clients by Annual Revenue</div>', unsafe_allow_html=True)
+            
+            # Calculate total annual revenue for each client
+            annual_revenue = []
+            for client_id, quarterly in summary_data['quarterly_totals'].items():
+                total_revenue = sum(quarterly.get(f'Q{q}', 0) for q in range(1, 5))
+                annual_revenue.append({'Client': quarterly['name'], 'Annual Revenue': total_revenue})
+            
+            # Create a DataFrame and filter for the top 5 clients
+            annual_revenue_df = pd.DataFrame(annual_revenue)
+            top_clients_df = annual_revenue_df.nlargest(5, 'Annual Revenue')
+            
+            if not top_clients_df.empty:
+                # Create a bar chart for the top 5 clients
+                top_clients_chart = alt.Chart(top_clients_df).encode(
+                    x=alt.X('Annual Revenue:Q', title='Annual Revenue', axis=alt.Axis(format='$,.0f')),
+                    y=alt.Y('Client:N', sort='-x', title=None),
+                    tooltip=['Client', alt.Tooltip('Annual Revenue:Q', format='$,.2f')]
+                ).mark_bar().properties(
+                    height=250
+                ).configure_view(
+                    strokeWidth=0
+                )
+                st.altair_chart(top_clients_chart, use_container_width=True)
+            else:
+                st.info("No revenue data available for the selected year.")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Client Performance section
+        st.markdown('<div class="section-container">', unsafe_allow_html=True)
+        with st.container():
+            st.markdown('<div class="section-header">Client Performance</div>', unsafe_allow_html=True)
+            
+            # Table container
+            st.markdown('<div class="table-container">', unsafe_allow_html=True)
+            
+            # Headers first
+            header_cols = st.columns([2, 1, 1, 1, 1, 1.2])
+            header_cols[0].markdown('<div style="text-align: left;">Client</div>', unsafe_allow_html=True)
+            header_cols[1].markdown('<div style="text-align: right;">Q1</div>', unsafe_allow_html=True)
+            header_cols[2].markdown('<div style="text-align: right;">Q2</div>', unsafe_allow_html=True)
+            header_cols[3].markdown('<div style="text-align: right;">Q3</div>', unsafe_allow_html=True)
+            header_cols[4].markdown('<div style="text-align: right;">Q4</div>', unsafe_allow_html=True)
+            header_cols[5].markdown('<div style="text-align: right;">Total</div>', unsafe_allow_html=True)
+            
+            # Divider immediately after headers
+            st.markdown("<hr/>", unsafe_allow_html=True)
+            
+            # Create DataFrame with proper structure
+            df = create_client_dataframe(summary_data)
+            df = df.sort_values('Total', ascending=False)
+            
+            # Table rows with proper spacing
+            st.markdown('<div class="table-rows">', unsafe_allow_html=True)
+            for _, row in df.iterrows():
+                cols = st.columns([2, 1, 1, 1, 1, 1.2])
+                
+                with cols[0]:
+                    if st.button(
+                        f"{'▼' if row['Client'] in st.session_state.expanded_rows else '▶'} {row['Client']}", 
+                        key=f"btn_{row['Client']}"
+                    ):
+                        if row['Client'] in st.session_state.expanded_rows:
+                            st.session_state.expanded_rows.remove(row['Client'])
+                        else:
+                            st.session_state.expanded_rows.add(row['Client'])
+                        st.rerun()
+                
+                cols[1].button(format_currency(row["Q1"]) if row["Q1"] > 0 else "-", key=f"q1_{row['Client']}", disabled=True)
+                cols[2].button(format_currency(row["Q2"]) if row["Q2"] > 0 else "-", key=f"q2_{row['Client']}", disabled=True)
+                cols[3].button(format_currency(row["Q3"]) if row["Q3"] > 0 else "-", key=f"q3_{row['Client']}", disabled=True)
+                cols[4].button(format_currency(row["Q4"]) if row["Q4"] > 0 else "-", key=f"q4_{row['Client']}", disabled=True)
+                cols[5].button(format_currency(row["Total"]), key=f"total_{row['Client']}", disabled=True)
+                
+                if row['Client'] in st.session_state.expanded_rows:
+                    with st.expander("", expanded=True):
+                        detail_cols = st.columns(3)
+                        
+                        with detail_cols[0]:
+                            st.metric(
+                                "Total Revenue",
+                                format_currency(row['Total']),
+                                format_growth(row['YoY Change'])
+                            )
+                        
+                        with detail_cols[1]:
+                            st.metric(
+                                "Contract Details",
+                                f"{row['_fee_type'].title()}",
+                                f"{row['_rate']*100:.1f}%" if row['_fee_type'] == 'percentage' else format_currency(row['_rate'])
+                            )
+                        
+                        with detail_cols[2]:
+                            st.metric(
+                                "Participants",
+                                str(row['_participants']),
+                                f"AUM: {format_currency(row['_aum'])}"
+                            )
+                        
+                        # Quarterly trend chart
+                        quarterly_data = pd.DataFrame({
+                            'Quarter': ['Q1', 'Q2', 'Q3', 'Q4'],
+                            'Revenue': [row['Q1'], row['Q2'], row['Q3'], row['Q4']]
+                        })
+                        
+                        trend_chart = alt.Chart(quarterly_data).mark_bar().encode(
+                            x=alt.X('Quarter:N', axis=alt.Axis(labelAngle=0)),
+                            y=alt.Y('Revenue:Q', axis=alt.Axis(format='$,.0f')),
+                            color=alt.value('#0068C9')
+                        ).properties(
+                            height=180
+                        ).configure_axis(
+                            grid=False
                         )
-                    
-                    with detail_cols[1]:
-                        st.metric(
-                            "Contract Details",
-                            f"{row['_fee_type'].title()}",
-                            f"{row['_rate']*100:.1f}%" if row['_fee_type'] == 'percentage' else format_currency(row['_rate'])
-                        )
-                    
-                    with detail_cols[2]:
-                        st.metric(
-                            "Participants",
-                            str(row['_participants']),
-                            f"AUM: {format_currency(row['_aum'])}"
-                        )
-                    
-                    # Quarterly trend chart
-                    quarterly_data = pd.DataFrame({
-                        'Quarter': ['Q1', 'Q2', 'Q3', 'Q4'],
-                        'Revenue': [row['Q1'], row['Q2'], row['Q3'], row['Q4']]
-                    })
-                    
-                    trend_chart = alt.Chart(quarterly_data).mark_bar().encode(
-                        x=alt.X('Quarter:N', axis=alt.Axis(labelAngle=0)),
-                        y=alt.Y('Revenue:Q', axis=alt.Axis(format='$,.0f')),
-                        color=alt.value('#0068C9')
-                    ).properties(
-                        height=180
-                    ).configure_axis(
-                        grid=False
-                    )
-                    st.altair_chart(trend_chart, use_container_width=True)
-        
-        st.markdown('</div>', unsafe_allow_html=True)  # Close table-rows
-        st.markdown('</div>', unsafe_allow_html=True)  # Close table-container
-    st.markdown('</div>', unsafe_allow_html=True)
+                        st.altair_chart(trend_chart, use_container_width=True)
+            
+            st.markdown('</div>', unsafe_allow_html=True)  # Close table-rows
+            st.markdown('</div>', unsafe_allow_html=True)  # Close table-container
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Use the simplified panel
+    create_collapsible_panel(
+        panel_id="summary",
+        main_content=main_content
+    )
 
 if __name__ == "__main__":
     show_main_summary()
