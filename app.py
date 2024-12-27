@@ -1,39 +1,36 @@
 # app.py
-import streamlit as st
-from sidebar import render_sidebar
-from pages_new.main_summary.summary import show_main_summary
-from pages_new.client_dashboard import show_client_dashboard
-from pages_new.manage_clients.client_management import show_manage_clients
-from pages_new.bulk_payment.bulk_entry import show_bulk_payment_entry
+import os
+import sys
+import streamlit.web.bootstrap
+from streamlit.web import bootstrap
+from streamlit import config as _config
 
-# Set page config
-st.set_page_config(
-    page_title="401K Payment Tracker",
-    page_icon="💰",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-def main():
-    # Initialize session state for navigation
-    if 'current_page' not in st.session_state:
-        st.session_state.current_page = '📊 Quarterly Summary'  # Ensure it matches the button text
-    if 'selected_client' not in st.session_state:
-        st.session_state.selected_client = None
-
-    # Render sidebar
-    render_sidebar()
-
-    # Main content area
-    current_page = st.session_state.current_page
-    if current_page == '📊 Quarterly Summary':
-        show_main_summary()
-    elif current_page == '👥 Client Dashboard':
-        show_client_dashboard()
-    elif current_page == '⚙️ Manage Clients':
-        show_manage_clients()
-    elif current_page == '📝 Bulk Payment Entry':
-        show_bulk_payment_entry()
+def run_app():
+    # Set Streamlit configuration
+    _config.set_option('server.address', 'localhost')
+    _config.set_option('server.port', 8501)
+    _config.set_option('browser.serverAddress', 'localhost')
+    _config.set_option('theme.primaryColor', '#0066cc')
+    
+    # Get the directory containing the executable
+    if getattr(sys, 'frozen', False):
+        # Running as compiled
+        base_dir = sys._MEIPASS
+    else:
+        # Running as script
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Set the working directory
+    os.chdir(base_dir)
+    
+    # Run the Streamlit app
+    args = []
+    bootstrap.run(
+        "pages_new/client_dashboard.py",
+        "streamlit run",
+        args,
+        flag_options={},
+    )
 
 if __name__ == "__main__":
-    main()
+    run_app()
