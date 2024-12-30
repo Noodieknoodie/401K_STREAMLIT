@@ -304,44 +304,40 @@ def render_contact_section(contact_type: str, contacts: list):
             st.session_state.contact_type = contact_type
             st.rerun()
 
-def render_contact_card(contact: tuple):
+def render_contact_card(contact):
     """Render a single contact card."""
     with st.container():
         # Show delete confirmation if this is the contact being deleted
         if st.session_state.show_delete_confirm and st.session_state.delete_contact_id == contact[7]:
-            confirm_col1, confirm_col2, confirm_col3 = st.columns([2,1,1])
-            with confirm_col1:
-                st.warning("Delete this contact?")
-            with confirm_col2:
+            st.warning("Delete this contact?")
+            col1, col2 = st.columns([1, 1])
+            with col1:
                 if st.button("Yes", key=f"confirm_delete_{contact[7]}", type="primary"):
                     if delete_contact(contact[7]):
                         st.session_state.delete_contact_id = None
                         st.session_state.show_delete_confirm = False
                         st.rerun()
-            with confirm_col3:
+            with col2:
                 if st.button("No", key=f"cancel_delete_{contact[7]}"):
                     st.session_state.delete_contact_id = None
                     st.session_state.show_delete_confirm = False
                     st.rerun()
             return
-        
-        # Two-column layout: Info | Actions
-        info_col, action_col = st.columns([6, 1])
-        
-        with info_col:
-            if contact[1]:  # Name
-                st.text(contact[1])
-            if contact[2]:  # Phone
-                st.text(f"📞 {contact[2]}")
-            if contact[3]:  # Email
-                st.text(f"✉️ {contact[3]}")
-            if contact[4]:  # Fax
-                st.text(f"📠 {contact[4]}")
-            if contact[5] or contact[6]:  # Addresses
-                st.text(f"📍 {contact[5] or contact[6]}")
-        
-        with action_col:
-            # Action buttons stacked vertically
+            
+        # Contact info
+        st.write(f"**{contact[1]}**")  # Name
+        if contact[2]:  # Phone
+            st.write(f"📞 {contact[2]}")
+        if contact[3]:  # Email
+            st.write(f"✉️ {contact[3]}")
+        if contact[4]:  # Fax
+            st.write(f"📠 {contact[4]}")
+        if contact[5] or contact[6]:  # Addresses
+            st.write(f"📍 {contact[5] or contact[6]}")
+            
+        # Actions
+        col1, col2 = st.columns([1, 1])
+        with col1:
             if st.button("✏️", key=f"edit_{contact[7]}", help="Edit contact"):
                 st.session_state.contact_edit_id = contact[7]
                 st.session_state.contact_type = contact[0]
@@ -355,13 +351,12 @@ def render_contact_card(contact: tuple):
                 }
                 st.session_state.show_contact_form = True
                 st.rerun()
-            
+        with col2:
             if st.button("🗑️", key=f"delete_{contact[7]}", help="Delete contact"):
                 st.session_state.delete_contact_id = contact[7]
                 st.session_state.show_delete_confirm = True
                 st.rerun()
-        
-        # Minimal separator
+                
         st.divider()
 
 # ============================================================================

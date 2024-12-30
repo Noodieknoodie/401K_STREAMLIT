@@ -109,7 +109,6 @@ def get_database_connection():
         logger.error(f"Error connecting to database: {str(e)}")
         raise
 
-@st.cache_data
 def get_clients():
     """Get all clients from the database"""
     conn = get_database_connection()
@@ -189,7 +188,6 @@ def get_latest_payment(client_id):
     finally:
         conn.close()
 
-@st.cache_data
 def get_client_details(client_id):
     """Get client details"""
     conn = get_database_connection()
@@ -820,7 +818,6 @@ def get_payment_by_id(payment_id):
     finally:
         conn.close()
 
-@st.cache_data(ttl=60)  # Cache dashboard data for 1 minute only
 def get_client_dashboard_data(client_id):
     """Get all necessary client data for the dashboard in a single database call"""
     conn = get_database_connection()
@@ -1223,5 +1220,41 @@ def delete_client(client_id: int) -> bool:
         conn.rollback()
         logger.error(f"Error deleting client {client_id}: {str(e)}")
         return False
+    finally:
+        conn.close()
+
+def get_client_file_paths(client_id: int) -> dict:
+    """Get document file paths for a specific client.
+    
+    Args:
+        client_id: The ID of the client
+        
+    Returns:
+        dict: Dictionary containing the document paths with keys:
+            - account_documentation
+            - consulting_fees
+            - meetings
+        Returns None if client not found
+    """
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT 
+                file_path_account_documentation,
+                file_path_consulting_fees,
+                file_path_meetings
+            FROM clients 
+            WHERE client_id = ?
+        """, (client_id,))
+        
+        result = cursor.fetchone()
+        if result:
+            return {
+                'account_documentation': result[0],
+                'consulting_fees': result[1],
+                'meetings': result[2]
+            }
+        return None
     finally:
         conn.close()

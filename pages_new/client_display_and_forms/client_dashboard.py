@@ -29,12 +29,12 @@ import streamlit as st
 from typing import Optional, Tuple
 import time
 
-from utils.utils import get_clients
+from utils.utils import get_clients, get_client_file_paths
 from .client_metrics import show_client_metrics
 from .client_contacts import display_contacts_section
 from .client_contracts import display_contracts_section
 from .client_payments import display_payments_section
-
+from utils.utils import get_client_details
 
 def init_dashboard_state():
     """Initialize dashboard-wide session state."""
@@ -52,6 +52,8 @@ def init_dashboard_state():
         st.session_state.contract_validation_errors = []
     if 'show_contract_history' not in st.session_state:
         st.session_state.show_contract_history = False
+    if 'sidebar_state' not in st.session_state:
+        st.session_state.sidebar_state = 'collapsed'        
 
 def get_selected_client() -> Optional[Tuple]:
     """Get the currently selected client from the dropdown.
@@ -127,44 +129,39 @@ def display_client_dashboard():
     # Initialize dashboard state
     init_dashboard_state()
     
-    st.title("👥 Client Dashboard")
+    # Get selected client (this needs to run always)
+    selected_client = get_selected_client()
+    if not selected_client:
+        st.info("Please select a client to view their dashboard")
+        return
     
-    def main_content():
-        # Get selected client (this needs to run always)
-        selected_client = get_selected_client()
-        if not selected_client:
-            st.info("Please select a client to view their dashboard")
-            return
-        
-        client_id = selected_client[0]
-        
-        # Show contract form above metrics if editing
-        if st.session_state.show_contract_form:
-            display_contracts_section(client_id)
-        
-        # Show dashboard components vertically
-        show_client_metrics(client_id)
-        
-        # Add spacing between sections
-        st.markdown("<div style='margin: 1rem 0;'></div>", unsafe_allow_html=True)
-        
-        # Contacts Section
-        display_contacts_section(client_id)
-        
-        # Add spacing between sections
-        st.markdown("<div style='margin: 1rem 0;'></div>", unsafe_allow_html=True)
-        
-        # Payments Section
-        display_payments_section(client_id)
+    client_id = selected_client[0]
     
-    # Execute the main content
-    main_content()
+    # Document viewer in native sidebar
+    with st.sidebar:
+        from pages_new.components.document_viewer.viewer import show_document_viewer
+        show_document_viewer(client_id)
     
+    # Main content
+    if st.session_state.show_contract_form:
+        display_contracts_section(client_id)
+    
+    show_client_metrics(client_id)
+    
+    st.markdown("<div style='margin: 1rem 0;'></div>", unsafe_allow_html=True)
+    
+    display_contacts_section(client_id)
+    
+    st.markdown("<div style='margin: 1rem 0;'></div>", unsafe_allow_html=True)
+    
+    display_payments_section(client_id)
+
     # Log performance metrics
     end_time = time.time()
     load_time = end_time - start_time
     st.session_state.last_load_time = load_time
 
+    
 def show_client_dashboard():
     """Wrapper for display_client_dashboard to maintain backward compatibility with app.py"""
     display_client_dashboard()

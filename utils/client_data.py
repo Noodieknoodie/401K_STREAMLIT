@@ -1,42 +1,17 @@
 # utils/client_data.py
 
 """
-CRITICAL!!! Performance optimization module for client data.
+Performance optimization module for client data.
 This module provides consolidated database queries to replace multiple separate calls.
 The original functions in utils.py remain unchanged for safety and backward compatibility.
 """
 
 import streamlit as st
 from .utils import get_database_connection
-import time
-from typing import Dict, Optional, Any, Tuple
+from typing import Dict, Any
 
-# Cache structure: {client_id: (data, timestamp)}
-_client_cache: Dict[int, Tuple[Dict[str, Any], float]] = {}
-CACHE_TTL_SECONDS = 5  # Cache data for 5 seconds
-
-def _get_cached_client_data(client_id: int) -> Optional[Dict[str, Any]]:
-    """Get client data from cache if valid."""
-    if client_id in _client_cache:
-        data, timestamp = _client_cache[client_id]
-        if time.time() - timestamp <= CACHE_TTL_SECONDS:
-            return data
-        # Clear expired cache entry
-        del _client_cache[client_id]
-    return None
-
-def _cache_client_data(client_id: int, data: Dict[str, Any]) -> None:
-    """Cache client data with current timestamp."""
-    _client_cache[client_id] = (data, time.time())
-
-@st.cache_data
 def get_consolidated_client_data(client_id: int) -> Dict[str, Any]:
-    """Get consolidated client data with caching."""
-    # Check cache first
-    cached_data = _get_cached_client_data(client_id)
-    if cached_data is not None:
-        return cached_data.copy()  # Return a copy to prevent cache corruption
-
+    """Get consolidated client data."""
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
@@ -149,9 +124,7 @@ def get_consolidated_client_data(client_id: int) -> Dict[str, Any]:
             'contacts': contacts
         }
         
-        # Cache the results before returning
-        _cache_client_data(client_id, consolidated_data)
-        return consolidated_data.copy()  # Return a copy to prevent cache corruption
+        return consolidated_data
     finally:
         conn.close()
 
