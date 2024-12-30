@@ -102,7 +102,7 @@ CREATE TABLE "clients" (
     "ima_signed_date" TEXT,              -- Format: YYYY-MM-DD
     "file_path_account_documentation" TEXT,
     "file_path_consulting_fees" TEXT,
-    "file_path_meetings" INTEGER
+    "file_path_meetings" TEXT
 )
 ```
 

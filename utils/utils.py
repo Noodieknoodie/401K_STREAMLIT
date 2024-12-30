@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 #     "ima_signed_date" TEXT,
 #     "file_path_account_documentation" TEXT,
 #     "file_path_consulting_fees" TEXT,
-#     "file_path_meetings" INTEGER,
+#     "file_path_meetings" TEXT,
 #     PRIMARY KEY("client_id" AUTOINCREMENT)
 # )
 
@@ -1121,3 +1121,107 @@ def validate_contract_data(data: Dict[str, Any]) -> list:
         errors.append("Invalid contract start date")
     
     return errors
+
+def add_client(display_name: str, **optional_fields) -> int:
+    """
+    Add a new client to the database.
+    
+    Args:
+        display_name (str): Required display name for the client
+        **optional_fields: Optional fields (full_name, ima_signed_date, file paths)
+    
+    Returns:
+        int: The new client_id
+    """
+    if not display_name:
+        raise ValueError("display_name is required")
+        
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        
+        # Build the query dynamically based on provided fields
+        fields = ['display_name'] + list(optional_fields.keys())
+        placeholders = ['?'] * len(fields)
+        values = [display_name] + list(optional_fields.values())
+        
+        query = f"""
+            INSERT INTO clients ({', '.join(fields)})
+            VALUES ({', '.join(placeholders)})
+        """
+        
+        cursor.execute(query, values)
+        conn.commit()
+        return cursor.lastrowid
+    finally:
+        conn.close()
+
+def update_client(client_id: int, **fields_to_update) -> bool:
+    """
+    Update an existing client's information.
+    
+    Args:
+        client_id (int): The ID of the client to update
+        **fields_to_update: Fields to update and their new values
+    
+    Returns:
+        bool: True if successful
+    """
+    if not fields_to_update:
+        return False
+        
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        
+        # Build the update query dynamically
+        set_clause = ', '.join(f"{field} = ?" for field in fields_to_update.keys())
+        values = list(fields_to_update.values()) + [client_id]
+        
+        query = f"""
+            UPDATE clients 
+            SET {set_clause}
+            WHERE client_id = ?
+        """
+        
+        cursor.execute(query, values)
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+def delete_client(client_id: int) -> bool:
+    """
+    Delete a client and all related records.
+    
+    Args:
+        client_id (int): The ID of the client to delete
+    
+    Returns:
+        bool: True if successful
+    """
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        
+        # Start a transaction
+        cursor.execute("BEGIN TRANSACTION")
+        
+        # Delete related records first (foreign key relationships)
+        cursor.execute("DELETE FROM payments WHERE client_id = ?", (client_id,))
+        cursor.execute("DELETE FROM contracts WHERE client_id = ?", (client_id,))
+        cursor.execute("DELETE FROM contacts WHERE client_id = ?", (client_id,))
+        
+        # Finally delete the client
+        cursor.execute("DELETE FROM clients WHERE client_id = ?", (client_id,))
+        
+        # Commit the transaction
+        conn.commit()
+        return True
+    except Exception as e:
+        # Rollback on error
+        conn.rollback()
+        logger.error(f"Error deleting client {client_id}: {str(e)}")
+        return False
+    finally:
+        conn.close()
