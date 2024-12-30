@@ -7,7 +7,6 @@ The original functions in utils.py remain unchanged for safety and backward comp
 """
 
 import streamlit as st
-import json
 from .utils import get_database_connection
 import time
 from typing import Dict, Optional, Any, Tuple

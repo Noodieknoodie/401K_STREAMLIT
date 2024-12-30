@@ -3,6 +3,12 @@ import sqlite3
 import streamlit as st
 from datetime import datetime
 from typing import Dict, Any
+import os
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # ============================================================================
 # DOCS: Table Structures
@@ -70,8 +76,51 @@ from typing import Dict, Any
 
 
 def get_database_connection():
-    """Create and return a database connection"""
-    return sqlite3.connect('DATABASE/401kDATABASE.db')
+    """Create and return a database connection dynamically based on OneDrive path."""
+    try:
+        print("\n=== DATABASE CONNECTION DIAGNOSTIC ===")
+        
+        # Get user profile path
+        user_profile = os.environ.get("USERPROFILE")
+        print("1. User Profile path:", user_profile)
+        
+        # Construct the full path to the database
+        database_path = os.path.join(
+            user_profile,
+            "Hohimer Wealth Management",
+            "Hohimer Company Portal - Company",
+            "Hohimer Team Shared 4-15-19",
+            "401Ks",
+            "Database_Payments",
+            "401kDATABASE.db"
+        )
+        print("2. Full database path:", database_path)
+        print("3. Database exists:", os.path.exists(database_path))
+
+        if not os.path.exists(database_path):
+            # Try local development path as fallback
+            local_path = 'DATABASE/401kDATABASE.db'
+            if os.path.exists(local_path):
+                print("\n=== USING LOCAL DATABASE ===")
+                print("Reason: Shared database not found")
+                print("Path:", local_path)
+                print("===========================\n")
+                return sqlite3.connect(local_path)
+            
+            logger.error(f"Database file not found at {database_path}")
+            raise FileNotFoundError(
+                f"Database file not found. Please ensure it exists at {database_path} "
+                "and that you have proper access permissions."
+            )
+
+        print("\n=== USING SHARED DATABASE ===")
+        print("Successfully connected to:", database_path)
+        print("===========================\n")
+        return sqlite3.connect(database_path)
+        
+    except Exception as e:
+        logger.error(f"Error connecting to database: {str(e)}")
+        raise
 
 @st.cache_data
 def get_clients():
