@@ -9,7 +9,6 @@ from .summary_utils import (
     calculate_sparkline_data
 )
 from streamlit_extras.metric_cards import style_metric_cards
-from ..components.collapsible_panel import create_collapsible_panel
 
 def render_metrics_section(summary_data: dict) -> None:
     """Render the top metrics section and trend charts."""
@@ -83,10 +82,6 @@ def show_main_summary():
     # Add CSS for page-level constraints and styling
     st.markdown("""
         <style>
-        .block-container {
-            padding: 3rem 1rem 10rem;  
-            max-width: 1300px !important;  
-        }
         .table-container {
             width: 100%;
             max-width: 1000px;  
@@ -361,11 +356,8 @@ def show_main_summary():
             st.markdown('</div>', unsafe_allow_html=True)  # Close table-container
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Use the simplified panel
-    create_collapsible_panel(
-        panel_id="summary",
-        main_content=main_content
-    )
+    # Directly render the main content
+    main_content()
 
 if __name__ == "__main__":
     show_main_summary()

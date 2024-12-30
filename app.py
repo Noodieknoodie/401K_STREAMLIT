@@ -1,39 +1,61 @@
-# app.py
 import streamlit as st
-from sidebar import render_sidebar
-from pages_new.main_summary.summary import show_main_summary
-from pages_new.client_dashboard import show_client_dashboard
-from pages_new.manage_clients.client_management import show_manage_clients
-from pages_new.bulk_payment.bulk_entry import show_bulk_payment_entry
 
-# Set page config
+# Configure the page - MUST be first Streamlit command
 st.set_page_config(
     page_title="401K Payment Tracker",
     page_icon="💰",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-def main():
-    # Initialize session state for navigation
-    if 'current_page' not in st.session_state:
-        st.session_state.current_page = '📊 Quarterly Summary'  # Ensure it matches the button text
-    if 'selected_client' not in st.session_state:
-        st.session_state.selected_client = None
+# Updated CSS injection
+st.markdown("""
+<style>
+/* Expanded sidebar container */
+[data-testid="stSidebar"][aria-expanded="true"] {
+    width: 40% !important;
+    max-width: 40% !important;
+}
 
-    # Render sidebar
-    render_sidebar()
+/* Expanded sidebar content */
+[data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
+    width: 40% !important;
+    max-width: 40% !important;
+}
 
-    # Main content area
-    current_page = st.session_state.current_page
-    if current_page == '📊 Quarterly Summary':
-        show_main_summary()
-    elif current_page == '👥 Client Dashboard':
-        show_client_dashboard()
-    elif current_page == '⚙️ Manage Clients':
-        show_manage_clients()
-    elif current_page == '📝 Bulk Payment Entry':
-        show_bulk_payment_entry()
+/* Main content when sidebar is expanded */
+[data-testid="stSidebar"][aria-expanded="true"] ~ .main {
+    margin-left: 40% !important;
+    width: 60% !important;
+    max-width: 60% !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
-if __name__ == "__main__":
-    main()
+# Now we can import modules that use Streamlit
+import sidebar  # Import sidebar after set_page_config
+
+# Simple tab-based navigation
+tabs = st.tabs([
+    "📊 Quarterly Summary",
+    "👥 Client Dashboard", 
+    "⚙️ Manage Clients",
+    "📝 Bulk Payment Entry"
+])
+
+# Render the selected page based on tab
+with tabs[0]:  # Quarterly Summary
+    from pages_new.main_summary.summary import show_main_summary
+    show_main_summary()
+
+with tabs[1]:  # Client Dashboard
+    from pages_new.client_display_and_forms.client_dashboard import show_client_dashboard
+    show_client_dashboard()
+
+with tabs[2]:  # Manage Clients
+    from pages_new.manage_clients.client_management import show_manage_clients
+    show_manage_clients()
+
+with tabs[3]:  # Bulk Payment Entry
+    from pages_new.bulk_payment.bulk_entry import show_bulk_payment_entry
+    show_bulk_payment_entry()
