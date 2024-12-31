@@ -29,12 +29,13 @@ import streamlit as st
 from typing import Optional, Tuple
 import time
 
-from utils.utils import get_clients, get_client_file_paths
+from utils.utils import get_clients
 from .client_metrics import show_client_metrics
 from .client_contacts import display_contacts_section
 from .client_contracts import display_contracts_section
 from .client_payments import display_payments_section
 from utils.utils import get_client_details
+from pages_new.components.document_viewer.DocumentViewer import render_document_viewer
 
 def init_dashboard_state():
     """Initialize dashboard-wide session state."""
@@ -53,14 +54,12 @@ def init_dashboard_state():
     if 'show_contract_history' not in st.session_state:
         st.session_state.show_contract_history = False
     if 'sidebar_state' not in st.session_state:
-        st.session_state.sidebar_state = 'collapsed'        
+        st.session_state.sidebar_state = 'collapsed'
+    if 'split_mode' not in st.session_state:
+        st.session_state.split_mode = False
 
 def get_selected_client() -> Optional[Tuple]:
-    """Get the currently selected client from the dropdown.
-    
-    Returns:
-        Optional[Tuple]: Selected client data or None if no selection
-    """
+    """Get the currently selected client from the dropdown."""
     # Client selector with edit button container
     st.markdown("""
         <style>
@@ -73,13 +72,17 @@ def get_selected_client() -> Optional[Tuple]:
             flex: 1;
         }
         .edit-contract-button {
-            margin-top: -1rem;  /* Align with dropdown */
+            margin-top: -1rem;
+        }
+        /* Style for the document viewer toggle */
+        div[data-testid="stCheckbox"] {
+            margin-bottom: 0 !important;
         }
         </style>
     """, unsafe_allow_html=True)
     
     with st.container():
-        col1, col2 = st.columns([6, 1])
+        col1, col2, col3 = st.columns([6, 1, 1.5])
         
         with col1:
             # Get client list
@@ -100,13 +103,17 @@ def get_selected_client() -> Optional[Tuple]:
         with col2:
             if selected_name != "Select a client...":
                 if st.button("✏️", key="edit_contract", help="Manage Contract", use_container_width=True):
-                    # Show contract form
                     client_id = next(
                         client[0] for client in clients if client[1] == selected_name
                     )
                     st.session_state.show_contract_form = True
                     st.session_state.contract_client_id = client_id
                     st.rerun()
+        
+        with col3:
+            st.checkbox("📄 Viewer", value=st.session_state.split_mode, 
+                       on_change=lambda: st.session_state.update({"split_mode": not st.session_state.split_mode}),
+                       help="Enable Document Viewer")
     
     if selected_name == "Select a client...":
         return None
@@ -114,7 +121,6 @@ def get_selected_client() -> Optional[Tuple]:
     # Reset data when client changes
     if st.session_state.previous_client != selected_name:
         st.session_state.previous_client = selected_name
-        # Each section handles its own state reset
     
     # Get selected client data
     return next(
@@ -128,6 +134,16 @@ def display_client_dashboard():
     
     # Initialize dashboard state
     init_dashboard_state()
+
+    # Add CSS for grid layout
+    if st.session_state.split_mode:
+        st.markdown("""
+            <style>
+            .stApp {
+                margin-right: 40% !important;
+            }
+            </style>
+        """, unsafe_allow_html=True)
     
     # Get selected client (this needs to run always)
     selected_client = get_selected_client()
@@ -136,32 +152,25 @@ def display_client_dashboard():
         return
     
     client_id = selected_client[0]
-    
-    # Document viewer in native sidebar
-    with st.sidebar:
-        from pages_new.components.document_viewer.viewer import show_document_viewer
-        show_document_viewer(client_id)
-    
-    # Main content
+
+    # Display main content
     if st.session_state.show_contract_form:
         display_contracts_section(client_id)
-    
     show_client_metrics(client_id)
-    
     st.markdown("<div style='margin: 1rem 0;'></div>", unsafe_allow_html=True)
-    
     display_contacts_section(client_id)
-    
     st.markdown("<div style='margin: 1rem 0;'></div>", unsafe_allow_html=True)
-    
     display_payments_section(client_id)
+
+    # Render document viewer if split mode is enabled
+    if st.session_state.split_mode:
+        render_document_viewer()
 
     # Log performance metrics
     end_time = time.time()
     load_time = end_time - start_time
     st.session_state.last_load_time = load_time
 
-    
 def show_client_dashboard():
     """Wrapper for display_client_dashboard to maintain backward compatibility with app.py"""
     display_client_dashboard()
