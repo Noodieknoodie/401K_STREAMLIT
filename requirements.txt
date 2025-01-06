@@ -1,0 +1,7 @@
+altair
+freezegun
+numpy
+pandas
+streamlit
+streamlit_extras
+pyinstaller
