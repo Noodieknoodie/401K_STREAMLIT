@@ -1,0 +1,9 @@
+1|# Parse the selected period into quarter and year
+2|start_quarter, start_year = parse_period_option(selected_period, schedule)
+3|
+4|form_data = {
+5|    'applied_start_period': start_quarter,  # Already a quarter number
+6|    'applied_start_year': start_year,
+7|    'applied_end_period': end_period if is_multi_period else start_quarter,
+8|    'applied_end_year': end_year if is_multi_period else start_year,
+9|} 
