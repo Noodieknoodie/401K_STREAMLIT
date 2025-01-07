@@ -295,7 +295,7 @@ def render_contact_section(contact_type: str, contacts: list):
     with st.expander(f"{contact_type} Contact ({len(contacts)})", expanded=False):
         if contacts:
             for contact in contacts:
-                render_contact_card(contact)
+                render_contact_card(contact, contact_type)
         else:
             st.caption(f"No {contact_type.lower()} contacts")
         
@@ -304,21 +304,26 @@ def render_contact_section(contact_type: str, contacts: list):
             st.session_state.contact_type = contact_type
             st.rerun()
 
-def render_contact_card(contact):
-    """Render a single contact card."""
+def render_contact_card(contact, contact_type: str):
+    """Render a single contact card.
+    
+    Args:
+        contact: The contact data tuple
+        contact_type: The type of contact (Primary/Authorized/Provider)
+    """
     with st.container():
         # Show delete confirmation if this is the contact being deleted
         if st.session_state.show_delete_confirm and st.session_state.delete_contact_id == contact[7]:
             st.warning("Delete this contact?")
             col1, col2 = st.columns([1, 1])
             with col1:
-                if st.button("Yes", key=f"confirm_delete_{contact[7]}", type="primary"):
+                if st.button("Yes", key=f"confirm_delete_contact_{contact_type}_{contact[7]}", type="primary"):
                     if delete_contact(contact[7]):
                         st.session_state.delete_contact_id = None
                         st.session_state.show_delete_confirm = False
                         st.rerun()
             with col2:
-                if st.button("No", key=f"cancel_delete_{contact[7]}"):
+                if st.button("No", key=f"cancel_delete_contact_{contact_type}_{contact[7]}"):
                     st.session_state.delete_contact_id = None
                     st.session_state.show_delete_confirm = False
                     st.rerun()
@@ -338,7 +343,7 @@ def render_contact_card(contact):
         # Actions
         col1, col2 = st.columns([1, 1])
         with col1:
-            if st.button("✏️", key=f"edit_{contact[7]}", help="Edit contact"):
+            if st.button("✏️", key=f"edit_contact_{contact_type}_{contact[7]}", help="Edit contact"):
                 st.session_state.contact_edit_id = contact[7]
                 st.session_state.contact_type = contact[0]
                 st.session_state.contact_form_data = {
@@ -352,7 +357,7 @@ def render_contact_card(contact):
                 st.session_state.show_contact_form = True
                 st.rerun()
         with col2:
-            if st.button("🗑️", key=f"delete_{contact[7]}", help="Delete contact"):
+            if st.button("🗑️", key=f"delete_contact_{contact_type}_{contact[7]}", help="Delete contact"):
                 st.session_state.delete_contact_id = contact[7]
                 st.session_state.show_delete_confirm = True
                 st.rerun()

@@ -240,13 +240,19 @@ from .client_payment_utils import (
 ### THE ONLY REQUIRED FIELDS ARE: Payment Date, Payment Amount
 
 def init_payment_state():
-    """Initialize minimal payment-related session state variables."""
+    """Initialize payment-related session state variables."""
+    if 'show_payment_form' not in st.session_state:
+        st.session_state.show_payment_form = False
     if 'editing_payment_id' not in st.session_state:
         st.session_state.editing_payment_id = None
-    if 'editing_note_id' not in st.session_state:
-        st.session_state.editing_note_id = None
-    if 'delete_confirm_id' not in st.session_state:
-        st.session_state.delete_confirm_id = None
+    if 'payment_form_data' not in st.session_state:
+        st.session_state.payment_form_data = {}
+    if 'payment_validation_errors' not in st.session_state:
+        st.session_state.payment_validation_errors = []
+    if 'delete_payment_id' not in st.session_state:
+        st.session_state.delete_payment_id = None
+    if 'show_delete_confirm' not in st.session_state:
+        st.session_state.show_delete_confirm = False
     if 'payment_filter' not in st.session_state:
         st.session_state.payment_filter = {
             'time_filter': 'All Time',
@@ -254,15 +260,22 @@ def init_payment_state():
             'quarter': None
         }
 
+def reset_payment_form():
+    """Reset payment form state."""
+    st.session_state.show_payment_form = False
+    st.session_state.editing_payment_id = None
+    st.session_state.payment_form_data = {}
+    st.session_state.payment_validation_errors = []
+
 def show_payment_form(client_id: int, contract: Tuple):
     """Display the payment form for adding/editing payments."""
     from streamlit_extras.grid import grid
 
     # Header and initial setup
-    st.subheader("Add Payment" if st.session_state.editing_payment_id == 0 else "Edit Payment")
+    st.subheader("Add Payment" if not st.session_state.editing_payment_id else "Edit Payment")
     
     # Load existing payment data if editing
-    if st.session_state.editing_payment_id and st.session_state.editing_payment_id != 0:
+    if st.session_state.editing_payment_id:
         payment_data = get_payment_by_id(st.session_state.editing_payment_id)
         current_payment = payment_data if payment_data else None
     else:
@@ -276,6 +289,13 @@ def show_payment_form(client_id: int, contract: Tuple):
     schedule = contract[3].lower() if contract[3] else ""
     is_monthly = schedule == "monthly"
     period_label = "Month" if is_monthly else "Quarter"
+
+    # Show validation errors if any
+    if st.session_state.payment_validation_errors:
+        for error in st.session_state.payment_validation_errors:
+            st.error(error)
+        # Clear errors after displaying
+        st.session_state.payment_validation_errors = []
 
     # Create a centered container for the form
     col1, col2, col3 = st.columns([1, 3, 1])
@@ -498,24 +518,29 @@ def show_payment_form(client_id: int, contract: Tuple):
         # Validate and save
         validation_errors = validate_payment_data(form_data)
         if validation_errors:
-            for error in validation_errors:
-                st.error(error)
+            st.session_state.payment_validation_errors = validation_errors
+            st.rerun()
         else:
-            if st.session_state.editing_payment_id and st.session_state.editing_payment_id != 0:
+            if st.session_state.editing_payment_id:
                 success = update_payment(st.session_state.editing_payment_id, form_data)
                 if success:
                     st.success("Payment updated successfully!")
-                    st.session_state.editing_payment_id = None
+                    reset_payment_form()
+                    st.rerun()
+                else:
+                    st.error("Failed to update payment")
             else:
                 payment_id = add_payment(client_id, form_data)
                 if payment_id:
                     st.success("Payment added successfully!")
-                    st.session_state.editing_payment_id = None
+                    reset_payment_form()
+                    st.rerun()
                 else:
                     st.error("Failed to add payment. Please try again.")
 
     if cancelled:
-        st.session_state.editing_payment_id = None
+        reset_payment_form()
+        st.rerun()
 
 def display_contract_info(contract: Tuple):
     """Display contract information above the payment form."""
@@ -539,14 +564,6 @@ def display_contract_info(contract: Tuple):
 
 def show_payment_history(client_id: int):
     """Display the payment history table with filtering options."""
-    # Initialize filter state if needed
-    if 'payment_filter' not in st.session_state:
-        st.session_state.payment_filter = {
-            'time_filter': 'All Time',
-            'year': datetime.now().year,
-            'quarter': None
-        }
-    
     # Get active contract first
     contract = get_active_contract(client_id)
     
@@ -583,8 +600,17 @@ def show_payment_history(client_id: int):
         if not contract or not contract[3]:
             st.error("Payment schedule must be set in the contract before adding payments.")
         else:
-            if st.button("Add Payment", type="primary", use_container_width=True):
-                st.session_state.editing_payment_id = 0  # 0 indicates new payment
+            def show_add_payment_form():
+                st.session_state.show_payment_form = True
+                st.session_state.editing_payment_id = None
+                st.session_state.payment_form_data = {}
+
+            st.button(
+                "Add Payment", 
+                type="primary", 
+                use_container_width=True,
+                on_click=show_add_payment_form
+            )
 
     with right_col:
         filter_text = (
@@ -672,66 +698,78 @@ def display_payment_table(payments: list):
             # Notes column
             with cols[-2]:
                 if payment['Notes']:
-                    if st.button("🟢", key=f"note_{payment['payment_id']}", help=payment['Notes']):
-                        st.session_state.editing_note_id = payment['payment_id']
+                    st.markdown(f"<p title='{payment['Notes']}'>🟢</p>", unsafe_allow_html=True)
                 else:
-                    if st.button("◯", key=f"note_{payment['payment_id']}", help="Add note"):
-                        st.session_state.editing_note_id = payment['payment_id']
+                    st.markdown("<p>◯</p>", unsafe_allow_html=True)
             
             # Actions column
             with cols[-1]:
                 action_cols = st.columns([1, 1])
                 with action_cols[0]:
-                    if st.button("✏️", key=f"edit_{payment['payment_id']}", help="Edit payment"):
-                        st.session_state.editing_payment_id = payment['payment_id']
+                    def edit_payment(payment_id):
+                        st.session_state.show_payment_form = True
+                        st.session_state.editing_payment_id = payment_id
+                        # Load payment data for editing
+                        payment_data = get_payment_by_id(payment_id)
+                        if payment_data:
+                            st.session_state.payment_form_data = {
+                                'received_date': payment_data[0],
+                                'total_assets': payment_data[5],
+                                'actual_fee': payment_data[6],
+                                'method': payment_data[7],
+                                'notes': payment_data[8]
+                            }
+
+                    st.button(
+                        "✏️",
+                        key=f"edit_payment_{payment['payment_id']}_{datetime.now().strftime('%Y%m%d')}",
+                        help="Edit payment",
+                        on_click=lambda: edit_payment(payment['payment_id'])
+                    )
                 
                 with action_cols[1]:
-                    if st.button("🗑️", key=f"delete_{payment['payment_id']}", help="Delete payment"):
-                        st.session_state.delete_confirm_id = payment['payment_id']
-            
-            # Show note editor if active
-            if getattr(st.session_state, 'editing_note_id', None) == payment['payment_id']:
-                with st.container():
-                    st.markdown("<div style='border-top: 1px solid #eee; padding-top: 0.5rem;'></div>", unsafe_allow_html=True)
-                    note_cols = st.columns([4, 12, 1])
-                    with note_cols[1]:
-                        edited_note = st.text_area(
-                            f"Note for {payment['Provider']} - {payment['Period']}",
-                            value=payment['Notes'] or "",
-                            key=f"note_text_{payment['payment_id']}",
-                            height=100,
-                            placeholder="Enter note here..."
-                        )
-                        
-                        save_cols = st.columns([6, 2, 2])
-                        with save_cols[1]:
-                            if st.button("Save", key=f"save_note_{payment['payment_id']}", type="primary"):
-                                if update_payment_note(payment['payment_id'], edited_note):
-                                    payment['Notes'] = edited_note  # Update in current data
-                                    st.session_state.editing_note_id = None
-                                    st.success("Note updated successfully!")
-                                else:
-                                    st.error("Failed to update note")
-                        with save_cols[2]:
-                            if st.button("Cancel", key=f"cancel_note_{payment['payment_id']}"):
-                                st.session_state.editing_note_id = None
+                    def delete_payment_confirm(payment_id):
+                        st.session_state.delete_payment_id = payment_id
+                        st.session_state.show_delete_confirm = True
+
+                    st.button(
+                        "🗑️",
+                        key=f"delete_payment_{payment['payment_id']}_{datetime.now().strftime('%Y%m%d')}",
+                        help="Delete payment",
+                        on_click=lambda: delete_payment_confirm(payment['payment_id'])
+                    )
             
             # Show delete confirmation if active
-            if getattr(st.session_state, 'delete_confirm_id', None) == payment['payment_id']:
+            if st.session_state.show_delete_confirm and st.session_state.delete_payment_id == payment['payment_id']:
                 with st.container():
                     confirm_cols = st.columns([6, 2, 2])
                     with confirm_cols[0]:
                         st.warning(f"Delete this payment for {payment['Period']}?")
                     with confirm_cols[1]:
-                        if st.button("Yes, Delete", key=f"confirm_delete_{payment['payment_id']}", type="primary"):
-                            if delete_payment(payment['payment_id']):
+                        def confirm_delete(payment_id):
+                            if delete_payment(payment_id):
                                 st.success("Payment deleted successfully!")
-                                st.session_state.delete_confirm_id = None
+                                st.session_state.delete_payment_id = None
+                                st.session_state.show_delete_confirm = False
                             else:
                                 st.error("Failed to delete payment")
+
+                        st.button(
+                            "Yes, Delete",
+                            key=f"confirm_delete_payment_{payment['payment_id']}_{datetime.now().strftime('%Y%m%d')}",
+                            type="primary",
+                            on_click=lambda: confirm_delete(payment['payment_id'])
+                        )
                     with confirm_cols[2]:
-                        if st.button("Cancel", key=f"cancel_delete_{payment['payment_id']}"):
-                            st.session_state.delete_confirm_id = None
+                        def cancel_delete():
+                            st.session_state.delete_payment_id = None
+                            st.session_state.show_delete_confirm = False
+
+                        st.button(
+                            "Cancel",
+                            key=f"cancel_delete_payment_{payment['payment_id']}_{datetime.now().strftime('%Y%m%d')}",
+                            on_click=cancel_delete
+                        )
     
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -756,8 +794,8 @@ def display_payments_section(client_id: int):
         st.error("Payment schedule must be set in the contract before adding payments.")
         return
     
-    # Show form or history based on editing state
-    if st.session_state.editing_payment_id is not None:
+    # Show form or history based on state
+    if st.session_state.show_payment_form:
         show_payment_form(client_id, contract)
     else:
         show_payment_history(client_id)
