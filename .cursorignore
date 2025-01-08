@@ -1,0 +1,16 @@
+# Add directories or file patterns to ignore during indexing (e.g. foo/ or *.csv)
+*.db
+Cursor_MemoryBank/Cursor_Changelog_and_Decisions.md
+Cursor_MemoryBank/Cursor_MUST_REMEMBER.md
+README/ReadMe_Project.md
+TEST_FILES/test_client_payments.py
+utils/ui_state_manager.py
+TEST_FILES/client_dashboard_LEGACY/
+TEST_FILES/client_dashboard_LEGACY/client_contact_layout.py
+TEST_FILES/client_dashboard_LEGACY/client_contact_management.py
+TEST_FILES/client_dashboard_LEGACY/client_contract_management.py
+TEST_FILES/client_dashboard_LEGACY/client_dashboard.py
+TEST_FILES/client_dashboard_LEGACY/client_payment_form.py
+TEST_FILES/client_dashboard_LEGACY/client_payment_management.py
+TEST_FILES/client_dashboard_LEGACY/client_selection.py
+IGNORE/
