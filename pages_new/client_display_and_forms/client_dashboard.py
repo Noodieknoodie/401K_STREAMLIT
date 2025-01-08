@@ -35,7 +35,6 @@ from .client_contacts import display_contacts_section
 from .client_contracts import display_contracts_section
 from .client_payments import display_payments_section
 from utils.utils import get_client_details
-from pages_new.components.document_viewer.DocumentViewer import render_document_viewer
 
 def init_dashboard_state():
     """Initialize dashboard-wide session state."""
@@ -55,8 +54,6 @@ def init_dashboard_state():
         st.session_state.show_contract_history = False
     if 'sidebar_state' not in st.session_state:
         st.session_state.sidebar_state = 'collapsed'
-    if 'split_mode' not in st.session_state:
-        st.session_state.split_mode = False
 
 def get_selected_client() -> Optional[Tuple]:
     """Get the currently selected client from the dropdown."""
@@ -74,15 +71,11 @@ def get_selected_client() -> Optional[Tuple]:
         .edit-contract-button {
             margin-top: -1rem;
         }
-        /* Style for the document viewer toggle */
-        div[data-testid="stCheckbox"] {
-            margin-bottom: 0 !important;
-        }
         </style>
     """, unsafe_allow_html=True)
     
     with st.container():
-        col1, col2, col3 = st.columns([6, 1, 1.5])
+        col1, col2 = st.columns([8, 2])
         
         with col1:
             # Get client list
@@ -109,11 +102,6 @@ def get_selected_client() -> Optional[Tuple]:
                     st.session_state.show_contract_form = True
                     st.session_state.contract_client_id = client_id
                     st.rerun()
-        
-        with col3:
-            st.checkbox("📄 Viewer", value=st.session_state.split_mode, 
-                       on_change=lambda: st.session_state.update({"split_mode": not st.session_state.split_mode}),
-                       help="Enable Document Viewer")
     
     if selected_name == "Select a client...":
         return None
@@ -134,16 +122,6 @@ def display_client_dashboard():
     
     # Initialize dashboard state
     init_dashboard_state()
-
-    # Add CSS for grid layout
-    if st.session_state.split_mode:
-        st.markdown("""
-            <style>
-            .stApp {
-                margin-right: 40% !important;
-            }
-            </style>
-        """, unsafe_allow_html=True)
     
     # Get selected client (this needs to run always)
     selected_client = get_selected_client()
@@ -161,10 +139,6 @@ def display_client_dashboard():
     display_contacts_section(client_id)
     st.markdown("<div style='margin: 1rem 0;'></div>", unsafe_allow_html=True)
     display_payments_section(client_id)
-
-    # Render document viewer if split mode is enabled
-    if st.session_state.split_mode:
-        render_document_viewer()
 
     # Log performance metrics
     end_time = time.time()

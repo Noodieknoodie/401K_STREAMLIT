@@ -3,20 +3,23 @@ from typing import Dict, List, Optional, Union, Sequence
 import numpy as np
 from datetime import datetime
 
-def calculate_current_quarter() -> int:
+def calculate_current_quarter() -> tuple:
     """Calculate current collection quarter based on arrears.
     For arrears, we collect for the previous quarter.
     
     Returns:
-        int: Previous quarter (1-4) that we are currently collecting for
+        tuple: (quarter, year) where:
+            quarter: Previous quarter (1-4) that we are currently collecting for
+            year: Year of the quarter we are collecting for
     """
     current_month = datetime.now().month
+    current_year = datetime.now().year
     current_quarter = (current_month - 1) // 3 + 1
     
     # In arrears, we collect for the previous quarter
     if current_quarter == 1:
-        return 4  # If we're in Q1, we're collecting for Q4 of previous year
-    return current_quarter - 1  # Otherwise collecting for previous quarter
+        return 4, current_year - 1  # If we're in Q1, we're collecting for Q4 of previous year
+    return current_quarter - 1, current_year  # Otherwise collecting for previous quarter
 
 def get_default_year() -> int:
     """Get default year based on current quarter.

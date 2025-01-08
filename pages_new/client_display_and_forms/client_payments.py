@@ -706,25 +706,42 @@ def display_payment_table(payments: list):
             with cols[-1]:
                 action_cols = st.columns([1, 1])
                 with action_cols[0]:
-                    def edit_payment(payment_id):
+                    def set_payment_to_edit(payment_id):
                         st.session_state.show_payment_form = True
                         st.session_state.editing_payment_id = payment_id
                         # Load payment data for editing
                         payment_data = get_payment_by_id(payment_id)
                         if payment_data:
+                            # Convert quarters to months if monthly schedule
+                            schedule = payment_data[9].lower() if payment_data[9] else ""
+                            if schedule == "monthly":
+                                # Convert quarters back to months
+                                start_period = (payment_data[1] - 1) * 3 + 1
+                                end_period = (payment_data[3] - 1) * 3 + 3 if payment_data[3] else start_period
+                            else:
+                                # Keep as quarters
+                                start_period = payment_data[1]
+                                end_period = payment_data[3] if payment_data[3] else start_period
+
                             st.session_state.payment_form_data = {
                                 'received_date': payment_data[0],
+                                'applied_start_period': start_period,
+                                'applied_start_year': payment_data[2],
+                                'applied_end_period': end_period,
+                                'applied_end_year': payment_data[4],
                                 'total_assets': payment_data[5],
                                 'actual_fee': payment_data[6],
                                 'method': payment_data[7],
-                                'notes': payment_data[8]
+                                'notes': payment_data[8],
+                                'payment_schedule': payment_data[9]
                             }
 
                     st.button(
                         "✏️",
                         key=f"edit_payment_{payment['payment_id']}_{datetime.now().strftime('%Y%m%d')}",
                         help="Edit payment",
-                        on_click=lambda: edit_payment(payment['payment_id'])
+                        on_click=set_payment_to_edit,
+                        args=(payment['payment_id'],)
                     )
                 
                 with action_cols[1]:
@@ -736,7 +753,8 @@ def display_payment_table(payments: list):
                         "🗑️",
                         key=f"delete_payment_{payment['payment_id']}_{datetime.now().strftime('%Y%m%d')}",
                         help="Delete payment",
-                        on_click=lambda: delete_payment_confirm(payment['payment_id'])
+                        on_click=delete_payment_confirm,
+                        args=(payment['payment_id'],)
                     )
             
             # Show delete confirmation if active

@@ -287,9 +287,9 @@ def show_main_summary():
         )
     
     with controls_cols[1]:
-        current_quarter = calculate_current_quarter()
+        current_quarter, display_year = calculate_current_quarter()
         st.markdown(
-            f'<div class="info-banner">Currently collecting Q{current_quarter} {datetime.now().year} payments</div>',
+            f'<div class="info-banner">Currently collecting Q{current_quarter} {display_year} payments</div>',
             unsafe_allow_html=True
         )
 
