@@ -555,54 +555,9 @@ def show_main_summary():
         cols[5].button(format_currency(row["Total"]), key=f"total_{row['Client']}", disabled=True)
         
         if row['Client'] in st.session_state.expanded_rows:
-            # Show expanded metrics in four columns
+            # Show expanded metrics in two rows of four columns each
+            # First row
             col1, col2, col3, col4 = st.columns(4)
-            
-            # Column 1: Contract & Provider Info
-            with col1:
-                st.metric(
-                    "Contract Details",
-                    f"{row['_provider']}",
-                    f"Contract #{row['_contract_number']}",
-                    help="Provider and contract number"
-                )
-            
-            # Column 2: Payment Structure
-            with col2:
-                payment_info = f"{row['_schedule'].title()}"
-                rate_info = f"{row['_rate']*100:.1f}%" if row['_fee_type'] == 'percentage' else format_currency(row['_rate'])
-                st.metric(
-                    "Payment Structure",
-                    f"{row['_fee_type'].title()} Rate: {rate_info}",
-                    payment_info,
-                    help="Fee type, rate, and payment schedule"
-                )
-            
-            # Column 3: Performance
-            with col3:
-                yoy_change = row['YoY Change']
-                trend_icon = "↗️" if yoy_change > 0 else "↘️" if yoy_change < 0 else "➡️"
-                st.metric(
-                    "Performance",
-                    format_currency(row['Total']),
-                    f"{trend_icon} {yoy_change:+.1f}% YoY" if yoy_change is not None else "No prior year data",
-                    help="Total revenue and year-over-year change"
-                )
-            
-            # Column 4: Plan Stats
-            with col4:
-                aum_display = format_currency(row['_aum']) if row['_aum'] and row['_aum'] != 'N/A' else 'N/A'
-                participants = row['_participants'] if row['_participants'] and row['_participants'] != 'N/A' else 'N/A'
-                st.metric(
-                    "Plan Statistics",
-                    f"{participants} participants",
-                    f"AUM: {aum_display}",
-                    help="Number of participants and Assets Under Management"
-                )
-            
-            # Add payment status information
-            st.markdown("<div style='margin: 0.5rem 0;'></div>", unsafe_allow_html=True)
-            status_col1, status_col2, status_col3, status_col4 = st.columns(4)
             
             # Get current quarter payment status
             current_quarter, current_year = calculate_current_quarter()
@@ -620,8 +575,8 @@ def show_main_summary():
                 if client_status:
                     break
             
-            # Payment Status
-            with status_col1:
+            # 1. Quarter Status
+            with col1:
                 status_icon = "✅" if client_status == 'complete' else "⚠️" if client_status == 'partial' else "❌"
                 status_text = client_status.title() if client_status else "Unknown"
                 st.metric(
@@ -631,27 +586,8 @@ def show_main_summary():
                     help="Payment status for current quarter"
                 )
             
-            # Expected vs Received
-            with status_col2:
-                if client_payment:
-                    expected = format_currency(client_payment['expected']) if client_payment['expected'] else 'N/A'
-                    received = format_currency(client_payment['received']) if client_payment['received'] else '$0.00'
-                    st.metric(
-                        "Expected vs Received",
-                        received,
-                        f"Expected: {expected}",
-                        help="Expected and received amounts for current quarter"
-                    )
-                else:
-                    st.metric(
-                        "Expected vs Received",
-                        "N/A",
-                        "No data available",
-                        help="Expected and received amounts for current quarter"
-                    )
-            
-            # Payment Schedule Progress
-            with status_col3:
+            # 2. Payment Progress
+            with col2:
                 if client_payment:
                     schedule = client_payment['schedule']
                     expected_count = 3 if schedule == 'monthly' else 1
@@ -670,25 +606,92 @@ def show_main_summary():
                         help="Number of payments received vs expected for the quarter"
                     )
             
-            # Historical Compliance
-            with status_col4:
-                # Calculate compliance rate from previous quarters
-                total_quarters = sum(1 for q in [row['Q1'], row['Q2'], row['Q3'], row['Q4']] if q > 0)
-                if total_quarters > 0:
-                    compliance_rate = f"{(total_quarters / 4) * 100:.0f}%"
-                    st.metric(
-                        "Payment History",
-                        compliance_rate,
-                        f"{total_quarters}/4 quarters",
-                        help="Percentage of quarters with payments received this year"
-                    )
-                else:
-                    st.metric(
-                        "Payment History",
-                        "N/A",
-                        "No historical data",
-                        help="Percentage of quarters with payments received this year"
-                    )
+            # 3. Provider
+            with col3:
+                st.metric(
+                    "Provider",
+                    row['_provider'],
+                    f"Contract #{row['_contract_number']}",
+                    help="Service provider"
+                )
+            
+            # 4. Participants
+            with col4:
+                participants = row['_participants'] if row['_participants'] and row['_participants'] != 'N/A' else 'N/A'
+                st.metric(
+                    "Participants",
+                    str(participants),
+                    "Active Plan",
+                    help="Number of plan participants"
+                )
+
+            # Second row
+            st.markdown("<div style='margin: 0.5rem 0;'></div>", unsafe_allow_html=True)
+            col1, col2, col3, col4 = st.columns(4)
+            
+            # 5. Rate
+            with col1:
+                rate_value = 'N/A'
+                rate_type = None
+                if row['_rate'] is not None:
+                    if row['_fee_type'] == 'percentage':
+                        rate_value = f"{row['_rate']*100:.3f}%"
+                        rate_type = "Percentage Rate"
+                    elif row['_fee_type'] == 'flat':
+                        rate_value = format_currency(row['_rate'])
+                        rate_type = "Flat Rate"
+                
+                st.metric(
+                    "Rate",
+                    rate_value,
+                    rate_type or "Not Set",
+                    help="Contract rate"
+                )
+            
+            # 6. Payment Schedule
+            with col2:
+                schedule = row['_schedule'].title() if row['_schedule'] else 'N/A'
+                st.metric(
+                    "Payment Schedule",
+                    schedule,
+                    "Payment Frequency",
+                    help="Payment frequency"
+                )
+            
+            # 7. Last Payment
+            with col3:
+                # Find last payment
+                last_payment = None
+                last_payment_date = None
+                for q in ['Q4', 'Q3', 'Q2', 'Q1']:
+                    if row[q] > 0:
+                        last_payment = row[q]
+                        last_payment_date = f"{q} {selected_year}"
+                        break
+                
+                st.metric(
+                    "Last Payment",
+                    format_currency(last_payment) if last_payment else 'No payments',
+                    last_payment_date or "No payment history",
+                    help="Most recent payment received"
+                )
+            
+            # 8. Last Recorded AUM
+            with col4:
+                aum_display = format_currency(row['_aum']) if row['_aum'] and row['_aum'] != 'N/A' else 'N/A'
+                # Calculate quarter of last AUM update
+                last_aum_quarter = None
+                for q in ['Q4', 'Q3', 'Q2', 'Q1']:
+                    if row[q] > 0 and row['_aum'] and row['_aum'] != 'N/A':
+                        last_aum_quarter = f"{q} {selected_year}"
+                        break
+                
+                st.metric(
+                    "Last Recorded AUM",
+                    aum_display,
+                    last_aum_quarter or "No AUM history",
+                    help="Most recent Assets Under Management"
+                )
     
     st.markdown('</div>', unsafe_allow_html=True)  # Close table-rows
     st.markdown('</div>', unsafe_allow_html=True)  # Close table-container
