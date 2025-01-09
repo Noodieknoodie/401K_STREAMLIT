@@ -122,10 +122,43 @@ def display_client_dashboard():
             margin-right: 0 !important;
         }
         .document-viewer {
-            transition: width 0.3s ease-in-out;
+            transition: all 0.3s ease-in-out;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 0;
+            height: 100vh;
+            background: #f0f2f6;
+            border-left: 1px solid #ddd;
+            padding: 0;
+            box-sizing: border-box;
+            z-index: 1000;
+            overflow: hidden;
+            opacity: 0;
+        }
+        .document-viewer.active {
+            width: 40%;
+            padding: 1rem;
+            opacity: 1;
         }
         </style>
     """, unsafe_allow_html=True)
+    
+    # Document viewer overlay
+    st.markdown(
+        f"""
+        <div class="document-viewer{' active' if st.session_state.split_mode else ''}">
+            <div style="display: flex; height: 100%; align-items: center; justify-content: center; color: #666;">
+                <div style="text-align: center;">
+                    <h3>Document Viewer</h3>
+                    <p>Coming soon...</p>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    
     if st.session_state.split_mode:
         st.markdown("""
             <style>
