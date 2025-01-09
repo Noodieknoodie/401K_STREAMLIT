@@ -21,9 +21,11 @@ from utils.utils import (
     get_clients,
     get_payment_history,
     format_currency_ui,
+)
+from pages_new.main_summary.summary_data import (
+    get_summary_year_data,
     get_available_years
 )
-from pages_new.main_summary.summary_data import get_summary_year_data
 
 def format_excel_workbook(writer: pd.ExcelWriter, df: pd.DataFrame, sheet_name: str) -> None:
     """Apply consistent Excel formatting exactly matching the app display."""
@@ -125,6 +127,7 @@ def create_quarterly_summary_df(year_data: Dict[str, Any]) -> pd.DataFrame:
             row = {
                 'Client': quarterly['name'],
                 'Provider': quarterly.get('provider', 'N/A'),
+                'Participants': metrics.get('avg_participants', 'N/A'),                
                 'Contract #': quarterly.get('contract_number', 'N/A'),
                 'Fee Type': quarterly.get('fee_type', 'N/A').title(),
                 'Rate': quarterly.get('rate', 0),
@@ -133,9 +136,6 @@ def create_quarterly_summary_df(year_data: Dict[str, Any]) -> pd.DataFrame:
                 'Q3': quarterly.get('Q3', 0),
                 'Q4': quarterly.get('Q4', 0),
                 'Total': metrics['total_fees'],
-                'YoY Change': metrics.get('yoy_growth', 0),
-                'Participants': metrics.get('avg_participants', 'N/A'),
-                'Avg AUM': metrics.get('avg_aum', 0)
             }
             rows.append(row)
         return pd.DataFrame(rows)
@@ -152,12 +152,11 @@ def create_client_payments_df(payments: List[tuple]) -> pd.DataFrame:
                 'Provider': payment[0] or "N/A",
                 'Period Start': f"Q{payment[1]} {payment[2]}",
                 'Period End': f"Q{payment[3]} {payment[4]}",
-                'Schedule': payment[5].title() if payment[5] else "N/A",
+                'Method': payment[5].title() if payment[5] else "N/A",
                 'Date Received': payment[6],
                 'Total Assets': payment[7] or 0,
                 'Expected Fee': payment[8] or 0,
                 'Actual Fee': payment[9] or 0,
-                'Method': payment[12] or "N/A",
                 'Notes': payment[10] or ""
             }
             formatted_data.append(row)
@@ -186,34 +185,42 @@ def export_data(df: pd.DataFrame, filename: str, file_format: str) -> Optional[B
 
 def show_export_section():
     """Display the export interface."""
-    st.title("📥 Export Data")
+    # Create a centered container for all content
+    left_col, center_col, right_col = st.columns([1, 2, 1])
     
-    tab1, tab2 = st.tabs(["Quarterly Summary", "Client Payments"])
-    
-    with tab1:
-        available_years = get_available_years()
-        if not available_years:
-            st.info("No payment data available for export.")
-            return
-            
-        col1, col2, col3 = st.columns([1, 1, 2])
+    with center_col:
+        st.title("📥 Export Data")
         
-        with col1:
-            year = st.selectbox(
-                "Select Year",
-                options=available_years,
-                index=0
-            )
+        tab1, tab2 = st.tabs(["Quarterly Summary", "Client Payments"])
         
-        with col2:
-            format_type = st.selectbox(
-                "File Format",
-                options=["Excel", "CSV"],
-                index=0
-            )
+        with tab1:
+            available_years = get_available_years()
+            if not available_years:
+                st.info("No payment data available for export.")
+                return
+                
+            col1, col2 = st.columns([1, 1])
             
-        with col3:
-            if st.button("Generate Report", type="primary", use_container_width=True):
+            with col1:
+                year = st.selectbox(
+                    "Select Year",
+                    options=available_years,
+                    index=0,
+                    key="summary_year_select"
+                )
+            
+            with col2:
+                format_type = st.selectbox(
+                    "File Format",
+                    options=["Excel", "CSV"],
+                    index=0,
+                    key="summary_format_select"
+                )
+            
+            # Generate button in its own row
+            generate_clicked = st.button("Generate Report", type="primary", use_container_width=True, key="summary_generate_btn")
+            
+            if generate_clicked:
                 try:
                     with st.spinner("Generating report..."):
                         year_data = get_summary_year_data(year)
@@ -236,33 +243,40 @@ def show_export_section():
                             )
                 except Exception as e:
                     st.error(f"Error generating report: {str(e)}")
-    
-    with tab2:
-        clients = get_clients()
-        if not clients:
-            st.info("No clients available.")
-            return
+        
+        with tab2:
+            clients = get_clients()
+            if not clients:
+                st.info("No clients available.")
+                return
+                
+            col1, col2 = st.columns([1, 1])
             
-        col1, col2, col3 = st.columns([1, 1, 2])
-        
-        with col1:
-            client_names = ["Select a client..."] + [client[1] for client in clients]
-            selected_name = st.selectbox(
-                "Select Client",
-                options=client_names,
-                index=0
-            )
-        
-        with col2:
-            format_type = st.selectbox(
-                "File Format",
-                options=["Excel", "CSV"],
-                index=0,
-                key="client_export_format"
-            )
-        
-        with col3:
-            if selected_name != "Select a client..." and st.button("Generate Report", type="primary", use_container_width=True):
+            with col1:
+                client_names = ["Select a client..."] + [client[1] for client in clients]
+                selected_name = st.selectbox(
+                    "Select Client",
+                    options=client_names,
+                    index=0,
+                    key="client_select"
+                )
+            
+            with col2:
+                format_type = st.selectbox(
+                    "File Format",
+                    options=["Excel", "CSV"],
+                    index=0,
+                    key="client_format_select"
+                )
+            
+            # Generate button in its own row
+            generate_clicked = st.button("Generate Report", 
+                                       type="primary", 
+                                       use_container_width=True, 
+                                       key="client_generate_btn",
+                                       disabled=(selected_name == "Select a client..."))
+            
+            if generate_clicked:
                 try:
                     with st.spinner("Generating report..."):
                         client_id = next(
@@ -293,14 +307,7 @@ def show_export_section():
 
 def show_export_data():
     """Main entry point for the export functionality."""
-    print("Export tab loaded!")  # Debug print
-    st.write("Export module loaded successfully!")  # Visual debug
     show_export_section()
 
 if __name__ == "__main__":
-    st.set_page_config(
-        page_title="Export Data",
-        page_icon="📥",
-        layout="wide"
-    )
     show_export_data()
