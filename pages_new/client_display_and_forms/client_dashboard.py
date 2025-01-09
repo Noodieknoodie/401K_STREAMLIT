@@ -29,12 +29,12 @@ import streamlit as st
 from typing import Optional, Tuple
 import time
 
-from utils.utils import get_clients, get_client_details
-from pages.main_summary.summary_data import get_summary_year_data
-from pages.client_display_and_forms.client_metrics import show_client_metrics
-from pages.client_display_and_forms.client_contacts import display_contacts_section
-from pages.client_display_and_forms.client_contracts import display_contracts_section
-from pages.client_display_and_forms.client_payments import display_payments_section
+from utils.utils import get_clients
+from .client_metrics import show_client_metrics
+from .client_contacts import display_contacts_section
+from .client_contracts import display_contracts_section
+from .client_payments import display_payments_section
+from utils.utils import get_client_details
 
 
 def init_dashboard_state():
@@ -149,7 +149,6 @@ def display_client_dashboard():
 
 
 def show_client_dashboard():
-    """Display the client dashboard."""
     display_client_dashboard()
 
 if __name__ == "__main__":
@@ -158,5 +157,5 @@ if __name__ == "__main__":
         page_icon="👥",
         layout="wide"
     )
-    show_client_dashboard()
+    display_client_dashboard()
 
