@@ -1,14 +1,19 @@
 # summary.py
 import streamlit as st
 import pandas as pd
-import altair as alt
 from datetime import datetime
+
+from utils.utils import get_database_connection
 from .summary_data import get_summary_year_data, get_available_years
+from .quarter_tracker import show_quarter_tracker
 from .summary_utils import (
-    calculate_current_quarter, get_default_year,
-    format_currency, format_growth, calculate_trend_direction,
-    calculate_sparkline_data
+    calculate_current_quarter,
+    get_default_year,
+    format_growth,
+    format_currency
 )
+import altair as alt
+import plotly.graph_objects as go
 from streamlit_extras.metric_cards import style_metric_cards
 
 def render_metrics_section(summary_data: dict) -> None:
@@ -161,13 +166,13 @@ def create_client_dataframe(summary_data: dict) -> pd.DataFrame:
         metrics = summary_data['client_metrics'][client_id]
         row = {
             'Client': quarterly['name'],
+            'ClientId': client_id,  # Add client_id to the DataFrame
             'Q1': quarterly.get('Q1', 0),
             'Q2': quarterly.get('Q2', 0),
             'Q3': quarterly.get('Q3', 0),
             'Q4': quarterly.get('Q4', 0),
             'Total': metrics['total_fees'],
             'YoY Change': metrics.get('yoy_growth', 0),
-            # Store additional data for expansion
             '_provider': quarterly.get('provider', 'N/A'),
             '_contract_number': quarterly.get('contract_number', 'N/A'),
             '_schedule': quarterly.get('schedule', 'N/A'),
@@ -179,11 +184,62 @@ def create_client_dataframe(summary_data: dict) -> pd.DataFrame:
         rows.append(row)
     return pd.DataFrame(rows)
 
+def create_revenue_sparkline(q1, q2, q3, q4):
+    """Create a compact revenue sparkline."""
+    quarters = ['Q1', 'Q2', 'Q3', 'Q4']
+    values = [q1, q2, q3, q4]
+    
+    fig = go.Figure()
+    
+    # Add the sparkline
+    fig.add_trace(go.Scatter(
+        x=quarters,
+        y=values,
+        mode='lines+markers',
+        line=dict(color='#0068C9', width=2),
+        marker=dict(
+            color='#0068C9',
+            size=6,
+        ),
+    ))
+    
+    # Clean minimal layout
+    fig.update_layout(
+        height=100,  # Much shorter height
+        margin=dict(l=0, r=0, t=0, b=0, pad=0),  # Remove all margins
+        paper_bgcolor='rgba(0,0,0,0)',  # Transparent background
+        plot_bgcolor='rgba(0,0,0,0)',   # Transparent plot area
+        showlegend=False,
+        xaxis=dict(
+            showgrid=False,
+            zeroline=False,
+            showline=False,
+            showticklabels=True,
+            tickfont=dict(size=10)
+        ),
+        yaxis=dict(
+            showgrid=False,
+            zeroline=False,
+            showline=False,
+            showticklabels=False  # Hide Y axis labels for cleaner look
+        ),
+    )
+    
+    return fig
+
 def show_main_summary():
-    """Display the main summary page."""
+    """Display the main summary page with navigation capabilities."""
     if 'expanded_rows' not in st.session_state:
         st.session_state.expanded_rows = set()
         
+    # Show quarter tracker in sidebar
+    try:
+        show_quarter_tracker()
+    except Exception as e:
+        st.sidebar.error("Error loading payment tracker. Please try refreshing the page.")
+        st.sidebar.exception(e)
+    
+    # Add navigation styles
     st.markdown("""
         <style>
         .section-header {
@@ -356,47 +412,28 @@ def show_main_summary():
         cols[5].button(format_currency(row["Total"]), key=f"total_{row['Client']}", disabled=True)
         
         if row['Client'] in st.session_state.expanded_rows:
-            with st.expander("", expanded=True):
-                detail_cols = st.columns(3)
+            st.markdown("---")  # Subtle separator
+            
+            # Metrics in a slightly indented container
+            with st.container():
+                st.markdown("&nbsp;&nbsp;**Quick Stats:**")  # Indented header
+                col1, col2, col3, col4 = st.columns([2, 2, 2, 1])  # Add column for nav
                 
-                with detail_cols[0]:
-                    st.metric(
-                        "Total Revenue",
-                        format_currency(row['Total']),
-                        format_growth(row['YoY Change'])
-                    )
-                
-                with detail_cols[1]:
-                    st.metric(
-                        "Contract Details",
-                        f"{row['_fee_type'].title()}",
-                        f"{row['_rate']*100:.1f}%" if row['_fee_type'] == 'percentage' else format_currency(row['_rate'])
-                    )
-                
-                with detail_cols[2]:
-                    st.metric(
-                        "Participants",
-                        str(row['_participants']),
-                        f"AUM: {format_currency(row['_aum'])}"
-                    )
-                
-                # Quarterly trend chart
-                quarterly_data = pd.DataFrame({
-                    'Quarter': ['Q1', 'Q2', 'Q3', 'Q4'],
-                    'Revenue': [row['Q1'], row['Q2'], row['Q3'], row['Q4']]
-                })
-                
-                trend_chart = alt.Chart(quarterly_data).mark_bar().encode(
-                    x=alt.X('Quarter:N', axis=alt.Axis(labelAngle=0)),
-                    y=alt.Y('Revenue:Q', axis=alt.Axis(format='$,.0f')),
-                    color=alt.value('#0068C9')
-                ).properties(
-                    height=180
-                ).configure_axis(
-                    grid=False
-                )
-                st.altair_chart(trend_chart, use_container_width=True)
+                with col1:
+                    st.metric("Total Revenue", format_currency(row['Total']), delta_color="normal", delta=f"{row['YoY Change']:+.1f}%")
+                with col2:
+                    st.metric("Contract Details", f"{row['_fee_type'].title()}", f"{row['_rate']*100:.1f}%" if row['_fee_type'] == 'percentage' else format_currency(row['_rate']))
+                with col3:
+                    st.metric("Participants", str(row['_participants']), delta="AUM: N/A")
+                with col4:
+                    st.markdown("&nbsp;")  # Spacing
+                    if st.button("🔍 Details", key=f"nav_{row['ClientId']}", type="primary", use_container_width=True):
+                        st.session_state.client_selector_dashboard = row['Client']
+                        st.rerun()
+                st.markdown("---")  # Subtle separator
     
     st.markdown('</div>', unsafe_allow_html=True)  # Close table-rows
+    st.markdown('</div>', unsafe_allow_html=True)  # Close table-container
+    st.markdown('</div>', unsafe_allow_html=True)  # Close section-container
     st.markdown('</div>', unsafe_allow_html=True)  # Close table-container
     st.markdown('</div>', unsafe_allow_html=True)  # Close section-container

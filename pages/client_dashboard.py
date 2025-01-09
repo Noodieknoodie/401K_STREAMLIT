@@ -29,15 +29,15 @@ import streamlit as st
 from typing import Optional, Tuple
 import time
 
-from utils.utils import get_clients
-from .client_metrics import show_client_metrics
-from .client_contacts import display_contacts_section
-from .client_contracts import display_contracts_section
-from .client_payments import display_payments_section
-from utils.utils import get_client_details
+from utils.utils import get_clients, get_client_details
+from pages.main_summary.summary_data import get_summary_year_data
+from pages.client_display_and_forms.client_metrics import show_client_metrics
+from pages.client_display_and_forms.client_contacts import display_contacts_section
+from pages.client_display_and_forms.client_contracts import display_contracts_section
+from pages.client_display_and_forms.client_payments import display_payments_section
+
 
 def init_dashboard_state():
-    """Initialize dashboard-wide session state."""
     if 'client_selector_dashboard' not in st.session_state:
         st.session_state.client_selector_dashboard = None
     if 'previous_client' not in st.session_state:
@@ -54,10 +54,10 @@ def init_dashboard_state():
         st.session_state.show_contract_history = False
     if 'sidebar_state' not in st.session_state:
         st.session_state.sidebar_state = 'collapsed'
+    if 'split_mode' not in st.session_state:
+        st.session_state.split_mode = False
 
 def get_selected_client() -> Optional[Tuple]:
-    """Get the currently selected client from the dropdown."""
-    # Client selector with edit button container
     st.markdown("""
         <style>
         .client-select-container {
@@ -71,20 +71,18 @@ def get_selected_client() -> Optional[Tuple]:
         .edit-contract-button {
             margin-top: -1rem;
         }
+        div[data-testid="stCheckbox"] {
+            margin-bottom: 0 !important;
+        }
         </style>
     """, unsafe_allow_html=True)
-    
     with st.container():
-        col1, col2 = st.columns([8, 2])
-        
+        col1, col2, col3 = st.columns([6, 1, 1.5])
         with col1:
-            # Get client list
             clients = get_clients()
             if not clients:
                 st.error("No clients found in the database")
                 return None
-            
-            # Create selection box
             client_names = ["Select a client..."] + [client[1] for client in clients]
             selected_name = st.selectbox(
                 "🔍 Search or select a client",
@@ -92,7 +90,6 @@ def get_selected_client() -> Optional[Tuple]:
                 key='client_selector_dashboard',
                 label_visibility="collapsed"
             )
-        
         with col2:
             if selected_name != "Select a client...":
                 if st.button("✏️", key="edit_contract", help="Manage Contract", use_container_width=True):
@@ -102,36 +99,46 @@ def get_selected_client() -> Optional[Tuple]:
                     st.session_state.show_contract_form = True
                     st.session_state.contract_client_id = client_id
                     st.rerun()
-    
+        with col3:
+            st.checkbox(
+                "📄 Viewer",
+                value=st.session_state.split_mode,
+                on_change=lambda: st.session_state.update({"split_mode": not st.session_state.split_mode}),
+                help="Enable Document Viewer"
+            )
     if selected_name == "Select a client...":
         return None
-        
-    # Reset data when client changes
     if st.session_state.previous_client != selected_name:
         st.session_state.previous_client = selected_name
-    
-    # Get selected client data
-    return next(
-        (client for client in clients if client[1] == selected_name),
-        None
-    )
+    return next((client for client in clients if client[1] == selected_name), None)
 
 def display_client_dashboard():
-    """Main dashboard display function."""
     start_time = time.time()
-    
-    # Initialize dashboard state
     init_dashboard_state()
-    
-    # Get selected client (this needs to run always)
+    st.markdown("""
+        <style>
+        .stApp {
+            transition: margin-right 0.3s ease-in-out;
+            margin-right: 0 !important;
+        }
+        .document-viewer {
+            transition: width 0.3s ease-in-out;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    if st.session_state.split_mode:
+        st.markdown("""
+            <style>
+            .stApp {
+                margin-right: 40% !important;
+            }
+            </style>
+        """, unsafe_allow_html=True)
     selected_client = get_selected_client()
     if not selected_client:
         st.info("Please select a client to view their dashboard")
         return
-    
     client_id = selected_client[0]
-
-    # Display main content
     if st.session_state.show_contract_form:
         display_contracts_section(client_id)
     show_client_metrics(client_id)
@@ -140,13 +147,9 @@ def display_client_dashboard():
     st.markdown("<div style='margin: 1rem 0;'></div>", unsafe_allow_html=True)
     display_payments_section(client_id)
 
-    # Log performance metrics
-    end_time = time.time()
-    load_time = end_time - start_time
-    st.session_state.last_load_time = load_time
 
 def show_client_dashboard():
-    """Wrapper for display_client_dashboard to maintain backward compatibility with app.py"""
+    """Display the client dashboard."""
     display_client_dashboard()
 
 if __name__ == "__main__":
@@ -155,5 +158,5 @@ if __name__ == "__main__":
         page_icon="👥",
         layout="wide"
     )
-    display_client_dashboard()
+    show_client_dashboard()
 
