@@ -16,8 +16,6 @@ import numpy as np
 
 def render_metrics_section(summary_data: dict) -> None:
     """Render the top metrics section with enhanced measurements."""
-    st.markdown('<div class="section-header">Key Metrics</div>', unsafe_allow_html=True)
-    
     # Calculate all metrics first
     # Client stats
     total_clients = len(summary_data['quarterly_totals'])
@@ -154,14 +152,10 @@ def render_metrics_section(summary_data: dict) -> None:
 
 def render_charts(summary_data: dict) -> None:
     """Render the charts section with focused, actionable visualizations."""
-    st.markdown('<div class="section-header">Charts</div>', unsafe_allow_html=True)
-    
     # Create three columns for charts
     chart_col1, chart_col2, chart_col3 = st.columns(3)
     
     with chart_col1:
-        st.markdown("#### Provider Distribution")
-        
         # Group clients by provider and calculate total revenue
         provider_data = []
         for client_id, quarterly in summary_data['quarterly_totals'].items():
@@ -198,11 +192,8 @@ def render_charts(summary_data: dict) -> None:
             ).properties(height=300)
             
             st.altair_chart(provider_chart, use_container_width=True)
-            st.markdown("*Revenue by provider with client counts*")
     
     with chart_col2:
-        st.markdown("#### Quarterly Revenue Flow")
-        
         # Analyze quarterly revenue patterns
         quarter_data = []
         quarters = ['Q1', 'Q2', 'Q3', 'Q4']
@@ -284,11 +275,8 @@ def render_charts(summary_data: dict) -> None:
             chart = (bars + text).properties(height=300)
             
             st.altair_chart(chart, use_container_width=True)
-            st.markdown("*Quarterly revenue with payment size distribution*")
     
     with chart_col3:
-        st.markdown("#### AUM vs Participants")
-        
         # Create AUM vs Participants analysis
         client_metrics = []
         for client_id, metrics in summary_data['client_metrics'].items():
@@ -329,7 +317,6 @@ def render_charts(summary_data: dict) -> None:
             ).properties(height=300)
             
             st.altair_chart(scatter_chart, use_container_width=True)
-            st.markdown("*Relationship between AUM and participants*")
 
 def create_client_dataframe(summary_data: dict) -> pd.DataFrame:
     """Create a DataFrame for the client performance table."""
@@ -412,14 +399,8 @@ def show_main_summary():
         
     st.markdown("""
         <style>
-        .section-header {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: #ffffff;
-        }
         .section-spacer {
-            height: 2rem;
+            height: 1rem;  /* Reduced from 2rem */
         }
         .info-banner {
             background: rgba(38, 39, 48, 0.1);
@@ -523,22 +504,14 @@ def show_main_summary():
     summary_data = get_summary_year_data(selected_year)
     
     # Key Metrics section
-    st.markdown('<div class="section-container">', unsafe_allow_html=True)
     render_metrics_section(summary_data)
-    st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
     
     # Charts section
-    st.markdown('<div class="section-container">', unsafe_allow_html=True)
     render_charts(summary_data)
-    st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
-    
-    # Client Performance Table section
-    st.markdown('<div class="section-container">', unsafe_allow_html=True)
-    st.markdown('<div class="section-header">Client Performance</div>', unsafe_allow_html=True)
     
     # Table container
     st.markdown('<div class="table-container">', unsafe_allow_html=True)
@@ -719,4 +692,3 @@ def show_main_summary():
     
     st.markdown('</div>', unsafe_allow_html=True)  # Close table-rows
     st.markdown('</div>', unsafe_allow_html=True)  # Close table-container
-    st.markdown('</div>', unsafe_allow_html=True)  # Close section-container
