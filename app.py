@@ -13,7 +13,8 @@ tabs = st.tabs([
     "📊 Quarterly Summary",
     "👥 Client Dashboard", 
     "⚙️ Manage Clients",
-    "📝 Bulk Payment Entry"
+    "📝 Bulk Payment Entry",
+    "📊 Export Data"
 ])
 
 # Render the selected page based on tab
@@ -32,3 +33,12 @@ with tabs[2]:  # Manage Clients
 with tabs[3]:  # Bulk Payment Entry
     from pages_new.bulk_payment.bulk_entry import show_bulk_payment_entry
     show_bulk_payment_entry()
+
+with tabs[4]:  # Export Data
+    try:
+        from pages_new.document_export import show_export_data
+        show_export_data()
+    except Exception as e:
+        st.error(f"Error loading export module: {str(e)}")
+        st.error("Please check the console for more details.")
+    
