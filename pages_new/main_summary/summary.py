@@ -4,7 +4,7 @@ import pandas as pd
 import altair as alt
 from datetime import datetime
 from .summary_data import get_summary_year_data, get_available_years
-from .quarter_tracker import show_quarter_tracker
+from .quarter_tracker import show_quarter_tracker, get_period_payments
 from .summary_utils import (
     calculate_current_quarter, get_default_year,
     format_currency, format_growth, calculate_trend_direction,
@@ -12,6 +12,7 @@ from .summary_utils import (
 )
 from streamlit_extras.metric_cards import style_metric_cards
 import plotly.graph_objects as go
+import numpy as np
 
 def render_metrics_section(summary_data: dict) -> None:
     """Render the top metrics section with enhanced measurements."""
@@ -152,10 +153,184 @@ def render_metrics_section(summary_data: dict) -> None:
         )
 
 def render_charts(summary_data: dict) -> None:
-    """Render the charts section."""
+    """Render the charts section with focused, actionable visualizations."""
     st.markdown('<div class="section-header">Charts</div>', unsafe_allow_html=True)
     
+    # Create three columns for charts
+    chart_col1, chart_col2, chart_col3 = st.columns(3)
     
+    with chart_col1:
+        st.markdown("#### Provider Distribution")
+        
+        # Group clients by provider and calculate total revenue
+        provider_data = []
+        for client_id, quarterly in summary_data['quarterly_totals'].items():
+            provider = quarterly.get('provider', 'Unspecified')
+            revenue = summary_data['client_metrics'][client_id]['total_fees']
+            provider_data.append({
+                'Provider': provider,
+                'Revenue': revenue,
+                'Client': quarterly['name']
+            })
+        
+        if provider_data:
+            provider_df = pd.DataFrame(provider_data)
+            provider_summary = provider_df.groupby('Provider').agg({
+                'Revenue': 'sum',
+                'Client': 'count'
+            }).reset_index()
+            provider_summary = provider_summary.sort_values('Revenue', ascending=True)
+            
+            # Create horizontal bar chart
+            provider_chart = alt.Chart(provider_summary).mark_bar().encode(
+                y=alt.Y('Provider:N', 
+                       sort='-x',
+                       title=None),
+                x=alt.X('Revenue:Q',
+                       title='Revenue ($)',
+                       axis=alt.Axis(format='$,.0f')),
+                color=alt.Color('Provider:N', legend=None),
+                tooltip=[
+                    alt.Tooltip('Provider:N'),
+                    alt.Tooltip('Revenue:Q', format='$,.2f'),
+                    alt.Tooltip('Client:Q', title='Client Count')
+                ]
+            ).properties(height=300)
+            
+            st.altair_chart(provider_chart, use_container_width=True)
+            st.markdown("*Revenue by provider with client counts*")
+    
+    with chart_col2:
+        st.markdown("#### Quarterly Revenue Flow")
+        
+        # Analyze quarterly revenue patterns
+        quarter_data = []
+        quarters = ['Q1', 'Q2', 'Q3', 'Q4']
+        
+        # First pass: collect all quarterly revenues
+        all_quarterly_revenues = []
+        for client_id, quarterly in summary_data['quarterly_totals'].items():
+            for q in quarters:
+                if quarterly.get(q, 0) > 0:
+                    all_quarterly_revenues.append(quarterly[q])
+        
+        # Calculate quartiles for meaningful categorization
+        if all_quarterly_revenues:
+            q75 = np.percentile(all_quarterly_revenues, 75)
+            q25 = np.percentile(all_quarterly_revenues, 25)
+            
+            for q in quarters:
+                quarter_payments = []
+                for client_id, quarterly in summary_data['quarterly_totals'].items():
+                    amount = quarterly.get(q, 0)
+                    if amount > 0:
+                        size_category = "Large" if amount >= q75 else "Small" if amount <= q25 else "Medium"
+                        quarter_payments.append({
+                            'Quarter': q,
+                            'Amount': amount,
+                            'Size': size_category
+                        })
+                
+                if quarter_payments:
+                    # Calculate statistics for each quarter
+                    total = sum(p['Amount'] for p in quarter_payments)
+                    count = len(quarter_payments)
+                    quarter_data.append({
+                        'Quarter': q,
+                        'Total Revenue': total,
+                        'Payment Count': count,
+                        'Average Payment': total / count if count > 0 else 0,
+                        'Large Payments': sum(1 for p in quarter_payments if p['Size'] == 'Large'),
+                        'Medium Payments': sum(1 for p in quarter_payments if p['Size'] == 'Medium'),
+                        'Small Payments': sum(1 for p in quarter_payments if p['Size'] == 'Small')
+                    })
+        
+        if quarter_data:
+            quarter_df = pd.DataFrame(quarter_data)
+            
+            # Create a stacked bar chart with payment distribution
+            base = alt.Chart(quarter_df).encode(
+                x=alt.X('Quarter:N', title=None)
+            )
+            
+            # Stacked bars showing payment size distribution
+            bars = base.mark_bar().encode(
+                y=alt.Y('Total Revenue:Q',
+                       title='Revenue ($)',
+                       axis=alt.Axis(format='$,.0f')),
+                tooltip=[
+                    alt.Tooltip('Quarter:N'),
+                    alt.Tooltip('Total Revenue:Q', format='$,.2f'),
+                    alt.Tooltip('Payment Count:Q', title='Number of Payments'),
+                    alt.Tooltip('Average Payment:Q', format='$,.2f', title='Average Payment'),
+                    alt.Tooltip('Large Payments:Q', title='Large Payments (Top 25%)'),
+                    alt.Tooltip('Medium Payments:Q', title='Medium Payments'),
+                    alt.Tooltip('Small Payments:Q', title='Small Payments (Bottom 25%)')
+                ]
+            )
+            
+            # Add text labels for total revenue
+            text = base.mark_text(
+                align='center',
+                baseline='bottom',
+                dy=-5,
+                color='white'
+            ).encode(
+                y=alt.Y('Total Revenue:Q'),
+                text=alt.Text('Total Revenue:Q', format='$,.0f')
+            )
+            
+            # Combine the visualizations
+            chart = (bars + text).properties(height=300)
+            
+            st.altair_chart(chart, use_container_width=True)
+            st.markdown("*Quarterly revenue with payment size distribution*")
+    
+    with chart_col3:
+        st.markdown("#### AUM vs Participants")
+        
+        # Create AUM vs Participants analysis
+        client_metrics = []
+        for client_id, metrics in summary_data['client_metrics'].items():
+            quarterly = summary_data['quarterly_totals'][client_id]
+            if metrics.get('avg_aum', 0) > 0 and metrics.get('avg_participants', 0) > 0:
+                client_metrics.append({
+                    'Client': quarterly['name'],
+                    'AUM': metrics['avg_aum'],
+                    'Participants': metrics['avg_participants'],
+                    'Revenue': metrics['total_fees'],
+                    'Fee Type': quarterly['fee_type'].title()
+                })
+        
+        if client_metrics:
+            metrics_df = pd.DataFrame(client_metrics)
+            
+            # Create scatter plot
+            scatter_chart = alt.Chart(metrics_df).mark_circle().encode(
+                x=alt.X('Participants:Q',
+                       title='Number of Participants',
+                       scale=alt.Scale(type='log')),
+                y=alt.Y('AUM:Q',
+                       title='Assets Under Management ($)',
+                       axis=alt.Axis(format='$,.0f'),
+                       scale=alt.Scale(type='log')),
+                size=alt.Size('Revenue:Q',
+                            title='Revenue',
+                            scale=alt.Scale(range=[100, 1000])),
+                color=alt.Color('Fee Type:N',
+                              title='Fee Type'),
+                tooltip=[
+                    'Client',
+                    alt.Tooltip('AUM:Q', format='$,.2f'),
+                    alt.Tooltip('Participants:Q', format=','),
+                    alt.Tooltip('Revenue:Q', format='$,.2f'),
+                    'Fee Type'
+                ]
+            ).properties(height=300)
+            
+            st.altair_chart(scatter_chart, use_container_width=True)
+            st.markdown("*Relationship between AUM and participants*")
+
 def create_client_dataframe(summary_data: dict) -> pd.DataFrame:
     """Create a DataFrame for the client performance table."""
     rows = []
@@ -407,15 +582,140 @@ def show_main_summary():
         cols[5].button(format_currency(row["Total"]), key=f"total_{row['Client']}", disabled=True)
         
         if row['Client'] in st.session_state.expanded_rows:
-            # Show only metrics, no chart
-            col1, col2, col3 = st.columns(3)
+            # Show expanded metrics in four columns
+            col1, col2, col3, col4 = st.columns(4)
             
+            # Column 1: Contract & Provider Info
             with col1:
-                st.metric("Total Revenue", format_currency(row['Total']), delta_color="normal", delta=f"{row['YoY Change']:+.1f}%")
+                st.metric(
+                    "Contract Details",
+                    f"{row['_provider']}",
+                    f"Contract #{row['_contract_number']}",
+                    help="Provider and contract number"
+                )
+            
+            # Column 2: Payment Structure
             with col2:
-                st.metric("Contract Details", f"{row['_fee_type'].title()}", f"{row['_rate']*100:.1f}%" if row['_fee_type'] == 'percentage' else format_currency(row['_rate']))
+                payment_info = f"{row['_schedule'].title()}"
+                rate_info = f"{row['_rate']*100:.1f}%" if row['_fee_type'] == 'percentage' else format_currency(row['_rate'])
+                st.metric(
+                    "Payment Structure",
+                    f"{row['_fee_type'].title()} Rate: {rate_info}",
+                    payment_info,
+                    help="Fee type, rate, and payment schedule"
+                )
+            
+            # Column 3: Performance
             with col3:
-                st.metric("Participants", str(row['_participants']), delta="AUM: N/A")
+                yoy_change = row['YoY Change']
+                trend_icon = "↗️" if yoy_change > 0 else "↘️" if yoy_change < 0 else "➡️"
+                st.metric(
+                    "Performance",
+                    format_currency(row['Total']),
+                    f"{trend_icon} {yoy_change:+.1f}% YoY" if yoy_change is not None else "No prior year data",
+                    help="Total revenue and year-over-year change"
+                )
+            
+            # Column 4: Plan Stats
+            with col4:
+                aum_display = format_currency(row['_aum']) if row['_aum'] and row['_aum'] != 'N/A' else 'N/A'
+                participants = row['_participants'] if row['_participants'] and row['_participants'] != 'N/A' else 'N/A'
+                st.metric(
+                    "Plan Statistics",
+                    f"{participants} participants",
+                    f"AUM: {aum_display}",
+                    help="Number of participants and Assets Under Management"
+                )
+            
+            # Add payment status information
+            st.markdown("<div style='margin: 0.5rem 0;'></div>", unsafe_allow_html=True)
+            status_col1, status_col2, status_col3, status_col4 = st.columns(4)
+            
+            # Get current quarter payment status
+            current_quarter, current_year = calculate_current_quarter()
+            payment_data = get_period_payments(current_quarter, current_year)
+            
+            # Find client's payment status
+            client_status = None
+            client_payment = None
+            for status_list in ['complete', 'partial', 'outstanding']:
+                for entry in payment_data[status_list]:
+                    if entry['name'] == row['Client']:
+                        client_status = status_list
+                        client_payment = entry
+                        break
+                if client_status:
+                    break
+            
+            # Payment Status
+            with status_col1:
+                status_icon = "✅" if client_status == 'complete' else "⚠️" if client_status == 'partial' else "❌"
+                status_text = client_status.title() if client_status else "Unknown"
+                st.metric(
+                    f"Q{current_quarter} {current_year} Status",
+                    f"{status_icon} {status_text}",
+                    "Current Quarter",
+                    help="Payment status for current quarter"
+                )
+            
+            # Expected vs Received
+            with status_col2:
+                if client_payment:
+                    expected = format_currency(client_payment['expected']) if client_payment['expected'] else 'N/A'
+                    received = format_currency(client_payment['received']) if client_payment['received'] else '$0.00'
+                    st.metric(
+                        "Expected vs Received",
+                        received,
+                        f"Expected: {expected}",
+                        help="Expected and received amounts for current quarter"
+                    )
+                else:
+                    st.metric(
+                        "Expected vs Received",
+                        "N/A",
+                        "No data available",
+                        help="Expected and received amounts for current quarter"
+                    )
+            
+            # Payment Schedule Progress
+            with status_col3:
+                if client_payment:
+                    schedule = client_payment['schedule']
+                    expected_count = 3 if schedule == 'monthly' else 1
+                    progress = f"{client_payment['payment_count']}/{expected_count}"
+                    st.metric(
+                        "Payment Progress",
+                        progress,
+                        schedule.title(),
+                        help="Number of payments received vs expected for the quarter"
+                    )
+                else:
+                    st.metric(
+                        "Payment Progress",
+                        "N/A",
+                        "No schedule data",
+                        help="Number of payments received vs expected for the quarter"
+                    )
+            
+            # Historical Compliance
+            with status_col4:
+                # Calculate compliance rate from previous quarters
+                total_quarters = sum(1 for q in [row['Q1'], row['Q2'], row['Q3'], row['Q4']] if q > 0)
+                if total_quarters > 0:
+                    compliance_rate = f"{(total_quarters / 4) * 100:.0f}%"
+                    st.metric(
+                        "Payment History",
+                        compliance_rate,
+                        f"{total_quarters}/4 quarters",
+                        help="Percentage of quarters with payments received this year"
+                    )
+                else:
+                    st.metric(
+                        "Payment History",
+                        "N/A",
+                        "No historical data",
+                        help="Percentage of quarters with payments received this year"
+                    )
     
     st.markdown('</div>', unsafe_allow_html=True)  # Close table-rows
     st.markdown('</div>', unsafe_allow_html=True)  # Close table-container
