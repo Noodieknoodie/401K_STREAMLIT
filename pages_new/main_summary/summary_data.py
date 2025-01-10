@@ -3,42 +3,31 @@ from typing import Dict, List, Optional, Tuple, Any, Union
 import streamlit as st
 from datetime import datetime
 import pandas as pd
-from utils.utils import get_database_connection
+from utils.database import get_database_connection
 
 class SummaryDataError(Exception):
     """Custom exception for summary data processing errors."""
     pass
 
-@st.cache_data(ttl=300)  # Cache for 5 minutes
 def get_summary_year_data(year: int) -> Dict[str, Any]:
-    """Get consolidated payment data for a specific year.
+    """Get consolidated payment data for a specific year using summary tables."""
+    from utils.utils import ensure_summaries_initialized
+    ensure_summaries_initialized()
     
-    Args:
-        year: The year to get data for
-        
-    Returns:
-        Dictionary containing:
-        - quarterly_totals: Dict mapping client_id to quarter totals
-        - client_metrics: Dict mapping client_id to annual metrics
-        - overall_metrics: Dict of overall annual metrics
-        
-    Raises:
-        SummaryDataError: If there's an error processing the data
-    """
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
         
-        # Get quarterly payment data
+        # Get quarterly summary data
         cursor.execute("""
             WITH QuarterlyData AS (
                 SELECT 
                     c.client_id,
                     c.display_name,
-                    p.applied_start_quarter as quarter,
-                    SUM(p.actual_fee) as total_fees,
-                    AVG(NULLIF(p.total_assets, 0)) as avg_aum,
-                    MAX(con.num_people) as participant_count,
+                    qs.quarter,
+                    qs.total_payments as total_fees,
+                    qs.total_assets as avg_aum,
+                    con.num_people as participant_count,
                     con.provider_name,
                     con.contract_number,
                     con.payment_schedule,
@@ -47,16 +36,14 @@ def get_summary_year_data(year: int) -> Dict[str, Any]:
                         WHEN con.fee_type = 'percentage' THEN con.percent_rate
                         ELSE con.flat_rate
                     END as rate,
-                    COUNT(p.payment_id) as payment_count
+                    qs.payment_count
                 FROM clients c
-                LEFT JOIN payments p ON c.client_id = p.client_id
-                LEFT JOIN contracts con ON p.contract_id = con.contract_id
-                WHERE p.applied_start_year = ?
-                  AND p.actual_fee IS NOT NULL
-                GROUP BY 
-                    c.client_id, 
-                    c.display_name, 
-                    p.applied_start_quarter
+                JOIN quarterly_summaries qs ON c.client_id = qs.client_id
+                LEFT JOIN contracts con ON 
+                    c.client_id = con.client_id AND 
+                    con.active = 'TRUE'
+                WHERE qs.year = ?
+                ORDER BY c.display_name, qs.quarter
             )
             SELECT 
                 client_id,
@@ -72,26 +59,24 @@ def get_summary_year_data(year: int) -> Dict[str, Any]:
                 rate,
                 payment_count
             FROM QuarterlyData
-            ORDER BY display_name, quarter
         """, (year,))
         
         quarterly_data = cursor.fetchall()
         
-        # Get previous year data for YoY calculations
+        # Get yearly summary data
         cursor.execute("""
             SELECT 
-                c.client_id,
-                SUM(COALESCE(p.actual_fee, 0)) as prev_year_total,
-                COUNT(DISTINCT CASE WHEN p.actual_fee > 0 THEN p.payment_id END) as payment_count
-            FROM clients c
-            LEFT JOIN payments p ON c.client_id = p.client_id
-            WHERE p.applied_start_year = ?
-            GROUP BY c.client_id
-        """, (year - 1,))
+                ys.client_id,
+                ys.total_payments as prev_year_total,
+                ys.payment_count,
+                ys.yoy_growth
+            FROM yearly_summaries ys
+            WHERE ys.year = ?
+        """, (year,))
         
-        prev_year_data = {row[0]: (row[1], row[2]) for row in cursor.fetchall()}
+        yearly_data = {row[0]: (row[1], row[2], row[3]) for row in cursor.fetchall()}
         
-        # Process data into usable format
+        # Process data into required format
         quarterly_totals: Dict[int, Dict[str, Any]] = {}
         client_metrics: Dict[int, Dict[str, Any]] = {}
         
@@ -136,20 +121,14 @@ def get_summary_year_data(year: int) -> Dict[str, Any]:
             
             client_metrics[client_id]['payment_count'] += payment_count or 0
             
-            # Calculate YoY growth
-            if client_id in prev_year_data:
-                prev_total, prev_count = prev_year_data[client_id]
-                if prev_total > 0 and prev_count > 0:
-                    client_metrics[client_id]['yoy_growth'] = (
-                        (client_metrics[client_id]['total_fees'] - prev_total)
-                        / prev_total * 100
-                    )
-                else:
-                    client_metrics[client_id]['yoy_growth'] = None
+            # Add YoY metrics if available
+            if client_id in yearly_data:
+                total, count, yoy = yearly_data[client_id]
+                client_metrics[client_id]['yoy_growth'] = yoy
             else:
                 client_metrics[client_id]['yoy_growth'] = None
         
-        # Calculate overall metrics safely
+        # Calculate overall metrics
         active_clients = len([
             cid for cid, metrics in client_metrics.items()
             if metrics['payment_count'] > 0
@@ -161,7 +140,7 @@ def get_summary_year_data(year: int) -> Dict[str, Any]:
         )
         
         prev_year_total = sum(
-            total for total, count in prev_year_data.values()
+            total for total, count, _ in yearly_data.values()
             if count > 0
         )
         
@@ -188,25 +167,16 @@ def get_summary_year_data(year: int) -> Dict[str, Any]:
     finally:
         conn.close()
 
-@st.cache_data
+
 def get_available_years() -> List[int]:
-    """Get list of years with payment data.
-    
-    Returns:
-        List of years in descending order
-    
-    Raises:
-        SummaryDataError: If there's an error accessing the database
-    """
+    """Get list of years with payment data from summary tables."""
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT DISTINCT applied_start_year 
-            FROM payments 
-            WHERE actual_fee IS NOT NULL
-              AND applied_start_year IS NOT NULL
-            ORDER BY applied_start_year DESC
+            SELECT DISTINCT year 
+            FROM yearly_summaries 
+            ORDER BY year DESC
         """)
         years = [row[0] for row in cursor.fetchall()]
         return years if years else []

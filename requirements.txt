@@ -6,3 +6,4 @@ streamlit
 streamlit_extras
 pyinstaller
 xlsxwriter
+SQLAlchemy

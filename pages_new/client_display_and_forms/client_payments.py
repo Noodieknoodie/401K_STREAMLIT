@@ -140,6 +140,7 @@ Testing Checklist:
 import streamlit as st
 from datetime import datetime
 from typing import Dict, Any, Optional, Tuple
+from utils.utils import ensure_summaries_initialized
 from utils.utils import (
     get_payment_history,
     get_active_contract,
@@ -162,6 +163,7 @@ from .client_payment_utils import (
     get_current_period,
     format_period_display
 )
+from utils.database import get_database_connection
 
 ### THE ONLY REQUIRED FIELDS ARE: Payment Date, Payment Amount
 
@@ -483,11 +485,9 @@ def display_contract_info(contract: Tuple):
 # ============================================================================
 
 def show_payment_history(client_id: int):
-    """Display the payment history table with filtering options."""
-    # Get active contract first
+    """Display the payment history table using summary data."""
     contract = get_active_contract(client_id)
     
-    # Filter controls
     left_col, middle_col, right_col = st.columns([4, 2, 4])
     
     with left_col:
@@ -502,9 +502,21 @@ def show_payment_history(client_id: int):
         if selected_filter == "Custom":
             col1, col2, _ = st.columns([1, 1, 2])
             with col1:
+                # Use summary table for years
+                conn = get_database_connection()
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT DISTINCT year 
+                    FROM quarterly_summaries 
+                    WHERE client_id = ? 
+                    ORDER BY year DESC
+                """, (client_id,))
+                available_years = [row[0] for row in cursor.fetchall()]
+                conn.close()
+                
                 year = st.selectbox(
                     "Select Year",
-                    options=range(datetime.now().year, datetime.now().year - 5, -1),
+                    options=available_years if available_years else [datetime.now().year],
                     key="filter_year"
                 )
             
@@ -516,7 +528,6 @@ def show_payment_history(client_id: int):
                 )
     
     with middle_col:
-        # Only show Add Payment button if contract has payment schedule
         if not contract or not contract[3]:
             st.error("Payment schedule must be set in the contract before adding payments.")
         else:
@@ -540,7 +551,7 @@ def show_payment_history(client_id: int):
         )
         st.markdown(f"<div style='text-align: right'>{filter_text}</div>", unsafe_allow_html=True)
     
-    # Get filtered data
+    # Get filtered data using summary tables
     years = None
     quarters = None
     
@@ -551,18 +562,15 @@ def show_payment_history(client_id: int):
         if quarter != "All Quarters":
             quarters = [int(quarter[1])]
     
-    # Get and display payments
+    # Get payments with summary data
     raw_payments = get_payment_history(client_id, years=years, quarters=quarters)
     if not raw_payments:
         st.info("No payment history available for this client.")
         return
     
-    # Format payments for display
     formatted_payments = format_payment_data(raw_payments)
-    
-    # Display payment table
     display_payment_table(formatted_payments)
-
+    
 def delete_payment_confirm(payment_id):
     """Set up confirmation dialog for payment deletion"""
     st.session_state.delete_payment_id = payment_id
@@ -742,29 +750,28 @@ def display_payment_table(payments: list):
 
 def display_payments_section(client_id: int):
     """Main entry point for the payments section."""
-    # Initialize state
+    # Initialize state and ensure summaries are ready
     init_payment_state()
+    ensure_summaries_initialized()
     
-    # Get active contract
+    # Rest of the function remains the same
     contract = get_active_contract(client_id)
     
-    # Check for valid contract and payment schedule before proceeding
     if not contract:
         st.error("No active contract found. Please set up a contract first.")
         return
     
-    if not contract[3]:  # payment_schedule is index 3 in contract tuple
+    if not contract[3]:
         st.error("Payment schedule must be set in the contract before adding payments.")
         return
     
-    # Show form or history based on state
     if st.session_state.show_payment_form:
         show_payment_form(client_id, contract)
     else:
         show_payment_history(client_id)
 
 def format_payment_data(payments: list) -> list:
-    """Format payment data for display with consistent formatting."""
+    """Format payment data for display using summary data when available."""
     table_data = []
     
     for payment in payments:
@@ -778,19 +785,15 @@ def format_payment_data(payments: list) -> list:
             except (ValueError, TypeError):
                 return "N/A"
         
-        # Format payment period based on frequency
         frequency = payment[5].title() if payment[5] else "N/A"
         
         if frequency.lower() == "monthly":
-            # For monthly payments, convert quarter to month range
             start_month = ((payment[1] - 1) * 3) + 1
             end_month = ((payment[3] - 1) * 3) + 3
             
             if payment[2] == payment[4] and start_month == end_month:
-                # Single month
                 period = f"{datetime.strptime(f'2000-{start_month}-1', '%Y-%m-%d').strftime('%b')} {payment[2]}"
             else:
-                # Month range
                 start_date = datetime.strptime(f'2000-{start_month}-1', '%Y-%m-%d')
                 end_date = datetime.strptime(f'2000-{end_month}-1', '%Y-%m-%d')
                 if payment[2] == payment[4]:
@@ -798,13 +801,11 @@ def format_payment_data(payments: list) -> list:
                 else:
                     period = f"{start_date.strftime('%b')} {payment[2]} - {end_date.strftime('%b')} {payment[4]}"
         else:
-            # Quarterly payments
             if payment[1] == payment[3] and payment[2] == payment[4]:
                 period = f"Q{payment[1]} {payment[2]}"
             else:
                 period = f"Q{payment[1]} {payment[2]} - Q{payment[3]} {payment[4]}"
         
-        # Format date
         received_date = "N/A"
         if payment[6]:
             try:
@@ -813,12 +814,10 @@ def format_payment_data(payments: list) -> list:
             except:
                 received_date = payment[6]
         
-        # Format all currency values
         total_assets = format_currency(payment[7])
         expected_fee = format_currency(payment[8])
         actual_fee = format_currency(payment[9])
         
-        # Calculate fee discrepancy
         try:
             if payment[8] is not None and payment[9] is not None and payment[8] != "" and payment[9] != "":
                 discrepancy = float(payment[9]) - float(payment[8])
@@ -832,7 +831,7 @@ def format_payment_data(payments: list) -> list:
         payment_id = payment[11]
         method = payment[12] or "N/A"
         
-        formatted_payment = {
+        table_data.append({
             "Provider": provider_name,
             "Period": period,
             "Frequency": frequency,
@@ -844,12 +843,10 @@ def format_payment_data(payments: list) -> list:
             "Discrepancy": discrepancy_str,
             "Notes": notes,
             "payment_id": payment_id
-        }
-        
-        table_data.append(formatted_payment)
+        })
     
     return table_data
-
+    
 if __name__ == "__main__":
     st.set_page_config(page_title="Client Payments", layout="wide")
     # For testing

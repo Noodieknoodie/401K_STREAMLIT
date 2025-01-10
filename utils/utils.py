@@ -7,6 +7,12 @@ import os
 import logging
 from pathlib import Path
 import platform
+from .summaries import (
+    update_quarterly_summary,
+    update_yearly_summary,
+    update_client_metrics
+)
+from .database import get_database_connection
 
 """
 File Path Handling System Documentation
@@ -325,6 +331,8 @@ def get_all_contracts(client_id):
 
 def get_payment_history(client_id, years=None, quarters=None):
     """Get payment history for a client with optional year/quarter filters"""
+    ensure_summaries_initialized()  # Add this line
+    
     base_query = """
         SELECT 
             c.provider_name,
@@ -342,18 +350,20 @@ def get_payment_history(client_id, years=None, quarters=None):
             p.method
         FROM payments p
         JOIN contracts c ON p.contract_id = c.contract_id
+        JOIN quarterly_summaries qs ON  -- Add this JOIN
+            p.client_id = qs.client_id AND
+            p.applied_start_year = qs.year AND
+            p.applied_start_quarter = qs.quarter
         WHERE p.client_id = ?
     """
     
     params = [client_id]
     
-    # Handle multiple years filter
     if years and len(years) > 0:
         year_placeholders = ','.join(['?' for _ in years])
         base_query += f" AND p.applied_start_year IN ({year_placeholders})"
         params.extend(years)
     
-    # Handle multiple quarters filter
     if quarters and len(quarters) > 0:
         quarter_placeholders = ','.join(['?' for _ in quarters])
         base_query += f" AND p.applied_start_quarter IN ({quarter_placeholders})"
@@ -368,6 +378,7 @@ def get_payment_history(client_id, years=None, quarters=None):
         return cursor.fetchall()
     finally:
         conn.close()
+
 
 def update_payment_note(payment_id, new_note):
     """Update payment note"""
@@ -742,43 +753,33 @@ def validate_payment_data(data):
 
 def add_payment(client_id, payment_data):
     """Add a new payment to the database"""
-    print("\n=== DEBUG ADD PAYMENT ===")
-    print(f"Client ID: {client_id}")
-    print(f"Payment Data: {payment_data}")
+    from .summaries import update_all_summaries
     
-    # Get active contract
-    contract = get_active_contract(client_id)
-    print(f"Active Contract: {contract}")
-    if not contract:
-        print("No active contract found!")
-        return None
-        
-    # Add retry logic for database locks
     max_retries = 3
     retry_count = 0
     
     while retry_count < max_retries:
         try:
+            contract = get_active_contract(client_id)
+            print(f"Active Contract: {contract}")
+            if not contract:
+                print("No active contract found!")
+                return None
+            
             conn = get_database_connection()
             cursor = conn.cursor()
             
-            # Convert period fields to quarter fields for database storage
             schedule = payment_data.get('payment_schedule', '').lower()
             if schedule == 'monthly':
-                # Convert months to quarters
                 start_quarter = (payment_data['applied_start_period'] - 1) // 3 + 1
                 end_quarter = (payment_data['applied_end_period'] - 1) // 3 + 1
             else:
-                # Already in quarters
                 start_quarter = payment_data['applied_start_period']
                 end_quarter = payment_data['applied_end_period']
             
-            print(f"Inserting payment with quarters: {start_quarter} - {end_quarter}")
-            
-            # Prepare values for insertion
             values = (
                 client_id,
-                contract[0],  # contract_id from active contract
+                contract[0],
                 payment_data['received_date'],
                 start_quarter,
                 payment_data['applied_start_year'],
@@ -790,46 +791,25 @@ def add_payment(client_id, payment_data):
                 payment_data.get('method'),
                 payment_data.get('notes', '')
             )
-            print("\nInserting values:", values)
             
             cursor.execute("""
                 INSERT INTO payments (
-                    client_id,
-                    contract_id,
-                    received_date,
-                    applied_start_quarter,
-                    applied_start_year,
-                    applied_end_quarter,
-                    applied_end_year,
-                    total_assets,
-                    expected_fee,
-                    actual_fee,
-                    method,
-                    notes
+                    client_id, contract_id, received_date,
+                    applied_start_quarter, applied_start_year,
+                    applied_end_quarter, applied_end_year,
+                    total_assets, expected_fee, actual_fee,
+                    method, notes
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, values)
             
-            conn.commit()
             payment_id = cursor.lastrowid
-            print(f"Successfully added payment with ID: {payment_id}")
             
-            # Verify the payment was added
-            cursor.execute("SELECT * FROM payments WHERE payment_id = ?", (payment_id,))
-            verification = cursor.fetchone()
-            print("\nVerification - Payment in database:", verification)
+            # Commit the payment first
+            conn.commit()
             
-            conn.close()
+            # Now update summaries in a separate transaction
+            update_all_summaries(client_id, payment_data['applied_start_year'], start_quarter)
             
-            # Clear all payment-related caches
-            if hasattr(st.session_state, 'get_payment_history'):
-                st.session_state.get_payment_history.clear()
-            if hasattr(st.session_state, 'get_paginated_payment_history'):
-                st.session_state.get_paginated_payment_history.clear()
-            if hasattr(st.session_state, 'get_payment_year_quarters'):
-                st.session_state.get_payment_year_quarters.clear()
-            if hasattr(st.session_state, 'get_latest_payment'):
-                st.session_state.get_latest_payment.clear()
-                
             return payment_id
             
         except sqlite3.Error as e:
@@ -839,9 +819,9 @@ def add_payment(client_id, payment_data):
             retry_count += 1
             if retry_count < max_retries:
                 import time
-                time.sleep(0.5)  # Wait half a second before retrying
+                time.sleep(0.5)
             
-    return None  # Return None if all retries failed
+    return None
 
 def get_payment_by_id(payment_id):
     """Get complete payment data for editing"""
@@ -978,11 +958,25 @@ def get_client_dashboard_data(client_id):
 
 def delete_payment(payment_id):
     """Delete a payment from the database"""
+    from .summaries import update_all_summaries
+    
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
+        
+        # Get payment data for summary updates
+        cursor.execute("SELECT client_id, applied_start_year, applied_start_quarter FROM payments WHERE payment_id = ?", (payment_id,))
+        payment_data = cursor.fetchone()
+        
         cursor.execute("DELETE FROM payments WHERE payment_id = ?", (payment_id,))
+        
+        # Commit the deletion first
         conn.commit()
+        
+        # Now update summaries in a separate transaction
+        if payment_data:
+            update_all_summaries(payment_data[0], payment_data[1], payment_data[2])
+        
         return True
     finally:
         conn.close()
@@ -1008,24 +1002,20 @@ def get_unique_payment_methods():
         conn.close()
 
 def update_payment(payment_id: int, form_data: Dict[str, Any]) -> bool:
-    """Update an existing payment in the database.
+    """Update an existing payment in the database."""
+    from .summaries import update_all_summaries
     
-    Args:
-        payment_id: The ID of the payment to update
-        form_data: Dictionary containing the updated payment data
-        
-    Returns:
-        bool: True if update was successful, False otherwise
-    """
     try:
-        # Clean currency values
         total_assets = format_currency_db(form_data.get('total_assets'))
         actual_fee = format_currency_db(form_data.get('actual_fee'))
         
         conn = get_database_connection()
         cursor = conn.cursor()
         
-        # Update the payment record
+        # Get original payment data for summary updates
+        cursor.execute("SELECT client_id, applied_start_year, applied_start_quarter FROM payments WHERE payment_id = ?", (payment_id,))
+        old_data = cursor.fetchone()
+        
         cursor.execute("""
             UPDATE payments
             SET received_date = ?,
@@ -1042,8 +1032,8 @@ def update_payment(payment_id: int, form_data: Dict[str, Any]) -> bool:
             form_data['received_date'],
             form_data['applied_start_period'],
             form_data['applied_start_year'],
-            form_data['applied_end_period'],  # Always store end values
-            form_data['applied_end_year'],    # Always store end values
+            form_data['applied_end_period'],
+            form_data['applied_end_year'],
             total_assets,
             actual_fee,
             form_data.get('method'),
@@ -1051,7 +1041,14 @@ def update_payment(payment_id: int, form_data: Dict[str, Any]) -> bool:
             payment_id
         ))
         
+        # Commit the update first
         conn.commit()
+        
+        # Now update summaries for both old and new periods in separate transactions
+        update_all_summaries(old_data[0], old_data[1], old_data[2])  # Update old period
+        if old_data[1] != form_data['applied_start_year'] or old_data[2] != form_data['applied_start_period']:
+            update_all_summaries(old_data[0], form_data['applied_start_year'], form_data['applied_start_period'])  # Update new period
+        
         return True
         
     except Exception as e:
@@ -1413,3 +1410,96 @@ def reconstruct_full_path(relative_path: str) -> Optional[str]:
         return str(path_obj)
     except:
         return None
+
+def ensure_summaries_initialized() -> bool:
+    """Ensure summary tables are populated and triggers are active."""
+    from .summaries import populate_all_summaries
+    from .triggers import check_triggers_exist, initialize_triggers
+    
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        
+        # Check if summary tables have data
+        cursor.execute("SELECT COUNT(*) FROM quarterly_summaries")
+        has_quarterly = cursor.fetchone()[0] > 0
+        
+        cursor.execute("SELECT COUNT(*) FROM yearly_summaries")
+        has_yearly = cursor.fetchone()[0] > 0
+        
+        cursor.execute("SELECT COUNT(*) FROM client_metrics")
+        has_metrics = cursor.fetchone()[0] > 0
+        
+        # Initialize triggers if needed
+        if not check_triggers_exist():
+            if not initialize_triggers():
+                return False
+        
+        # Populate summaries if empty
+        if not (has_quarterly and has_yearly and has_metrics):
+            if not populate_all_summaries():
+                return False
+        
+        return True
+        
+    except Exception as e:
+        print(f"Error initializing summaries: {str(e)}")
+        return False
+    finally:
+        conn.close()
+
+def get_summary_metrics(client_id: int, year: int = None, quarter: int = None) -> Dict[str, Any]:
+    """Get summary metrics for a client with optional period filtering."""
+    if year is None:
+        year = datetime.now().year
+    if quarter is None:
+        quarter = (datetime.now().month - 1) // 3 + 1
+        
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT 
+                qs.total_payments,
+                qs.total_assets,
+                qs.payment_count,
+                qs.avg_payment,
+                qs.expected_total,
+                ys.yoy_growth,
+                cm.last_payment_date,
+                cm.last_payment_amount,
+                cm.total_ytd_payments,
+                cm.avg_quarterly_payment
+            FROM quarterly_summaries qs
+            LEFT JOIN yearly_summaries ys ON
+                qs.client_id = ys.client_id AND
+                qs.year = ys.year
+            LEFT JOIN client_metrics cm ON
+                qs.client_id = cm.client_id
+            WHERE qs.client_id = ?
+            AND qs.year = ?
+            AND qs.quarter = ?
+        """, (client_id, year, quarter))
+        
+        row = cursor.fetchone()
+        
+        if not row:
+            return None
+            
+        return {
+            'total_payments': row[0],
+            'total_assets': row[1],
+            'payment_count': row[2],
+            'avg_payment': row[3],
+            'expected_total': row[4],
+            'yoy_growth': row[5],
+            'last_payment_date': row[6],
+            'last_payment_amount': row[7],
+            'total_ytd_payments': row[8],
+            'avg_quarterly_payment': row[9]
+        }
+        
+    finally:
+        conn.close()
+

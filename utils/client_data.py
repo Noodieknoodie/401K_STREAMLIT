@@ -7,32 +7,38 @@ The original functions in utils.py remain unchanged for safety and backward comp
 """
 
 import streamlit as st
-from .utils import get_database_connection
+from .database import get_database_connection
 from typing import Dict, Any
 
 def get_consolidated_client_data(client_id: int) -> Dict[str, Any]:
-    """Get consolidated client data."""
+    """Get consolidated client data using summary tables."""
+    from .utils import ensure_summaries_initialized
+    ensure_summaries_initialized()  # Ensure summaries are ready
+    
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
         
-        # Get client info with raw SQL instead of JSON aggregation
         cursor.execute("""
-            WITH LatestPayment AS (
+            WITH LatestSummaries AS (
                 SELECT 
-                    client_id,
-                    actual_fee,
-                    received_date,
-                    total_assets,
-                    applied_start_quarter,
-                    applied_start_year,
-                    notes
-                FROM payments
-                WHERE payment_id IN (
-                    SELECT MAX(payment_id)
-                    FROM payments
-                    GROUP BY client_id
-                )
+                    qs.client_id,
+                    qs.total_payments as quarterly_total,
+                    qs.total_assets as latest_assets,
+                    qs.payment_count,
+                    qs.year,
+                    qs.quarter,
+                    cm.last_payment_date,
+                    cm.last_payment_amount,
+                    ys.yoy_growth
+                FROM quarterly_summaries qs
+                LEFT JOIN client_metrics cm ON qs.client_id = cm.client_id
+                LEFT JOIN yearly_summaries ys ON 
+                    qs.client_id = ys.client_id AND 
+                    qs.year = ys.year
+                WHERE qs.client_id = ?
+                ORDER BY qs.year DESC, qs.quarter DESC
+                LIMIT 1
             )
             SELECT 
                 c.display_name,
@@ -46,14 +52,14 @@ def get_consolidated_client_data(client_id: int) -> Dict[str, Any]:
                 ac.percent_rate,
                 ac.flat_rate,
                 ac.num_people,
-                -- Latest Payment
-                lp.actual_fee,
-                lp.received_date,
-                lp.total_assets,
-                lp.applied_start_quarter,
-                lp.applied_start_year,
-                lp.notes,
-                -- Contacts as separate rows
+                -- Latest Payment Metrics
+                ls.quarterly_total,
+                ls.last_payment_date,
+                ls.latest_assets,
+                ls.quarter,
+                ls.year,
+                ls.yoy_growth,
+                -- Contacts
                 co.contact_type,
                 co.contact_name,
                 co.phone,
@@ -67,10 +73,10 @@ def get_consolidated_client_data(client_id: int) -> Dict[str, Any]:
                 SELECT * FROM contracts 
                 WHERE active = 'TRUE'
             ) ac ON c.client_id = ac.client_id
-            LEFT JOIN LatestPayment lp ON c.client_id = lp.client_id
+            LEFT JOIN LatestSummaries ls ON c.client_id = ls.client_id
             LEFT JOIN contacts co ON c.client_id = co.client_id
             WHERE c.client_id = ?
-        """, (client_id,))
+        """, (client_id, client_id))
         
         rows = cursor.fetchall()
         if not rows:
@@ -79,22 +85,22 @@ def get_consolidated_client_data(client_id: int) -> Dict[str, Any]:
         # First row has all the non-contact data
         first_row = rows[0]
         
-        # Build contacts list from all rows
+        # Build contacts list
         contacts = []
         for row in rows:
-            if row[15]:  # if contact_type exists
+            if row[16]:  # if contact_type exists
                 contacts.append({
-                    'contact_type': row[15],
-                    'contact_name': row[16],
-                    'phone': row[17],
-                    'email': row[18],
-                    'fax': row[19],
-                    'physical_address': row[20],
-                    'mailing_address': row[21],
-                    'contact_id': row[22]
+                    'contact_type': row[16],
+                    'contact_name': row[17],
+                    'phone': row[18],
+                    'email': row[19],
+                    'fax': row[20],
+                    'physical_address': row[21],
+                    'mailing_address': row[22],
+                    'contact_id': row[23]
                 })
         
-        # Structure the data maintaining the same format as before
+        # Structure the data
         consolidated_data = {
             'client': {
                 'display_name': first_row[0],
@@ -114,12 +120,12 @@ def get_consolidated_client_data(client_id: int) -> Dict[str, Any]:
                 'num_people': first_row[9]
             } if first_row[2] else None,
             'latest_payment': {
-                'actual_fee': first_row[10],
-                'received_date': first_row[11],
-                'total_assets': first_row[12],
+                'actual_fee': first_row[10],  # quarterly_total
+                'received_date': first_row[11],  # last_payment_date
+                'total_assets': first_row[12],  # latest_assets
                 'quarter': first_row[13],
                 'year': first_row[14],
-                'notes': first_row[15]
+                'yoy_growth': first_row[15]  # Added YoY growth
             } if first_row[10] else None,
             'contacts': contacts
         }
@@ -128,6 +134,7 @@ def get_consolidated_client_data(client_id: int) -> Dict[str, Any]:
     finally:
         conn.close()
 
+        
 # Wrapper functions that match the original API but use consolidated query
 def get_client_details_optimized(client_id):
     """Get client details using consolidated query"""

@@ -348,6 +348,58 @@ CREATE INDEX idx_payments_quarter_year ON payments(client_id, applied_start_quar
 CREATE INDEX idx_contracts_provider ON contracts(provider_name);
 
 
+#### NEW TABLES AND INDEXES RECENTLY ADDED 
+
+
+quarterly_summaries	table	CREATE TABLE quarterly_summaries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    client_id INTEGER NOT NULL,
+    year INTEGER NOT NULL,
+    quarter INTEGER NOT NULL,
+    total_payments REAL,
+    total_assets REAL,
+    payment_count INTEGER,
+    avg_payment REAL,
+    expected_total REAL,
+    last_updated TEXT,
+    FOREIGN KEY(client_id) REFERENCES clients(client_id),
+    UNIQUE(client_id, year, quarter)
+)
+sqlite_autoindex_quarterly_summaries_1	index	
+yearly_summaries	table	CREATE TABLE yearly_summaries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    client_id INTEGER NOT NULL,
+    year INTEGER NOT NULL,
+    total_payments REAL,
+    total_assets REAL,
+    payment_count INTEGER,
+    avg_payment REAL,
+    yoy_growth REAL,
+    last_updated TEXT,
+    FOREIGN KEY(client_id) REFERENCES clients(client_id),
+    UNIQUE(client_id, year)
+)
+sqlite_autoindex_yearly_summaries_1	index	
+client_metrics	table	CREATE TABLE client_metrics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    client_id INTEGER NOT NULL,
+    last_payment_date TEXT,
+    last_payment_amount REAL,
+    last_payment_quarter INTEGER,
+    last_payment_year INTEGER,
+    total_ytd_payments REAL,
+    avg_quarterly_payment REAL,
+    last_recorded_assets REAL,
+    last_updated TEXT,
+    FOREIGN KEY(client_id) REFERENCES clients(client_id),
+    UNIQUE(client_id)
+)
+sqlite_autoindex_client_metrics_1	index	
+idx_quarterly_lookup	index	CREATE INDEX idx_quarterly_lookup ON quarterly_summaries(client_id, year, quarter)
+idx_yearly_lookup	index	CREATE INDEX idx_yearly_lookup ON yearly_summaries(client_id, year)
+idx_client_metrics_lookup	index	CREATE INDEX idx_client_metrics_lookup ON client_metrics(client_id)
+
+
 ---
 
 

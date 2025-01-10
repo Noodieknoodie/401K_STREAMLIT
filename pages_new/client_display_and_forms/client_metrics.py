@@ -6,19 +6,20 @@ from utils.client_data import (
     get_client_details_optimized
 )
 from streamlit_extras.metric_cards import style_metric_cards
+from utils.database import get_database_connection
 
 def show_client_metrics(client_id: int) -> None:
-    """Display the client metrics section of the dashboard.
-    
-    Args:
-        client_id (int): The ID of the client to display metrics for
-    """
-    # Get all data in a single query
+    """Display the client metrics section of the dashboard using summary tables."""
+    from utils.utils import ensure_summaries_initialized
+    from utils.client_data import get_consolidated_client_data
+    ensure_summaries_initialized()
+
+    # Get consolidated data (optimized version)
     data = get_consolidated_client_data(client_id)
     if not data:
         return
 
-    # Add CSS for consistent metric card styling
+    # Apply existing styling
     st.markdown("""
         <style>
         div[data-testid="stMetric"] {
@@ -46,10 +47,11 @@ def show_client_metrics(client_id: int) -> None:
         </style>
     """, unsafe_allow_html=True)
 
-    # Compact container for metrics
+    # Display metrics 
     with st.container():
-        # First row - Client and Contract Info
         col1, col2, col3, col4 = st.columns(4)
+        
+        # Client Info - No changes needed
         with col1:
             st.metric(
                 "Client Name", 
@@ -75,10 +77,9 @@ def show_client_metrics(client_id: int) -> None:
                 None
             )
 
-        # Second row - Rate and Payment Info
+        # Financial metrics - Now using summary data
         col1, col2, col3, col4 = st.columns(4)
         
-        # Rate Display
         with col1:
             rate_value = 'N/A'
             rate_type = None
@@ -94,6 +95,7 @@ def show_client_metrics(client_id: int) -> None:
                 if rate_value != 'N/A':
                     rate_type = contract['fee_type'].title()
                     schedule = contract['payment_schedule']
+                    from utils.utils import calculate_rate_conversions
                     rate_value, rate_conversions = calculate_rate_conversions(
                         rate_value, 
                         contract['fee_type'],
@@ -106,7 +108,6 @@ def show_client_metrics(client_id: int) -> None:
                 rate_conversions if rate_conversions else rate_type
             )
 
-        # Payment Schedule
         with col2:
             st.metric(
                 "Payment Schedule",
@@ -116,33 +117,37 @@ def show_client_metrics(client_id: int) -> None:
                 None
             )
         
-        # Last Payment
         with col3:
-            last_payment = 'No payments'
-            payment_date = None
             if data['latest_payment']:
                 payment = data['latest_payment']
-                if payment['actual_fee']:
-                    last_payment = f"${payment['actual_fee']:,.2f}"
-                    payment_date = payment['received_date']
-            st.metric("Last Payment", last_payment, payment_date)
+                last_payment = f"${payment['actual_fee']:,.2f}" if payment['actual_fee'] else "No payments"
+                payment_date = payment['received_date']
+            else:
+                last_payment = "No payments"
+                payment_date = None
+                
+            st.metric(
+                "Last Payment",
+                last_payment,
+                payment_date
+            )
         
-        # AUM Display
         with col4:
-            aum_value = 'Not available'
-            aum_date = None
-            if data['latest_payment']:
-                payment = data['latest_payment']
-                if payment['total_assets']:
-                    aum_value = f"${payment['total_assets']:,.2f}"
-                    aum_date = f"Q{payment['quarter']} {payment['year']}"
+            if data['latest_payment'] and data['latest_payment']['total_assets']:
+                aum_value = f"${data['latest_payment']['total_assets']:,.2f}"
+                aum_date = f"Q{data['latest_payment']['quarter']} {data['latest_payment']['year']}"
+            else:
+                aum_value = "Not available"
+                aum_date = None
+                
             st.metric(
                 "Last Recorded AUM",
                 aum_value,
                 aum_date
             )
 
-        # Apply metric cards styling
+        # Apply consistent styling
+        from streamlit_extras.metric_cards import style_metric_cards
         style_metric_cards(
             background_color="rgba(38, 39, 48, 0.2)",
             border_size_px=1,
