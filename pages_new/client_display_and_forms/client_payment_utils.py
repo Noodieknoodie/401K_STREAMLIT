@@ -2,69 +2,6 @@ from datetime import datetime
 import streamlit as st
 from utils.utils import format_currency_ui, get_database_connection
 
-# ============================================================================
-# DOCS: Table Structures
-# ============================================================================
-
-# Client Table Structure:
-# CREATE TABLE "clients" (
-#     "client_id" INTEGER NOT NULL,
-#     "display_name" TEXT NOT NULL,
-#     "full_name" TEXT,
-#     "ima_signed_date" TEXT,
-#     "file_path_account_documentation" TEXT,
-#     "file_path_consulting_fees" TEXT,
-#     "file_path_meetings" INTEGER,
-#     PRIMARY KEY("client_id" AUTOINCREMENT)
-# )
-
-# Contact Table Structure:
-# CREATE TABLE "contacts" (
-#     "contact_id" INTEGER NOT NULL,
-#     "client_id" INTEGER NOT NULL,
-#     "contact_type" TEXT NOT NULL,
-#     "contact_name" TEXT,
-#     "phone" TEXT,
-#     "email" TEXT,
-#     "fax" TEXT,
-#     "physical_address" TEXT,
-#     "mailing_address" TEXT,
-#     PRIMARY KEY("contact_id" AUTOINCREMENT),
-#     FOREIGN KEY("client_id") REFERENCES "clients"("client_id")
-# )
-
-# Contract Table Structure:
-# CREATE TABLE "contracts" (
-#     "contract_id" INTEGER NOT NULL,
-#     "client_id" INTEGER NOT NULL,
-#     "active" TEXT,
-#     "contract_number" TEXT,
-#     "provider_name" TEXT,
-#     "contract_start_date" TEXT,
-#     "fee_type" TEXT,
-#     "percent_rate" REAL,
-#     "flat_rate" REAL,
-#     "payment_schedule" TEXT,
-#     "num_people" INTEGER,
-#     "notes" TEXT
-# )
-
-# Payment Table Structure:
-# CREATE TABLE "payments" (
-#     "payment_id" INTEGER NOT NULL,
-#     "contract_id" INTEGER NOT NULL,
-#     "client_id" INTEGER NOT NULL,
-#     "received_date" TEXT,
-#     "applied_start_quarter" INTEGER,
-#     "applied_start_year" INTEGER,
-#     "applied_end_quarter" INTEGER,
-#     "applied_end_year" INTEGER,
-#     "total_assets" INTEGER,
-#     "expected_fee" REAL,
-#     "actual_fee" REAL,
-#     "method" TEXT,
-#     "notes" TEXT
-# )
 
 
 def get_current_period(schedule):
