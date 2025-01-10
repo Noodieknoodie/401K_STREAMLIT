@@ -232,3 +232,61 @@ def display_contract_info(contract: tuple) -> bool:
         return False
         
     return True
+
+def get_client_payments(client_id: int, limit: int = None):
+    """Get payments for a client"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        query = """
+            SELECT 
+                p.payment_id,
+                p.received_date,
+                p.total_assets,
+                p.expected_fee,
+                p.actual_fee,
+                p.applied_start_quarter,
+                p.applied_start_year,
+                p.applied_end_quarter,
+                p.applied_end_year,
+                p.notes,
+                c.provider_name,
+                c.payment_schedule
+            FROM payments p
+            JOIN contracts c ON p.contract_id = c.contract_id
+            WHERE p.client_id = ?
+            AND p.valid_to IS NULL
+            AND c.valid_to IS NULL
+            ORDER BY p.received_date DESC
+        """
+        if limit:
+            query += " LIMIT ?"
+            cursor.execute(query, (client_id, limit))
+        else:
+            cursor.execute(query, (client_id,))
+        return cursor.fetchall()
+    finally:
+        conn.close()
+
+def get_payment_details(payment_id: int):
+    """Get detailed payment information"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT 
+                p.*,
+                c.provider_name,
+                c.payment_schedule,
+                c.fee_type,
+                c.percent_rate,
+                c.flat_rate
+            FROM payments p
+            JOIN contracts c ON p.contract_id = c.contract_id
+            WHERE p.payment_id = ?
+            AND p.valid_to IS NULL
+            AND c.valid_to IS NULL
+        """, (payment_id,))
+        return cursor.fetchone()
+    finally:
+        conn.close()

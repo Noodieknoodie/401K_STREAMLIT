@@ -83,70 +83,6 @@ Notes
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ============================================================================
-# DOCS: Table Structures
-# ============================================================================
-
-# Client Table Structure:
-# CREATE TABLE "clients" (
-#     "client_id" INTEGER NOT NULL,
-#     "display_name" TEXT NOT NULL,
-#     "full_name" TEXT,
-#     "ima_signed_date" TEXT,
-#     "file_path_account_documentation" TEXT,
-#     "file_path_consulting_fees" TEXT,
-#     "file_path_meetings" TEXT,
-#     PRIMARY KEY("client_id" AUTOINCREMENT)
-# )
-
-# Contact Table Structure:
-# CREATE TABLE "contacts" (
-#     "contact_id" INTEGER NOT NULL,
-#     "client_id" INTEGER NOT NULL,
-#     "contact_type" TEXT NOT NULL,
-#     "contact_name" TEXT,
-#     "phone" TEXT,
-#     "email" TEXT,
-#     "fax" TEXT,
-#     "physical_address" TEXT,
-#     "mailing_address" TEXT,
-#     PRIMARY KEY("contact_id" AUTOINCREMENT),
-#     FOREIGN KEY("client_id") REFERENCES "clients"("client_id")
-# )
-
-# Contract Table Structure:
-# CREATE TABLE "contracts" (
-#     "contract_id" INTEGER NOT NULL,
-#     "client_id" INTEGER NOT NULL,
-#     "active" TEXT,
-#     "contract_number" TEXT,
-#     "provider_name" TEXT,
-#     "contract_start_date" TEXT,
-#     "fee_type" TEXT,
-#     "percent_rate" REAL,
-#     "flat_rate" REAL,
-#     "payment_schedule" TEXT,
-#     "num_people" INTEGER,
-#     "notes" TEXT
-# )
-
-# Payment Table Structure:
-# CREATE TABLE "payments" (
-#     "payment_id" INTEGER NOT NULL,
-#     "contract_id" INTEGER NOT NULL,
-#     "client_id" INTEGER NOT NULL,
-#     "received_date" TEXT,
-#     "applied_start_quarter" INTEGER,
-#     "applied_start_year" INTEGER,
-#     "applied_end_quarter" INTEGER,
-#     "applied_end_year" INTEGER,
-#     "total_assets" INTEGER,
-#     "expected_fee" REAL,
-#     "actual_fee" REAL,
-#     "method" TEXT,
-#     "notes" TEXT
-# )
-
 
 def get_database_connection():
     """Create and return a database connection to the local database."""
@@ -172,7 +108,12 @@ def get_clients():
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT client_id, display_name FROM clients ORDER BY display_name")
+        cursor.execute("""
+            SELECT client_id, display_name 
+            FROM clients 
+            WHERE valid_to IS NULL
+            ORDER BY display_name
+        """)
         return cursor.fetchall()
     finally:
         conn.close()
@@ -193,7 +134,9 @@ def get_active_contract(client_id):
                 flat_rate,
                 num_people
             FROM contracts 
-            WHERE client_id = ? AND active = 'TRUE'
+            WHERE client_id = ? 
+            AND active = 'TRUE'
+            AND valid_to IS NULL
             LIMIT 1
         """, (client_id,))
         return cursor.fetchone()
@@ -221,6 +164,7 @@ def get_client_contracts(client_id: int):
                 num_people
             FROM contracts 
             WHERE client_id = ?
+            AND valid_to IS NULL
             ORDER BY 
                 CASE WHEN active = 'TRUE' THEN 0 ELSE 1 END,
                 contract_start_date DESC
@@ -239,6 +183,7 @@ def get_latest_payment(client_id):
                    p.applied_start_quarter, p.applied_start_year
             FROM payments p
             WHERE p.client_id = ?
+            AND p.valid_to IS NULL
             ORDER BY p.received_date DESC
             LIMIT 1
         """, (client_id,))
@@ -251,7 +196,11 @@ def get_client_details(client_id):
     conn = get_database_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT display_name, full_name FROM clients WHERE client_id = ?", (client_id,))
+        cursor.execute("""
+            SELECT display_name, full_name 
+            FROM clients 
+            WHERE client_id = ? AND valid_to IS NULL
+        """, (client_id,))
         return cursor.fetchone()
     finally:
         conn.close()
@@ -297,6 +246,7 @@ def get_contacts(client_id):
                    physical_address, mailing_address, contact_id
             FROM contacts 
             WHERE client_id = ?
+            AND valid_to IS NULL
             ORDER BY 
                 CASE contact_type
                     WHEN 'Primary' THEN 1

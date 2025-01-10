@@ -326,6 +326,50 @@ def display_contracts_section(client_id: int):
     # Show contract history
     show_contract_history(client_id)
 
+def get_contract_details(contract_id: int):
+    """Get detailed contract information"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT *
+            FROM contracts
+            WHERE contract_id = ?
+            AND valid_to IS NULL
+        """, (contract_id,))
+        return cursor.fetchone()
+    finally:
+        conn.close()
+
+def get_all_client_contracts(client_id: int):
+    """Get all contracts for a client"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT 
+                contract_id,
+                active,
+                contract_number,
+                provider_name,
+                contract_start_date,
+                fee_type,
+                percent_rate,
+                flat_rate,
+                payment_schedule,
+                num_people,
+                notes
+            FROM contracts
+            WHERE client_id = ?
+            AND valid_to IS NULL
+            ORDER BY 
+                CASE WHEN active = 'TRUE' THEN 0 ELSE 1 END,
+                contract_start_date DESC
+        """, (client_id,))
+        return cursor.fetchall()
+    finally:
+        conn.close()
+
 if __name__ == "__main__":
     st.set_page_config(page_title="Client Contracts", layout="wide")
     # For testing

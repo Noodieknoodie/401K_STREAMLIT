@@ -72,10 +72,13 @@ def get_consolidated_client_data(client_id: int) -> Dict[str, Any]:
             LEFT JOIN (
                 SELECT * FROM contracts 
                 WHERE active = 'TRUE'
+                AND valid_to IS NULL  -- Add temporal condition for contracts
             ) ac ON c.client_id = ac.client_id
             LEFT JOIN LatestSummaries ls ON c.client_id = ls.client_id
             LEFT JOIN contacts co ON c.client_id = co.client_id
             WHERE c.client_id = ?
+            AND c.valid_to IS NULL  -- Add temporal condition for clients
+            AND (co.valid_to IS NULL OR co.valid_to IS NULL)  -- Add temporal condition for contacts
         """, (client_id, client_id))
         
         rows = cursor.fetchall()
