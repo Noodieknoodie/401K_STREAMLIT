@@ -8,21 +8,6 @@ This module serves as the main dashboard for the 401K Payment Tracker applicatio
 It integrates all client management components into a cohesive interface while
 maintaining the legacy layout and UX patterns but with modern state management.
 
-Key Components:
--------------
-1. Client Selection - Top bar with search/select
-2. Metrics Display - Card layout showing key metrics
-3. Contacts Section - Three-column layout with forms
-4. Contracts Section - Active contract and history
-5. Payments Section - Payment history with forms
-
-State Management:
----------------
-Each section manages its own state using st.session_state:
-- Form visibility
-- Edit/delete states
-- Filter states
-- Validation states
 """
 
 import streamlit as st
