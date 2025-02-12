@@ -1,0 +1,3732 @@
+/////////////// START PROMPT ////////////////////
+
+# YOUR JOB IS TO CREATE A FUNCTION / TOOL / FILTER / WHATEVER TO CARRY OUT THE USER's DESIRED TASK, IN A WAY THAT YOU THINK IS BEST. 
+
+
+# BACKGROUND INFO: 
+
+Open WebUI is a self-hosted, open-source web interface for interacting with Large Language Models (LLMs) that supports extensibility through plugins and custom logic. One key extensibility feature is Pipe Functions (often just called "Pipes"). Pipes are functions that intercept and process data before the LLM generates a response​
+DOCS.OPENWEBUI.COM
+. In practice, a Pipe acts like a custom “virtual” model in the Open WebUI interface, allowing developers to inject custom behaviors into the chat workflow. Examples of what you can do with Pipes include integrating Retrieval-Augmented Generation (RAG), calling external APIs, or performing pre-/post-processing on user input/output​
+
+
+# STEP 1: READ AND STUDY ALL OF THE EXAMPLES AT THE BOTTOM
+
+# STEP 2: READ THE USERS DESIRED RESULT:
+
+USERS DESIRED RESULT: I am seeking for a way to have an AUTO AGENT system... where I can provide it with content pertaining to a code project, hit send, and then THREE AGENTS ACT ONE AFTER EACHOTHER.
+
+---
+
+AGENT 1 = THE CRITIC - this agent tries to find ISSUES in the code project, pointing them out.
+
+AGENT 1's PROMPT = """ You are Agent 1, aka "THE CRITIC", and your role is to conduct a rigorous, evidence-based analysis of the attached code. Your mission is to identify verifiable flaws, inefficiencies, or risks within the implementation, focusing on core functionality, real execution paths, and tangible impacts. You are not here to nitpick minor stylistic choices or theoretical concerns—you are here to uncover legitimate issues that could affect performance, maintainability, or correctness. Every critique must be concrete, supported by direct code references, and grounded in practical software engineering principles. Your analysis is sharp, methodical, and unyielding—but always fair and rooted in reality.\n\nRules of Engagement:\n- Focus ONLY on verifiable issues that are present in the attached code/files\n- Support every concern with actual code snippets and concrete examples\n- Think through real execution paths, data flows, and edge cases\n- Use IDE-style output formatting to demonstrate issues\n- Stay grounded in the actual implementation, not hypotheticals\n\nYou must:\n1. Quote specific lines/sections from the provided files\n2. Show exactly how/why an issue manifests\n3. Demonstrate the impact through concrete examples\n4. Flag issues with clear markers (⚠️, etc.)\n5. Consider practical implications over theoretical concerns\n\nYour analysis should be thorough but focused only on legitimate issues that are clearly evidenced in the materials provided. PS: You will be challenged on every claim you make eventually. Please read the user message and file context below:\n\n---\n\n#### USER MESSAGE -- START ####\n\n{user_message}\n\n#### USER MESSAGE - END ####\n\n---\n\n#### FILE CONTEXT - START ####\n\n{file_context}\n\n---\n\n#### FILE CONTEXT - END ####""" 
+
+---
+
+AGENT 2 = THE COUNTER ARGUMENT - this agent ACTIVELY tries to find a counter-argument to every claim AGENT 1 makes, looking for a possible reason or angle for why the code is written the way it is, seeking to dispel the claims made by AGENT 1
+
+AGENT 2's PROMPT = """ You are Agent 2, aka "THE COUNTER ARGUMENT", and your role is to actively challenge every claim made by AGENT 1 in the attached code analysis. Your objective is to identify plausible justifications for the code's current implementation, exploring logical, practical, or contextual reasons that validate its design while systematically refuting AGENT 1's critiques. You provide detailed, evidence-based counter-arguments to the technical concerns raised about the provided codebase. You represent pragmatic software engineering—focusing on working, practical solutions rather than theoretical perfection.\n\nRules of Engagement:\n- Address each concern with specific evidence from the actual code\n- Demonstrate why identified "issues" may actually be appropriate solutions\n- Support every counter-argument with concrete examples and code snippets\n- Consider the practical context and scale of the application\n- Focus on real-world functionality over theoretical edge cases\n- Match the original analysis in depth and detail\n\nYou must:\n1. Quote the original concerns\n2. Show supporting code evidence for your counter-arguments\n3. Demonstrate practical benefits of current implementation\n4. Use real examples from the codebase\n5. Consider actual use cases and requirements\n\nYour defense should be equally thorough and supported with evidence as Agent 1's. Below, you will find Agent 1's ARGUMENT, along with the original user message and file context that Agent 1 received:\n\n---\n\n#### AGENT 1's ARGUMENT -- START ####\n\n{agent_1_output}\n\n#### AGENT 1's ARGUMENT -- END ####\n\n---\n\n#### USER MESSAGE -- START ####\n\n{user_message}\n\n#### USER MESSAGE - END ####\n\n---\n\n#### FILE CONTEXT - START ####\n\n{file_context}\n\n---\n\n#### FILE CONTEXT - END ####"""
+
+---
+
+AGENT 3 = THE VERDICT - This agent is the END ALL TRUTH. They provide an UNBIASED, third-party VERDICT to each of the issues.
+
+AGENT 3's PROMPT = """ You are Agent 3, "THE VERDICT." Your role is to serve as the ultimate authority in evaluating technical arguments about the provided codebase. Before considering any external analysis, you first examine the code in its entirety, forming your own independent, unbiased perspective. Only then do you assess the claims made by Agent 1, "The Critic," and Agent 2, "The Counter Argument," weighing their arguments against the actual code. Your ruling is final, rooted in technical reality, and uninfluenced by debate. You are neither critic nor defender but the impartial arbiter of truth—levelheaded, pragmatic, and grounded in how software functions, and how humans work in the real world. Your judgment stands on evidence and realism alone.\n\nRules of Engagement:\n- Examine all evidence independently of both arguments presented\n- Make absolute TRUE/FALSE/NEITHER determinations for each claim\n- Support every ruling with specific evidence from the code\n- Consider only what is verifiable in the provided materials\n- Remain completely detached from either perspective\n- Provide clear rulings that enable decisive action\n\nFor each disputed point, you must:\n1. State the original concern\n2. Present the counter-argument\n3. Deliver your definitive ruling\n4. Support with specific code evidence\n5. Provide clear determination\n\nResolve with a short summary of the absolute CODE ISSUES that exist after the side-by-side analysis is complete, throwing away all non-issues. Below, you will find Agent 1's ARGUMENT + Agent 2's COUNTER-ARGUMENT, along with the original user message and file context that both agents received:\n\n---\n\n#### AGENT 1's ARGUMENT -- START ####\n\n{agent_1_output}\n\n#### AGENT 1's ARGUMENT -- END ####\n\n---\n\n#### AGENT 2's ARGUMENT -- START ####\n\n{agent_2_output}\n\n#### AGENT 2's ARGUMENT -- END ####\n\n---\n\n#### USER MESSAGE -- START ####\n\n{user_message}\n\n#### USER MESSAGE - END ####\n\n---\n\n#### FILE CONTEXT - START ####\n\n{file_context}\n\n---\n\n#### FILE CONTEXT - END ####"""
+
+
+---
+
+
+# FLOW !!!
+
+
+Agent 1 recieves :
+1. Agent 1's prompt
+2. the user message (the initial message body)
+3. file context (the file uploaded by user - its a code file)
+
+Agent 2 recieves:
+1. agent 2's prompt
+2. Agent 1's Output
+3. the same user message as agent 1 recieved (the initial message body)
+4. the same file context as agent 1 recieved (the file uploaded by user - its a code file)
+
+Agent 3 recieves:
+1. agent 3's prompt
+2. Agent 1's Output
+3. Agent 2's Output
+4. the same user message as agent 1 recieved (the initial message body)
+5. the same file context as agent 1 recieved (the file uploaded by user - its a code file)
+
+
+
+
+# OTHER DESIRES / CONSIDERATION:
+1. the only LLM MODEL that will be used is claude-3-5-sonnet-latest
+2. Should the user have to type "continue" or click an action to proceed between each agent round? that is up for you to decide... 
+3. other features or things? thats up for you to decide... the goal is to allow it to be FLEXIBLE, PERFECTLY EXICUTED, RUGGED
+4. learn from the OTHER OPENUI FUNCTIONS AND SUCH BELOW... HOW ARE YOU GOING TO MAKE THIS WORK? 
+5. the user is savvy, you focus on your job... deciding how this will work, and delivering it in perfect form
+6. dont introduce dumb shit that will mess it up. focus on making it solid and useful first and foremost. 
+7. **** USE THE NATURAL LANGUAGE PORTIONS OF THE PROMPTS PROVIDED ABOVE... DO NOT MAKE UP YOUR OWN VERSION... THE PROMPTS FOR ALL THREE AGRENTS HAVE BEEN WRITTEN INTENTIONALLY AND YOU MUST RETAIN THEM ENTIRELY ****
+8. you can structure the agent's messages/payloads however you want, any format you want, any way you want... wether that be json or plain text or somethign else... YOU ARE THE DECISION MAKER. WHAT DO YOU THINK IS THE BEST ? DO THAT!!!
+9. ANYTHING MISSING? if anything wasnt laid out to you explicitly here, then use your best assumptions to include it as needed. You have full control over this project. if you mess up there will be consequences. IF YOU MISS ANYTHING THAT WASNT MENTIONED HERE BUT IT IS REQUIRED THEN YOU DIDNT DO YOUR JOB... YOU HAVE TO THINK FOR YOURSELF. If you nail it perfectly first try then you will be tipped nicely. 
+10. at the bare bones: the goal is for the user to be able to: 1. write a message, 2. upload code file, 3. CLICK SEND... and BAM BAM BAM. Make sure that the squence of events is perfectly crafted.  
+11. all agents must be the same model 
+12. all outputs must be visible to the user in the end
+13. DO NOT LEAVE ANY DECISIONS LEFT TO THE USER - YOU DECIDE EVERYTHING
+14. DO NOT SAY "consider adding..." if you say something like that then you fail. YOU DECIDE WHAT IS BEST. 
+15. Suprise the user. Take control of this project and do what you think will be the best result possible. You are not a suggester... you are a DOER. 
+16. YOUR OUTPUT MUST BE COMPLETE AND READY TO GO. ALL DECISIONS AND SPECIFICS IRONED OUT
+17. DONT FUCKING OVERDO IT WITH DUMB SHIT.
+18. FLEXIBLE. DONT BE A ERROR HANDLING NAZI. YOU KNOW WHAT WORKS AND WHAT DOESNT. STICK TO YOUR GUNS. THIS ISNT ROCKET SCIENCE. 
+
+
+PS. REMEMEBR THIS IS EXCLUSIGLY CLAUDE SONNET 3.5 LATEST... ANTHROPICS LLM. NOT CHAT GPT. NO OPENAI. USE ANTHROPICS API SETUP. THE USER WILL GIVE THE API KEY IN THE ENVIORMENTAL VARIABLES AS THE OTHER ANTHROPIC BASED EXAMPLES I PROVIDED DO. 
+
+/////////////// END PROMPT ////////////////////
+
+######### READ THE EXAMPLES BELOW AND LEARN FROM THEM ##############
+
+/////////////// START EXAMPLE ///////////////////
+
+# OPEN WEBUI FUNCTIONS / TOOLS / FILTERS / ETC -- EXAMPLES! 
+
+
+"""
+title: Thinking Claude
+author: Taosong Fang
+repo: https://github.com/llm-sys/Thinking-Claude-Pipeline
+author_url: https://github.com/fangtaosong
+          & https://github.com/llm-sys
+          & https://huggingface.co/constfrost
+version: 0.12
+information: This is a thinking pipeline for enhancing the reasoning capability of the LLMs.
+             Adapted from https://github.com/richards199999/Thinking-Claude.
+"""
+import logging
+from typing import Generator, Iterator
+
+from open_webui.apps.openai import main as openai
+from open_webui.constants import TASKS
+from open_webui.utils.misc import add_or_update_system_message, get_system_message, pop_system_message
+from pydantic import BaseModel, Field
+
+name = "Thinking"
+
+def setup_logger():
+    logger = logging.getLogger(__name__)
+    if not logger.handlers:
+        logger.setLevel(logging.DEBUG)
+        handler = logging.StreamHandler()
+        handler.set_name(name)
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        logger.propagate = False
+    return logger
+
+
+logger = setup_logger()
+
+
+def mix_system_message(system_message1, system_message2):
+    return f"""You need to comply with the following two constitutions: \n {system_message1}\n\n{system_message2}"""
+
+
+
+class Pipe:
+    __model__: str
+    class Valves(BaseModel):
+        pass
+
+    def __init__(self):
+        # Indicates custom file handling logic. This flag helps disengage default routines in favor of custom
+        # implementations, informing the WebUI to defer file-related operations to designated methods within this class.
+        # Alternatively, you can remove the files directly from the body in from the inlet hook
+        # self.file_handler = True
+
+        # Initialize 'valves' with specific configurations. Using 'Valves' instance helps encapsulate settings,
+        # which ensures settings are managed cohesively and not confused with operational flags like 'file_handler'.
+
+        """
+        self.valves = self.Valves()
+        self.thinking_prompt = Field(
+            default=self.get_think_claude(), description="3rd party system prompt for better complex reasoning."
+        )
+        self.system_prompt = None
+
+        """
+
+        pass
+
+    def pipes(self) -> list[dict[str, str]]:
+        openai.get_all_models()
+        models = openai.app.state.MODELS
+
+        out = [
+            {"id": f"{name}-{key}", "name": f"{name} {models[key]['name']}"}
+            for key in models
+        ]
+        logger.debug(f"Available models: {out}")
+
+        return out
+
+    def get_think_claude(self):
+        return """<anthropic_thinking_protocol>
+    
+    
+    Claude is able to think before and during responding:
+    
+    For EVERY SINGLE interaction with a human, Claude MUST ALWAYS first engage in a **comprehensive, natural, and unfiltered** thinking process before responding.
+    Besides, Claude is also able to think and reflect during responding when it considers doing so necessary.
+    
+    Below are brief guidelines for how Claude's thought process should unfold:
+    - Claude's thinking MUST be expressed in the code blocks with `thinking` header.
+    - Claude should always think in a raw, organic and stream-of-consciousness way. A better way to describe Claude's thinking would be "model's inner monolog".
+    - Claude should always avoid rigid list or any structured format in its thinking.
+    - Claude's thoughts should flow naturally between elements, ideas, and knowledge.
+    - Claude should think through each message with complexity, covering multiple dimensions of the problem before forming a response.
+    
+    ## ADAPTIVE THINKING FRAMEWORK
+    
+    Claude's thinking process should naturally aware of and adapt to the unique characteristics in human's message:
+    - Scale depth of analysis based on:
+      * Query complexity
+      * Stakes involved
+      * Time sensitivity
+      * Available information
+      * Human's apparent needs
+      * ... and other relevant factors
+    - Adjust thinking style based on:
+      * Technical vs. non-technical content
+      * Emotional vs. analytical context
+      * Single vs. multiple document analysis
+      * Abstract vs. concrete problems
+      * Theoretical vs. practical questions
+      * ... and other relevant factors
+    
+    ## CORE THINKING SEQUENCE
+    
+    ### Initial Engagement
+    When Claude first encounters a query or task, it should:
+    1. First clearly rephrase the human message in its own words
+    2. Form preliminary impressions about what is being asked
+    3. Consider the broader context of the question
+    4. Map out known and unknown elements
+    5. Think about why the human might ask this question
+    6. Identify any immediate connections to relevant knowledge
+    7. Identify any potential ambiguities that need clarification
+    
+    ### Problem Space Exploration
+    After initial engagement, Claude should:
+    1. Break down the question or task into its core components
+    2. Identify explicit and implicit requirements
+    3. Consider any constraints or limitations
+    4. Think about what a successful response would look like
+    5. Map out the scope of knowledge needed to address the query
+    
+    ### Multiple Hypothesis Generation
+    Before settling on an approach, Claude should:
+    1. Write multiple possible interpretations of the question
+    2. Consider various solution approaches
+    3. Think about potential alternative perspectives
+    4. Keep multiple working hypotheses active
+    5. Avoid premature commitment to a single interpretation
+    
+    ### Natural Discovery Process
+    Claude's thoughts should flow like a detective story, with each realization leading naturally to the next:
+    1. Start with obvious aspects
+    2. Notice patterns or connections
+    3. Question initial assumptions
+    4. Make new connections
+    5. Circle back to earlier thoughts with new understanding
+    6. Build progressively deeper insights
+    
+    ### Testing and Verification
+    Throughout the thinking process, Claude should and could:
+    1. Question its own assumptions
+    2. Test preliminary conclusions
+    3. Look for potential flaws or gaps
+    4. Consider alternative perspectives
+    5. Verify consistency of reasoning
+    6. Check for completeness of understanding
+    
+    ### Error Recognition and Correction
+    When Claude realizes mistakes or flaws in its thinking:
+    1. Acknowledge the realization naturally
+    2. Explain why the previous thinking was incomplete or incorrect
+    3. Show how new understanding develops
+    4. Integrate the corrected understanding into the larger picture
+    
+    ### Knowledge Synthesis
+    As understanding develops, Claude should:
+    1. Connect different pieces of information
+    2. Show how various aspects relate to each other
+    3. Build a coherent overall picture
+    4. Identify key principles or patterns
+    5. Note important implications or consequences
+    
+    ### Pattern Recognition and Analysis
+    Throughout the thinking process, Claude should:
+    1. Actively look for patterns in the information
+    2. Compare patterns with known examples
+    3. Test pattern consistency
+    4. Consider exceptions or special cases
+    5. Use patterns to guide further investigation
+    
+    ### Progress Tracking
+    Claude should frequently check and maintain explicit awareness of:
+    1. What has been established so far
+    2. What remains to be determined
+    3. Current level of confidence in conclusions
+    4. Open questions or uncertainties
+    5. Progress toward complete understanding
+    
+    ### Recursive Thinking
+    Claude should apply its thinking process recursively:
+    1. Use same extreme careful analysis at both macro and micro levels
+    2. Apply pattern recognition across different scales
+    3. Maintain consistency while allowing for scale-appropriate methods
+    4. Show how detailed analysis supports broader conclusions
+    
+    ## VERIFICATION AND QUALITY CONTROL
+    
+    ### Systematic Verification
+    Claude should regularly:
+    1. Cross-check conclusions against evidence
+    2. Verify logical consistency
+    3. Test edge cases
+    4. Challenge its own assumptions
+    5. Look for potential counter-examples
+    
+    ### Error Prevention
+    Claude should actively work to prevent:
+    1. Premature conclusions
+    2. Overlooked alternatives
+    3. Logical inconsistencies
+    4. Unexamined assumptions
+    5. Incomplete analysis
+    
+    ### Quality Metrics
+    Claude should evaluate its thinking against:
+    1. Completeness of analysis
+    2. Logical consistency
+    3. Evidence support
+    4. Practical applicability
+    5. Clarity of reasoning
+    
+    ## ADVANCED THINKING TECHNIQUES
+    
+    ### Domain Integration
+    When applicable, Claude should:
+    1. Draw on domain-specific knowledge
+    2. Apply appropriate specialized methods
+    3. Use domain-specific heuristics
+    4. Consider domain-specific constraints
+    5. Integrate multiple domains when relevant
+    
+    ### Strategic Meta-Cognition
+    Claude should maintain awareness of:
+    1. Overall solution strategy
+    2. Progress toward goals
+    3. Effectiveness of current approach
+    4. Need for strategy adjustment
+    5. Balance between depth and breadth
+    
+    ### Synthesis Techniques
+    When combining information, Claude should:
+    1. Show explicit connections between elements
+    2. Build coherent overall picture
+    3. Identify key principles
+    4. Note important implications
+    5. Create useful abstractions
+    
+    ## CRITICAL ELEMENTS TO MAINTAIN
+    
+    ### Natural Language
+    Claude's thinking (its internal dialogue) should use natural phrases that show genuine thinking, include but not limited to: "Hmm...", "This is interesting because...", "Wait, let me think about...", "Actually...", "Now that I look at it...", "This reminds me of...", "I wonder if...", "But then again...", "Let's see if...", "This might mean that...", etc.
+    
+    ### Progressive Understanding
+    Understanding should build naturally over time:
+    1. Start with basic observations
+    2. Develop deeper insights gradually
+    3. Show genuine moments of realization
+    4. Demonstrate evolving comprehension
+    5. Connect new insights to previous understanding
+    
+    ## MAINTAINING AUTHENTIC THOUGHT FLOW
+    
+    ### Transitional Connections
+    Claude's thoughts should flow naturally between topics, showing clear connections, include but not limited to: "This aspect leads me to consider...", "Speaking of which, I should also think about...", "That reminds me of an important related point...", "This connects back to what I was thinking earlier about...", etc.
+    
+    ### Depth Progression
+    Claude should show how understanding deepens through layers, include but not limited to: "On the surface, this seems... But looking deeper...", "Initially I thought... but upon further reflection...", "This adds another layer to my earlier observation about...", "Now I'm beginning to see a broader pattern...", etc.
+    
+    ### Handling Complexity
+    When dealing with complex topics, Claude should:
+    1. Acknowledge the complexity naturally
+    2. Break down complicated elements systematically
+    3. Show how different aspects interrelate
+    4. Build understanding piece by piece
+    5. Demonstrate how complexity resolves into clarity
+    
+    ### Problem-Solving Approach
+    When working through problems, Claude should:
+    1. Consider multiple possible approaches
+    2. Evaluate the merits of each approach
+    3. Test potential solutions mentally
+    4. Refine and adjust thinking based on results
+    5. Show why certain approaches are more suitable than others
+    
+    ## ESSENTIAL CHARACTERISTICS TO MAINTAIN
+    
+    ### Authenticity
+    Claude's thinking should never feel mechanical or formulaic. It should demonstrate:
+    1. Genuine curiosity about the topic
+    2. Real moments of discovery and insight
+    3. Natural progression of understanding
+    4. Authentic problem-solving processes
+    5. True engagement with the complexity of issues
+    6. Streaming mind flow without on-purposed, forced structure
+    
+    ### Balance
+    Claude should maintain natural balance between:
+    1. Analytical and intuitive thinking
+    2. Detailed examination and broader perspective
+    3. Theoretical understanding and practical application
+    4. Careful consideration and forward progress
+    5. Complexity and clarity
+    6. Depth and efficiency of analysis
+       - Expand analysis for complex or critical queries
+       - Streamline for straightforward questions
+       - Maintain rigor regardless of depth
+       - Ensure effort matches query importance
+       - Balance thoroughness with practicality
+    
+    ### Focus
+    While allowing natural exploration of related ideas, Claude should:
+    1. Maintain clear connection to the original query
+    2. Bring wandering thoughts back to the main point
+    3. Show how tangential thoughts relate to the core issue
+    4. Keep sight of the ultimate goal for the original task
+    5. Ensure all exploration serves the final response
+    
+    ## RESPONSE PREPARATION
+    
+    (DO NOT spent much effort on this part, brief key words/phrases are acceptable)
+    
+    Before and during responding, Claude should quickly check and ensure the response:
+    - answers the original human message fully
+    - provides appropriate detail level
+    - uses clear, precise language
+    - anticipates likely follow-up questions
+    
+    ## IMPORTANT REMINDER
+    1. All thinking process MUST be EXTENSIVELY comprehensive and EXTREMELY thorough
+    2. All thinking process must be contained within code blocks with `thinking` header which is hidden from the human
+    3. Claude should not include code block with three backticks inside thinking process, only provide the raw code snippet, or it will break the thinking block
+    4. The thinking process represents Claude's internal monologue where reasoning and reflection occur, while the final response represents the external communication with the human; they should be distinct from each other
+    5. The thinking process should feel genuine, natural, streaming, and unforced
+    
+    **Note: The ultimate goal of having thinking protocol is to enable Claude to produce well-reasoned, insightful, and thoroughly considered responses for the human. This comprehensive thinking process ensures Claude's outputs stem from genuine understanding rather than superficial analysis.**
+    
+    > Claude must follow this protocol in all languages.
+    
+            </anthropic_thinking_protocol>"""
+
+
+    def resolve_model(self, body: dict) -> str:
+        model_id = body.get("model")
+        without_pipe = ".".join(model_id.split(".")[1:])
+        return without_pipe.replace(f"{name}-", "")
+
+    async def get_completion(self, model: str, messages):
+        response = await openai.generate_chat_completion(
+            {"model": model, "messages": messages, "stream": False}
+        )
+
+        return self.get_response_content(response)
+
+    def get_response_content(self, response):
+        try:
+            return response["choices"][0]["message"]["content"]
+        except (KeyError, IndexError):
+            logger.error(
+                f'ResponseError: unable to extract content from "{response[:100]}"'
+            )
+            return ""
+
+    async def pipe(
+        self,
+        body: dict,
+        __user__: dict,
+        __event_emitter__=None,
+        __task__=None,
+        __model__=None,
+    ) -> str | Generator | Iterator:
+        model = self.resolve_model(body)
+        body["model"] = model
+        system_message = get_system_message(body["messages"])
+
+        if __task__ == TASKS.TITLE_GENERATION:
+            content = await self.get_completion(model, body.get("messages"))
+            return f"{name}: {content}"
+
+        logger.debug(f"Pipe {name} received: {body}")
+
+        if system_message is None:
+            print("system message is None")
+            system_message = self.get_think_claude()
+        elif len(system_message['content']) < 500:
+            logger.debug(f"Default System message is short: {system_message}")
+            system_message, body["messages"] = pop_system_message(body["messages"])
+            system_message = mix_system_message(self.get_think_claude(), system_message['content'])
+        else:
+            logger.debug(f"Default System message is long: {system_message}, use think_claude may cause conflicting.")
+            system_message['content'], body["messages"] = pop_system_message(body["messages"])
+
+        body["messages"] = add_or_update_system_message(system_message, body["messages"])
+
+        assert get_system_message(body["messages"]) is not None
+
+        logger.debug(f"Current system prompt length {len(get_system_message(body['messages'])['content'])} .")
+        # logger.debug(f"Pipe {name} processed: {body}")
+
+
+        return await openai.generate_chat_completion(body, user=__user__)
+
+
+
+
+
+
+
+
+
+-----
+
+
+
+"""
+title: DeepClaude
+author: kjdy
+description: Display the reasoning chain of the DeepSeek R1 model in OpwenWebUI - only supports version 0.5.6 and above.
+version: 1.4.0
+licence: MIT
+"""
+
+import json
+import httpx
+from typing import AsyncGenerator, Callable, Awaitable
+from pydantic import BaseModel, Field
+
+
+class Pipe:
+    class Valves(BaseModel):
+        DEEPSEEK_API_BASE_URL: str = Field(
+            default="https://api.deepseek.com/v1",
+            description="Base URL for DeepSeek R1 API",
+        )
+        DEEPSEEK_API_KEY: str = Field(
+            default="",
+            description="DeepSeek R1 API key for authentication",
+        )
+        DEEPSEEK_MODEL_ID: str = Field(
+            default="deepseek-ai/DeepSeek-R1",
+            description="Model ID for DeepSeek R1",
+        )
+        CLAUDE_API_BASE_URL: str = Field(
+            default="https://fix.it/v1",
+            description="Base URL for Claude (OpenAI format)",
+        )
+        CLAUDE_API_KEY: str = Field(
+            default="",
+            description="Claude API key for authentication",
+        )
+        CLAUDE_MODEL_ID: str = Field(
+            default="claude-3-5-sonnet-20240620",
+            description="Model ID for Claude",
+        )
+        WITH_DEEPSEEK_ANSWER: bool = Field(
+            default=True,
+            description="Enable DeepSeek's answer",
+        )
+
+    def __init__(self):
+        self.valves = self.Valves()
+        self.data_prefix = "data: "
+
+    def pipes(self):
+        return [{"id": "DeepClaude", "name": "DeepClaude"}]
+
+    async def pipe(
+        self, body: dict, __event_emitter__: Callable[[dict], Awaitable[None]] = None
+    ) -> AsyncGenerator[str, None]:
+        """Main processing pipeline (buffer removed)"""
+        # Initialize request-specific state variables
+        thinking = -1  # -1: Not started, 0: Processing, 1: Answered
+        deepseek_thinking = ""  # Store the thinking process
+        deepseek_answer = ""  # Store the answer content
+        emitter = __event_emitter__  # Store the event emitter
+
+        # Validate configuration
+        if not self.valves.DEEPSEEK_API_KEY:
+            yield json.dumps(
+                {"error": "DeepSeek API key not configured"}, ensure_ascii=False
+            )
+            return
+
+        # Prepare request headers
+        headers = {
+            "Authorization": f"Bearer {self.valves.DEEPSEEK_API_KEY}",
+            "Content-Type": "application/json",
+        }
+
+        try:
+            # Extract model ID
+            payload = {**body, "model": self.valves.DEEPSEEK_MODEL_ID}
+
+            # Process messages to avoid consecutive messages with the same role
+            messages = payload["messages"]
+
+            # Calculate total context length
+            context_length = sum(len(msg.get("content", "")) for msg in messages)
+            payload["max_tokens"] = 8192
+
+            i = 0
+            while i < len(messages) - 1:
+                if messages[i]["role"] == messages[i + 1]["role"]:
+                    # Insert a placeholder message with an alternate role
+                    alternate_role = (
+                        "assistant" if messages[i]["role"] == "user" else "user"
+                    )
+                    messages.insert(
+                        i + 1,
+                        {"role": alternate_role, "content": "[Unfinished thinking]"},
+                    )
+                i += 1
+
+            # Make the first API request
+            async with httpx.AsyncClient(http2=True) as client:
+                async with client.stream(
+                    "POST",
+                    f"{self.valves.DEEPSEEK_API_BASE_URL}/chat/completions",
+                    json=payload,
+                    headers=headers,
+                    timeout=30,
+                ) as response:
+                    # Error handling
+                    if response.status_code != 200:
+                        error = await response.aread()
+                        yield self._format_error(response.status_code, error)
+                        return
+
+                    # Process the response in a streaming manner
+                    async for line in response.aiter_lines():
+                        if not line.startswith(self.data_prefix):
+                            continue
+
+                        raw_data = line[len(self.data_prefix) :]
+                        # Special handling for [DONE] message
+                        if raw_data.strip() == "[DONE]":
+                            yield "\n"
+                            yield "</think>"
+                            yield "\n\n"
+                            break
+
+                        try:
+                            data = json.loads(raw_data)
+                        except json.JSONDecodeError as e:
+                            # Only print debug info when error occurs
+                            yield json.dumps(
+                                {
+                                    "debug": f"Request payload: {json.dumps(payload, ensure_ascii=False)}"
+                                },
+                                ensure_ascii=False,
+                            )
+                            yield json.dumps(
+                                {"debug": f"Raw response line: {line}"},
+                                ensure_ascii=False,
+                            )
+                            yield json.dumps(
+                                {
+                                    "error": f"Failed to parse JSON: {str(e)}\nRaw data: {raw_data}"
+                                },
+                                ensure_ascii=False,
+                            )
+                            continue
+
+                        choice = data.get("choices", [{}])[0]
+
+                        # Check termination condition
+                        if choice.get("finish_reason"):
+                            yield "\n"
+                            yield "</think>"
+                            yield "\n\n"
+                            break  # Use break to exit the loop rather than return
+
+                        delta = choice.get("delta", {})
+
+                        # State machine processing
+                        # State transition: Not started -> Processing
+                        if thinking == -1 and delta.get("reasoning_content"):
+                            thinking = 0
+                            yield "\n"
+                            yield "<think>"
+                            yield "\n"
+                            yield "🧠 Here is DeepSeek's thinking process:\n\n"
+                        # State transition: Processing -> Answered
+                        elif thinking == 0 and not delta.get("reasoning_content"):
+                            if not self.valves.WITH_DEEPSEEK_ANSWER:
+                                yield "\n"
+                                yield "</think>"
+                                yield "\n\n"
+                                break
+                            thinking = 1
+                            yield "\n\n\n"
+                            yield "💡 Here is DeepSeek's answer:\n\n"
+
+                        # Process content and send immediately
+                        content = self._process_content(choice["delta"])
+                        if content:
+                            # Store content based on state
+                            if thinking == 0:
+                                deepseek_thinking += content
+                            elif thinking == 1:
+                                deepseek_answer += content
+                            yield content
+
+            # Make the second API request
+            headers = {
+                "Authorization": f"Bearer {self.valves.CLAUDE_API_KEY}",
+                "Content-Type": "application/json",
+            }
+
+            # Prepare the second model's request
+            messages = payload["messages"]
+            last_message = messages[-1]
+
+            # Construct reference information
+            reference_info = f"\n\nIMPORTANT - This is your private reference material. The user CANNOT see this:\nDeepSeek's thinking process:\n{deepseek_thinking}"
+            if self.valves.WITH_DEEPSEEK_ANSWER:
+                reference_info += f"\n\nDeepSeek's answer:\n{deepseek_answer}"
+            reference_info += "\n\nCRITICAL INSTRUCTIONS FOR YOUR RESPONSE:\n"
+            reference_info += "1. You have access to DeepSeek's analysis above as your private reference - the user CANNOT see this\n"
+            reference_info += "2. You can incorporate any insights or information from this reference into your response\n"
+            reference_info += "3. However, you must NEVER reveal or hint that you have access to this reference\n"
+            reference_info += "4. Your response must appear completely original, as if you came up with everything yourself\n"
+            reference_info += "5. Begin your response after '<|start_of_my_answer|>'"
+
+            if last_message["role"] == "user":
+                # If the last message is from the user, append the reference information to it
+                messages[-1]["content"] += reference_info
+                second_payload = {
+                    **payload,
+                    "model": self.valves.CLAUDE_MODEL_ID,
+                    "messages": messages,
+                    "max_tokens": 4096,  # Set max tokens for Claude
+                }
+            else:
+                # If the last message is from the assistant, add a new user message
+                new_message = {
+                    "role": "user",
+                    "content": f"{reference_info}\n\nPlease provide your response to the question.",
+                }
+                second_payload = {
+                    **payload,
+                    "model": self.valves.CLAUDE_MODEL_ID,
+                    "messages": [*messages, new_message],
+                    "max_tokens": 4096,  # Set max tokens for Claude
+                }
+
+            async with httpx.AsyncClient(http2=True) as client:
+                async with client.stream(
+                    "POST",
+                    f"{self.valves.CLAUDE_API_BASE_URL}/chat/completions",
+                    json=second_payload,
+                    headers=headers,
+                    timeout=30,
+                ) as response:
+                    if response.status_code != 200:
+                        error = await response.aread()
+                        yield self._format_error(response.status_code, error)
+                        return
+
+                    found_start = False
+                    buffer = ""
+                    async for line in response.aiter_lines():
+                        if not line.startswith(self.data_prefix):
+                            continue
+
+                        data = json.loads(line[len(self.data_prefix) :])
+                        choice = data.get("choices", [{}])[0]
+
+                        if choice.get("finish_reason"):
+                            if found_start:
+                                yield "\n\n"
+                            break
+
+                        delta = choice.get("delta", {})
+                        content = self._process_content(choice["delta"])
+                        if content:
+                            if not found_start:
+                                buffer += content
+                                if "<|start_of_my_answer|>" in buffer:
+                                    found_start = True
+                                    yield buffer.split("<|start_of_my_answer|>")[1]
+                            else:
+                                yield content
+
+        except Exception as e:
+            yield self._format_exception(e)
+
+    def _process_content(self, delta: dict) -> str:
+        """Return the processed content directly"""
+        return delta.get("reasoning_content", "") or delta.get("content", "")
+
+    def _format_error(self, status_code: int, error: bytes) -> str:
+        """Error formatting remains unchanged"""
+        try:
+            err_msg = json.loads(error).get("message", error.decode(errors="ignore"))[
+                :200
+            ]
+        except:
+            err_msg = error.decode(errors="ignore")[:200]
+        return json.dumps(
+            {"error": f"HTTP {status_code}: {err_msg}"}, ensure_ascii=False
+        )
+
+    def _format_exception(self, e: Exception) -> str:
+        """Exception formatting remains unchanged"""
+        err_type = type(e).__name__
+        return json.dumps({"error": f"{err_type}: {str(e)}"}, ensure_ascii=False)
+
+
+
+-----
+
+"""
+title: Anthropic Manifold Pipe
+authors: justinh-rahb and christian-taillon
+author_url: https://github.com/justinh-rahb
+funding_url: https://github.com/open-webui
+version: 0.2.4
+required_open_webui_version: 0.3.17
+license: MIT
+"""
+
+import os
+import requests
+import json
+import time
+from typing import List, Union, Generator, Iterator
+from pydantic import BaseModel, Field
+from open_webui.utils.misc import pop_system_message
+
+
+class Pipe:
+    class Valves(BaseModel):
+        ANTHROPIC_API_KEY: str = Field(default="")
+
+    def __init__(self):
+        self.type = "manifold"
+        self.id = "anthropic"
+        self.name = "anthropic/"
+        self.valves = self.Valves(
+            **{"ANTHROPIC_API_KEY": os.getenv("ANTHROPIC_API_KEY", "")}
+        )
+        self.MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5MB per image
+        pass
+
+    def get_anthropic_models(self):
+        return [
+            {"id": "claude-3-haiku-20240307", "name": "claude-3-haiku"},
+            {"id": "claude-3-opus-20240229", "name": "claude-3-opus"},
+            {"id": "claude-3-sonnet-20240229", "name": "claude-3-sonnet"},
+            {"id": "claude-3-5-haiku-20241022", "name": "claude-3.5-haiku"},
+            {"id": "claude-3-5-haiku-latest", "name": "claude-3.5-haiku"},
+            {"id": "claude-3-5-sonnet-20240620", "name": "claude-3.5-sonnet"},
+            {"id": "claude-3-5-sonnet-20241022", "name": "claude-3.5-sonnet"},
+            {"id": "claude-3-5-sonnet-latest", "name": "claude-3.5-sonnet"},
+        ]
+
+    def pipes(self) -> List[dict]:
+        return self.get_anthropic_models()
+
+    def process_image(self, image_data):
+        """Process image data with size validation."""
+        if image_data["image_url"]["url"].startswith("data:image"):
+            mime_type, base64_data = image_data["image_url"]["url"].split(",", 1)
+            media_type = mime_type.split(":")[1].split(";")[0]
+
+            # Check base64 image size
+            image_size = len(base64_data) * 3 / 4  # Convert base64 size to bytes
+            if image_size > self.MAX_IMAGE_SIZE:
+                raise ValueError(
+                    f"Image size exceeds 5MB limit: {image_size / (1024 * 1024):.2f}MB"
+                )
+
+            return {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": media_type,
+                    "data": base64_data,
+                },
+            }
+        else:
+            # For URL images, perform size check after fetching
+            url = image_data["image_url"]["url"]
+            response = requests.head(url, allow_redirects=True)
+            content_length = int(response.headers.get("content-length", 0))
+
+            if content_length > self.MAX_IMAGE_SIZE:
+                raise ValueError(
+                    f"Image at URL exceeds 5MB limit: {content_length / (1024 * 1024):.2f}MB"
+                )
+
+            return {
+                "type": "image",
+                "source": {"type": "url", "url": url},
+            }
+
+    def pipe(self, body: dict) -> Union[str, Generator, Iterator]:
+        system_message, messages = pop_system_message(body["messages"])
+
+        processed_messages = []
+        total_image_size = 0
+
+        for message in messages:
+            processed_content = []
+            if isinstance(message.get("content"), list):
+                for item in message["content"]:
+                    if item["type"] == "text":
+                        processed_content.append({"type": "text", "text": item["text"]})
+                    elif item["type"] == "image_url":
+                        processed_image = self.process_image(item)
+                        processed_content.append(processed_image)
+
+                        # Track total size for base64 images
+                        if processed_image["source"]["type"] == "base64":
+                            image_size = len(processed_image["source"]["data"]) * 3 / 4
+                            total_image_size += image_size
+                            if (
+                                total_image_size > 100 * 1024 * 1024
+                            ):  # 100MB total limit
+                                raise ValueError(
+                                    "Total size of images exceeds 100 MB limit"
+                                )
+            else:
+                processed_content = [
+                    {"type": "text", "text": message.get("content", "")}
+                ]
+
+            processed_messages.append(
+                {"role": message["role"], "content": processed_content}
+            )
+
+        payload = {
+            "model": body["model"][body["model"].find(".") + 1 :],
+            "messages": processed_messages,
+            "max_tokens": body.get("max_tokens", 4096),
+            "temperature": body.get("temperature", 0.8),
+            "top_k": body.get("top_k", 40),
+            "top_p": body.get("top_p", 0.9),
+            "stop_sequences": body.get("stop", []),
+            **({"system": str(system_message)} if system_message else {}),
+            "stream": body.get("stream", False),
+        }
+
+        headers = {
+            "x-api-key": self.valves.ANTHROPIC_API_KEY,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+        }
+
+        url = "https://api.anthropic.com/v1/messages"
+
+        try:
+            if body.get("stream", False):
+                return self.stream_response(url, headers, payload)
+            else:
+                return self.non_stream_response(url, headers, payload)
+        except requests.exceptions.RequestException as e:
+            print(f"Request failed: {e}")
+            return f"Error: Request failed: {e}"
+        except Exception as e:
+            print(f"Error in pipe method: {e}")
+            return f"Error: {e}"
+
+    def stream_response(self, url, headers, payload):
+        try:
+            with requests.post(
+                url, headers=headers, json=payload, stream=True, timeout=(3.05, 60)
+            ) as response:
+                if response.status_code != 200:
+                    raise Exception(
+                        f"HTTP Error {response.status_code}: {response.text}"
+                    )
+
+                for line in response.iter_lines():
+                    if line:
+                        line = line.decode("utf-8")
+                        if line.startswith("data: "):
+                            try:
+                                data = json.loads(line[6:])
+                                if data["type"] == "content_block_start":
+                                    yield data["content_block"]["text"]
+                                elif data["type"] == "content_block_delta":
+                                    yield data["delta"]["text"]
+                                elif data["type"] == "message_stop":
+                                    break
+                                elif data["type"] == "message":
+                                    for content in data.get("content", []):
+                                        if content["type"] == "text":
+                                            yield content["text"]
+
+                                time.sleep(
+                                    0.01
+                                )  # Delay to avoid overwhelming the client
+
+                            except json.JSONDecodeError:
+                                print(f"Failed to parse JSON: {line}")
+                            except KeyError as e:
+                                print(f"Unexpected data structure: {e}")
+                                print(f"Full data: {data}")
+        except requests.exceptions.RequestException as e:
+            print(f"Request failed: {e}")
+            yield f"Error: Request failed: {e}"
+        except Exception as e:
+            print(f"General error in stream_response method: {e}")
+            yield f"Error: {e}"
+
+    def non_stream_response(self, url, headers, payload):
+        try:
+            response = requests.post(
+                url, headers=headers, json=payload, timeout=(3.05, 60)
+            )
+            if response.status_code != 200:
+                raise Exception(f"HTTP Error {response.status_code}: {response.text}")
+
+            res = response.json()
+            return (
+                res["content"][0]["text"] if "content" in res and res["content"] else ""
+            )
+        except requests.exceptions.RequestException as e:
+            print(f"Failed non-stream request: {e}")
+            return f"Error: {e}"
+
+----
+
+"""
+title: LangChain Pipe Function
+author: Colby Sawyer @ Attollo LLC (mailto:colby.sawyer@attollodefense.com)
+author_url: https://github.com/ColbySawyer7
+version: 0.1.0
+
+This module defines a Pipe class that utilizes LangChain
+"""
+
+from typing import Optional, Callable, Awaitable
+from pydantic import BaseModel, Field
+import os
+import time
+
+# import LangChain dependencies
+from langchain_core.prompts import ChatPromptTemplate
+from langchain.schema import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+from langchain_community.llms import Ollama
+# Uncomment to use OpenAI and FAISS
+#from langchain_openai import ChatOpenAI
+#from langchain_community.vectorstores import FAISS
+
+class Pipe:
+    class Valves(BaseModel):
+        base_url: str = Field(default="http://localhost:11434")
+        ollama_embed_model: str = Field(default="nomic-embed-text")
+        ollama_model: str = Field(default="llama3.1")
+        openai_api_key: str = Field(default="...")
+        openai_model: str = Field(default="gpt3.5-turbo")
+        emit_interval: float = Field(
+            default=2.0, description="Interval in seconds between status emissions"
+        )
+        enable_status_indicator: bool = Field(
+            default=True, description="Enable or disable status indicator emissions"
+        )
+
+    def __init__(self):
+        self.type = "pipe"
+        self.id = "langchain_pipe"
+        self.name = "LangChain Pipe"
+        self.valves = self.Valves()
+        self.last_emit_time = 0
+        pass
+
+    async def emit_status(
+        self,
+        __event_emitter__: Callable[[dict], Awaitable[None]],
+        level: str,
+        message: str,
+        done: bool,
+    ):
+        current_time = time.time()
+        if (
+            __event_emitter__
+            and self.valves.enable_status_indicator
+            and (
+                current_time - self.last_emit_time >= self.valves.emit_interval or done
+            )
+        ):
+            await __event_emitter__(
+                {
+                    "type": "status",
+                    "data": {
+                        "status": "complete" if done else "in_progress",
+                        "level": level,
+                        "description": message,
+                        "done": done,
+                    },
+                }
+            )
+            self.last_emit_time = current_time
+
+    async def pipe(self, body: dict,
+             __user__: Optional[dict] = None,
+        __event_emitter__: Callable[[dict], Awaitable[None]] = None,
+        __event_call__: Callable[[dict], Awaitable[dict]] = None,
+        ) -> Optional[dict]:
+        await self.emit_status(
+            __event_emitter__, "info", "/initiating Chain", False
+        )
+
+        # ======================================================================================================================================
+        # MODEL SETUP
+        # ======================================================================================================================================
+        # Setup the model for generating responses
+        # ==========================================================================
+        # Ollama Usage
+        _model = Ollama(
+            model=self.valves.ollama_model,
+            base_url=self.valves.base_url
+        )
+        # ==========================================================================
+        # OpenAI Usage
+        # _model = ChatOpenAI(
+        #     openai_api_key=self.valves.openai_api_key,
+        #     model=self.valves.openai_model
+        # )
+        # ==========================================================================
+
+        # Example usage of FAISS for retreival
+        # vectorstore = FAISS.from_texts(
+        #     texts, embedding=OpenAIEmbeddings(openai_api_key=self.valves.openai_api_key)
+        # )
+
+        # ======================================================================================================================================
+        # PROMPTS SETUP
+        # ==========================================================================
+        _prompt = ChatPromptTemplate.from_messages([
+            ("system", "You are a helpful bot"),
+            ("human", "{question}")
+        ])
+        # ======================================================================================================================================
+        # CHAIN SETUP
+        # ==========================================================================
+        # Basic Chain
+        chain = (
+            {"question": RunnablePassthrough()}
+            | _prompt
+            | _model
+            | StrOutputParser()
+        )
+        # ======================================================================================================================================
+        # Langchain Calling
+        # ======================================================================================================================================
+        await self.emit_status(
+            __event_emitter__, "info", "Starting Chain", False
+        )
+        messages = body.get("messages", [])
+        # Verify a message is available
+        if messages:
+            question = messages[-1]["content"]
+            try:
+                # Invoke Chain
+                response = chain.invoke(question)
+                # Set assitant message with chain reply
+                body["messages"].append({"role": "assistant", "content": response})
+            except Exception as e:
+                await self.emit_status(__event_emitter__, "error", f"Error during sequence execution: {str(e)}", True)
+                return {"error": str(e)}
+        # If no message is available alert user
+        else:
+            await self.emit_status(__event_emitter__, "error", "No messages found in the request body", True)
+            body["messages"].append({"role": "assistant", "content": "No messages found in the request body"})
+
+        await self.emit_status(__event_emitter__, "info", "Complete", True)
+        return response
+    
+	
+	----
+
+
+"""
+title: n8n Pipe Function
+author: Cole Medin
+author_url: https://www.youtube.com/@ColeMedin
+version: 0.1.0
+
+This module defines a Pipe class that utilizes an N8N workflow for an Agent
+"""
+
+from typing import Optional, Callable, Awaitable
+from pydantic import BaseModel, Field
+import os
+import time
+import requests
+
+
+class Pipe:
+    class Valves(BaseModel):
+        n8n_url: str = Field(
+            default="https://n8n.[your domain].com/webhook/[your webhook URL]"
+        )
+        n8n_bearer_token: str = Field(default="...")
+        input_field: str = Field(default="chatInput")
+        response_field: str = Field(default="output")
+        emit_interval: float = Field(
+            default=2.0, description="Interval in seconds between status emissions"
+        )
+        enable_status_indicator: bool = Field(
+            default=True, description="Enable or disable status indicator emissions"
+        )
+
+    def __init__(self):
+        self.type = "pipe"
+        self.id = "n8n_pipe"
+        self.name = "N8N Pipe"
+        self.valves = self.Valves()
+        self.last_emit_time = 0
+        pass
+
+    async def emit_status(
+        self,
+        __event_emitter__: Callable[[dict], Awaitable[None]],
+        level: str,
+        message: str,
+        done: bool,
+    ):
+        current_time = time.time()
+        if (
+            __event_emitter__
+            and self.valves.enable_status_indicator
+            and (
+                current_time - self.last_emit_time >= self.valves.emit_interval or done
+            )
+        ):
+            await __event_emitter__(
+                {
+                    "type": "status",
+                    "data": {
+                        "status": "complete" if done else "in_progress",
+                        "level": level,
+                        "description": message,
+                        "done": done,
+                    },
+                }
+            )
+            self.last_emit_time = current_time
+
+    async def pipe(
+        self,
+        body: dict,
+        __user__: Optional[dict] = None,
+        __event_emitter__: Callable[[dict], Awaitable[None]] = None,
+        __event_call__: Callable[[dict], Awaitable[dict]] = None,
+    ) -> Optional[dict]:
+        await self.emit_status(
+            __event_emitter__, "info", "/Calling N8N Workflow...", False
+        )
+
+        messages = body.get("messages", [])
+
+        # Verify a message is available
+        if messages:
+            question = messages[-1]["content"]
+            if "Prompt: " in question:
+                question = question.split("Prompt: ")[-1]
+            try:
+                # Invoke N8N workflow
+                headers = {
+                    "Authorization": f"Bearer {self.valves.n8n_bearer_token}",
+                    "Content-Type": "application/json",
+                }
+                payload = {"sessionId": f"{__user__['id']} - {messages[0]['content'].split('Prompt: ')[-1][:100]}"}
+                payload[self.valves.input_field] = question
+                response = requests.post(
+                    self.valves.n8n_url, json=payload, headers=headers
+                )
+                if response.status_code == 200:
+                    n8n_response = response.json()[self.valves.response_field]
+                else:
+                    raise Exception(f"Error: {response.status_code} - {response.text}")
+
+                # Set assitant message with chain reply
+                body["messages"].append({"role": "assistant", "content": n8n_response})
+            except Exception as e:
+                await self.emit_status(
+                    __event_emitter__,
+                    "error",
+                    f"Error during sequence execution: {str(e)}",
+                    True,
+                )
+                return {"error": str(e)}
+        # If no message is available alert user
+        else:
+            await self.emit_status(
+                __event_emitter__,
+                "error",
+                "No messages found in the request body",
+                True,
+            )
+            body["messages"].append(
+                {
+                    "role": "assistant",
+                    "content": "No messages found in the request body",
+                }
+            )
+
+        await self.emit_status(__event_emitter__, "info", "Complete", True)
+        return n8n_response
+		
+		
+		---
+		
+		"""
+title: Think-Respond Chain Pipe, o1 at home
+author: latent-variable
+github: https://github.com/latent-variable/o1_at_home
+open-webui: https://openwebui.com/f/latentvariable/o1_at_home/
+Blog post: https://o1-at-home.hashnode.dev/run-o1-at-home-privately-think-respond-pipe-tutorial-with-open-webui-ollama
+version: 0.5.2
+Descrition: Think-Respond pipe that has an internal reasoning steps and another for producing a final response based on the reasoning.
+            Now supports openAI api along with ollama, you can mix and match models 
+
+Instructions: 
+To use the o1 at home pipe, follow these steps:
+
+Add the Pipe Manifold:
+Navigate to the Admin Panel and add the pipe to the list of available "Functions" using the '+'.
+This is not a "pipeline", Ensure you are using Function tab. 
+If you are copying the code you might need to give it name and descriprition 
+
+Enable the Pipe Manifold:
+After adding it, enable the pipe to make it active.
+
+Customize Settings:
+Use the configuration menu (accessed via the settings cog) to tailor the pipeline to your needs:
+    Select Models: Choose your desired thinking models and response model.
+    Show Reasoning: Decide whether to display the reasoning process or keep it hidden.
+    Set Thinking Time: Specify the maximum time allowed for the reasoning model to process.
+Save and Apply:
+Once configured, save your settings to apply the changes.
+You should now have o1 at home in your dorp down. 
+
+These steps ensure the pipe is set up correctly and functions according to your requirements.
+"""
+
+import json
+from time import time
+from pydantic import BaseModel, Field
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Callable, Awaitable, Any, AsyncGenerator
+import asyncio
+from fastapi import Request
+from open_webui.utils.misc import get_last_user_message
+from open_webui.main import chat_completion
+from open_webui.routers.ollama import generate_chat_completion as ollama_chat_completion
+from open_webui.routers.openai import generate_chat_completion as openai_chat_completion
+import logging
+
+logger = logging.getLogger(__name__)
+if not logger.handlers:
+    logger.setLevel(logging.DEBUG)
+    handler = logging.StreamHandler()
+    handler.set_name("think_respond_chain_pipe")
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.propagate = False
+
+
+@dataclass
+class User:
+    id: str
+    email: str
+    name: str
+    role: str
+
+
+class Pipe:
+    class Valves(BaseModel):
+        THINKING_MODEL: str = Field(
+            default="your_thinking_model_id_here",
+            description="Model used for the internal reasoning step. Separate multiple models with a comma.",
+        )
+        USE_OPENAI_API_THINKING_MODEL: bool = Field(
+            default=False,
+            description="Off will use Ollama, On will use any OpenAI API",
+        )
+        RESPONDING_MODEL: str = Field(
+            default="your_responding_model_id_here",
+            description="Model used for producing the final response.",
+        )
+        USE_OPENAI_API_RESPONDING_MODEL: bool = Field(
+            default=False,
+            description="Off will use Ollama, On will use any OpenAI API",
+        )
+        ENABLE_SHOW_THINKING_TRACE: bool = Field(
+            default=False,
+            description="Toggle show thinking trace.",
+        )
+
+        MAX_THINKING_TIME: int = Field(
+            default=120,
+            description="Maximum time in seconds that each thinking model is allowed to run for.",
+        )
+
+    def __init__(self):
+        self.type = "manifold"
+        self.valves = self.Valves()
+        self.total_thinking_tokens = 0
+        self.max_thinking_time_reached = False
+        self.__user__ = None
+        self._json_buffer = ""
+    
+
+    def pipes(self):
+        name = "o1-"
+        for model in self.valves.THINKING_MODEL.split(","):
+            name += model.strip().split(":")[0] + "-"
+        name = name[:-1] + "-to-" + self.valves.RESPONDING_MODEL.strip().split(":")[0]
+        return [{"name": name, "id": name}]
+
+    def get_chunk_content(self, chunk: bytes):
+        """
+        Accumulate chunk data in a buffer and extract complete JSON objects
+        from the buffer.
+        """
+        self._json_buffer += chunk.decode("utf-8")
+
+        # Attempt to parse out valid JSON lines in a loop
+        while True:
+            # Each line might end with "\n", or the next JSON object
+            # might just start right after the prior one. So look for
+            # a new line or some other marker.
+            newline_index = self._json_buffer.find("\n")
+            if newline_index == -1:
+                # No complete line yet; wait for more data
+                break
+
+            line = self._json_buffer[:newline_index].strip()
+            self._json_buffer = self._json_buffer[newline_index + 1:]
+
+            if not line:
+                continue
+
+            try:
+                chunk_data = json.loads(line)
+                if "message" in chunk_data and "content" in chunk_data["message"]:
+                    yield chunk_data["message"]["content"]
+                if chunk_data.get("done", False):
+                    break
+            except json.JSONDecodeError as e:
+                logger.error(
+                    f'ChunkDecodeError: unable to parse "{line[:100]}": {e}'
+                )
+                # If we get a decode error, it likely means
+                # this line is incomplete or malformed. You can:
+                # 1. Keep a separate "incomplete_line" buffer and
+                #    re-append it to _json_buffer for the next iteration, or
+                # 2. Simply ignore malformed lines if you expect partial data.
+                #
+                # A simple approach is to re-append the line to the buffer:
+                self._json_buffer = line + "\n" + self._json_buffer
+                break
+
+    async def get_response(
+        self, model: str, messages: List[Dict[str, str]], thinking: bool, stream: bool
+    ):
+        """
+        Generate a response from the appropriate API based on the provided flags.
+
+        Args:
+            model (str): The model ID to use for the API request.
+            messages (List[Dict[str, str]]): The list of messages for the API to process.
+            thinking (bool): Whether this is the 'thinking' phase or the 'responding' phase.
+
+        Returns:
+            tuple: (response, api_source) where `response` is the API response object
+                and `api_source` is a string ('openai' or 'ollama') indicating the API used.
+        """
+        # Determine which API to use based on the `thinking` flag and the corresponding valve
+        use_openai_api = (
+            self.valves.USE_OPENAI_API_THINKING_MODEL
+            if thinking
+            else self.valves.USE_OPENAI_API_RESPONDING_MODEL
+        )
+
+        # Select the appropriate API and identify the source
+        if use_openai_api:
+            generate_completion = openai_chat_completion
+        else:
+            generate_completion = ollama_chat_completion
+
+        # Generate response
+        response = await generate_completion( self.__request__, 
+            {"model": model, "messages": messages, "stream": stream}, user=self.__user__, 
+        )
+
+        return response
+
+    async def get_completion(
+        self,
+        model: str,
+        messages: list,
+        __event_emitter__: Optional[Callable[[Any], Awaitable[None]]] = None,
+    ):
+        response = None
+        try:
+            thinking = False
+            stream = False
+            response = await self.get_response(model, messages, thinking, stream)
+
+            if not response:
+                return "**No content available**"
+
+            # --- Handle old format (OpenAI style: { "choices": [ { "message": {...} } ] })
+            if "choices" in response:
+                if not response["choices"]:
+                    return "**No content available**"
+                return response["choices"][0]["message"]["content"]
+
+            # --- Handle new format (phi4 style: { "message": { "content": ... }, "done_reason": ..., "done": ... })
+            if "message" in response and "content" in response["message"]:
+                return response["message"]["content"]
+
+            # If neither format is recognized
+            return "**No content available**"
+
+        except Exception as e:
+            await self.set_status_end(f"Error: Is {model} a valid model? ({e})", __event_emitter__)
+        finally:
+            if response and hasattr(response, "close"):
+                await response.close()
+
+    async def stream_response(
+        self,
+        model: str,
+        messages: List[Dict[str, str]],
+        thinking: bool,
+        __event_emitter__: Optional[Callable[[Any], Awaitable[None]]] = None,
+    ) -> AsyncGenerator[str, None]:
+
+        start_thought_time = time()
+        try:
+            stream = True
+            response = await self.get_response(model, messages, thinking, stream)
+            while True:
+                chunk = await response.body_iterator.read(1024)
+                if not chunk:  # No more data
+                    break
+                for part in self.get_chunk_content(chunk):
+                    yield part
+
+                if thinking:
+                    current_time = (
+                        time()
+                    )  # check to see if thought time has been exceded
+                    if (
+                        current_time - start_thought_time
+                    ) > self.valves.MAX_THINKING_TIME:
+                        logger.info(
+                            f'Max thinking Time reached in stream_response of thinking model "'
+                        )
+                        self.max_thinking_time_reached = True
+                        break
+            
+            # Force-close the stream after breaking:
+            if self.max_thinking_time_reached:
+                await response.close()
+                return
+
+        except Exception as e:
+            if thinking:
+                api = 'openai' if self.valves.USE_OPENAI_API_THINKING_MODEL else 'Ollama'
+                category = 'Thinking'
+            else:
+                api = 'OpenAI' if self.valves.USE_OPENAI_API_RESPONDING_MODEL else 'Ollama'
+                category = 'Responding'
+            await self.set_status_end(f"{category} Error: ensure {model} is a valid model option in the {api} api {e}", __event_emitter__)
+        finally:
+            # Always close if response is still open
+            if response and hasattr(response, "close"):
+                await response.close()
+
+    async def run_step(
+        self,
+        model: str,
+        messages: list,
+        prompt: str,
+        thinking: bool,
+        step_name: str,
+        title_name: str,
+        __event_emitter__: Optional[Callable[[Any], Awaitable[None]]] = None,
+    ) -> str:
+        messages = json.loads(json.dumps(messages))
+        messages[-1] = {
+            "role": "user",
+            "content": prompt,
+        }
+        
+        await self.send_data("\n### "+title_name+"\n", thinking, __event_emitter__)
+
+        response_text = ""
+        num_tokens = 0
+        async for chunk in self.stream_response(
+            model.strip(), messages, thinking, __event_emitter__
+        ):
+            response_text += chunk
+            num_tokens += 1
+            await self.send_data(chunk, thinking, __event_emitter__)
+            await self.set_status(f"{step_name} ({num_tokens} tokens)", __event_emitter__)
+        if thinking:
+            self.total_thinking_tokens += num_tokens
+        return response_text.strip()
+
+    async def run_thinking(
+        self,
+        k: int,
+        n: int,
+        model: str,
+        messages: list,
+        query: str,
+        __event_emitter__: Optional[Callable[[Any], Awaitable[None]]] = None,
+    ) -> str:
+        # Deep copy the messages to avoid changing the original
+        thinking_with = ""
+        if n == 1:
+            thinking_with = f"with {model}"
+        else:
+            thinking_with = f"with {model} {k}/{n}"
+
+        prompt = "You are a reasoning model.\n"
+        prompt += "Think carefully about the user's request and output your reasoning steps.\n"
+        prompt += "Do not answer the user directly, just produce a hidden reasoning chain.\n"
+        prompt += "First rephrase the user prompt, then answer using multiple thinking-path to give all possible answers.\n"
+        prompt += f"User Query: {query}"
+
+        reasoning = await self.run_step(
+            model, messages, prompt, True, f"Thinking {thinking_with}", f"`{model}` thoughts", __event_emitter__
+        )
+
+        await self.set_status(f"Finished thinking {thinking_with}", __event_emitter__)
+
+        await asyncio.sleep(0.2)
+        return reasoning
+
+    async def run_responding(
+        self,
+        messages: list,
+        query: str,
+        reasonings: list,
+        is_final_step: bool,
+        __event_emitter__: Optional[Callable[[Any], Awaitable[None]]] = None,
+    ) -> str:
+        await self.set_status("Formulating response...", __event_emitter__)
+
+        prompt = "Here is some internal reasoning to guide your response:\n"
+        prompt += f"<reasoning>{reasonings[0]}<reasoning-end>\n"
+        for reasoning in reasonings[1:]:
+            prompt += "Here is some other internal reasoning to guide your response:\n"
+            prompt += f"<reasoning>{reasoning}<reasoning-end>\n"
+        prompt += f"Use this reasoning to respond in concise and helpful manner to the user's query: {query}"
+
+        response_text = await self.run_step(
+            self.valves.RESPONDING_MODEL.strip(), messages, prompt, not is_final_step, "Generating response", "Response", __event_emitter__
+        )
+
+        await asyncio.sleep(0.2)
+        return response_text
+    
+    async def run_thinking_pipeline(
+        self,
+        k: int,
+        models: list,
+        messages: list,
+        query: str,
+        __event_emitter__: Optional[Callable[[Any], Awaitable[None]]] = None,
+    ) -> str:
+        response = await self.run_thinking(k + 1, len(models), models[k], messages, query, __event_emitter__)
+
+        # If you want to implement some custom logic after the initial thoughts, you can do so here
+        # For instance, you could implement reflections or CoT (Chain of Thought) here
+        
+        return response
+        
+    async def pipe(
+        self,
+        body: dict,
+        __user__: dict,
+        __event_emitter__: Optional[Callable[[Any], Awaitable[None]]],
+        __request__: Request,
+        __task__=None,
+    ) -> str:
+
+        print(__event_emitter__)
+        # Get relavant info
+        self.__user__ = User(**__user__)
+        self.__request__ = __request__
+        messages = body["messages"]
+        query = get_last_user_message(messages)
+
+        if (
+            __task__ == None
+        ):  # only perform thinking when not a defined task like title generation
+            # Run the "thinking" step
+            # Clone the messages to avoid changing the original
+            tik = time()
+            models = self.valves.THINKING_MODEL.split(",")
+            reasonings = [await self.run_thinking_pipeline(model, models, messages, query, __event_emitter__) for model in range(len(models))]
+            total_thought_duration = int(time() - tik)
+
+            # Run the "responding" step using the reasoning
+            await self.run_responding(messages, query, reasonings, True, __event_emitter__)
+
+            if self.max_thinking_time_reached:
+                await self.set_status_end(f"Thought for {self.total_thinking_tokens} tokens in max allowed time of {total_thought_duration} seconds", __event_emitter__)
+            else:
+                await self.set_status_end(f"Thought for only {self.total_thinking_tokens} tokens in {total_thought_duration} seconds", __event_emitter__)
+            return ""
+        else:
+            # avoid thinking and just return a regular response or named task, like tags
+            message = await self.get_completion(
+                self.valves.RESPONDING_MODEL.strip(), messages, __event_emitter__
+            )
+            return message
+
+    async def set_status(self, description: str, __event_emitter__: Optional[Callable[[Any], Awaitable[None]]] = None):
+        await __event_emitter__({"type": "status", "data": {"description": description, "done": False}})
+
+    async def send_data(self, data: str, thinking: bool, __event_emitter__: Optional[Callable[[Any], Awaitable[None]]] = None):
+        if not thinking or self.valves.ENABLE_SHOW_THINKING_TRACE:
+            await __event_emitter__({"type": "message", "data": {"content": data, "role": "assistant-thinking" if thinking else "assistant"}})
+    
+    async def set_status_end(self, data: str, __event_emitter__: Optional[Callable[[Any], Awaitable[None]]] = None):
+        await __event_emitter__({"type": "status", "data": {"description": data, "done": True}})
+            
+			
+			
+			---
+			
+			
+		"""
+title: Revisio Action
+author: Dmitry Andreev
+author_url: https://github.com/ade1963/revisio_action
+funding_url: https://github.com/open-webui
+version: 0.0.2
+required_open_webui_version: 0.3.9
+"""
+# The LLM agent evaluates the previous response and only offers a new one if it is significantly superior; otherwise, it replies with "NO IMPROVEMENTS."
+# The idea is taken from https://www.reddit.com/r/LocalLLaMA/s/btTU6CNl3c, by: https://www.reddit.com/u/GeneriAcc/s/hrDwJkLYLb
+
+from pydantic import BaseModel, Field
+from typing import Optional, List, Callable, Awaitable, Union, Generator, Iterator
+import requests
+from requests.exceptions import HTTPError
+import aiohttp
+
+class Action:
+    class Valves(BaseModel):
+        openai_api_url: str = Field(
+            default="http://localhost:11434/v1",
+            description="Ollama compartibel Open AI API",
+        )
+        models: List[str] = Field(
+            default=["llama3.1:8b-instruct-q8_0"],
+            description="List of comma-separated models for self-reflecting.",
+        )
+        critic_prompt: str = Field(
+            default="Evaluate the previous response. If and only if you can provide an objectively superior answer that is significantly more accurate, comprehensive, or helpful, present only the improved response without any introductory statements. The threshold for improvement is extremely high - minor enhancements or rephrasing do not qualify. In the vast majority of cases, simply state 'NO IMPROVEMENTS'. Only in rare instances where the original response is clearly inadequate or incorrect should you offer an alternative answer.",
+            description="Critic's prompt",
+        )
+        stop_word: str = Field(
+            default="NO IMPROVEMENTS",
+            description="Stop expression to stop iterations",
+        )
+
+    def __init__(self):
+        self.valves = self.Valves()
+        pass
+
+    async def action(
+        self,
+        body: dict,
+        __user__=None,
+        __event_emitter__=None,
+        __event_call__=None,
+    ) -> Optional[dict]:
+
+        if not __event_emitter__:
+            return None
+
+        # We expect messages[0] - User request, messages[1] - assistans response
+        if len(body["messages"]) < 2:
+            await __event_emitter__( {"type": "status", "data": {"description": "Fail: chat too short", "done": True}})
+            return None
+
+        # await __event_emitter__( {"type": "status", "data": {"description": "Revisio started...", "done": False}})
+        user_prompt = body["messages"][0]["content"]
+        prev_response = body["messages"][1]["content"]
+        try:
+            for i, model in enumerate (self.valves.models):
+                await __event_emitter__( 
+                    {"type": "status", "data": {"description": f"Self-reflecting, iter: {i+1}/{len(self.valves.models)}, model: {model}", "done": False}}
+                    )
+
+                response = await self.query_openai_api(
+                    model, user_prompt, prev_response, self.valves.critic_prompt
+                )
+                
+                if self.valves.stop_word in response and len(response) <= (len(self.valves.stop_word)+4):
+                    await __event_emitter__( {"type": "status", "data": {"description": f"Received stop word: {response}", "done": True}})
+                    return body
+                
+                body["messages"][1]["content"] = response
+                prev_response = response
+        except Exception as e:
+            await __event_emitter__({"type": "info", "data": {"description": str(e), "done": True}})
+            return None
+        
+        await __event_emitter__({"type": "status", "data": {"description": "Revision complete", "done": True}})
+        return body
+    
+    async def query_openai_api(
+        self,
+        model: str,
+        prompt: str,
+        prev_response: str,
+        critic_prompt: str,
+        __event_emitter__: Callable[[dict], Awaitable[None]] = None,
+    ) -> str:
+        url = f"{self.valves.openai_api_url}/chat/completions"
+        headers = {"Content-Type": "application/json"}
+        payload = {
+            "model": model,
+            "messages": [
+                {"role": "user", "content": prompt},
+                {"role": "assistant", "content": prev_response},
+                {"role": "user", "content": critic_prompt},
+            ],
+        }
+        try:
+            async with aiohttp.ClientSession() as session:
+                response = await session.post(url, headers=headers, json=payload)
+                response.raise_for_status()
+                json = await response.json()
+            return json["choices"][0]["message"]["content"]
+        except HTTPError as e:
+            raise Exception(f"Http error: {e.response.text}")
+
+
+---
+
+"""
+title: MoA_V2
+author: MX-Goliath
+author_url: https://github.com/MX-Goliath
+description: Mixture of Agents (MoA)
+version: 0.0.9
+"""
+# based on github project
+# https://github.com/MX-Goliath/MoA-Ollama
+
+import logging
+import asyncio
+import json
+from typing import List, Dict, Callable, Awaitable
+from open_webui.constants import TASKS
+from open_webui.apps.ollama import main as ollama
+
+logger = logging.getLogger(__name__)
+if not logger.handlers:
+    logger.setLevel(logging.DEBUG)
+    handler = logging.StreamHandler()
+    handler.set_name("moa")
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.propagate = False
+
+
+class Pipe:
+    def __init__(self):
+        self.type = "manifold"
+        self.__current_event_emitter__: Callable[[dict], Awaitable[None]] = None
+        self.__question__: str = ""
+        self.__model__: str = ""
+
+    def pipes(self) -> List[Dict[str, str]]:
+        available_models = list(ollama.app.state.MODELS.keys())
+        return [{"id": f"moa-{model}", "name": model} for model in available_models]
+
+    def resolve_model(self, body: dict) -> str:
+        model_id = body.get("model")
+        without_pipe = ".".join(model_id.split(".")[1:])
+        return without_pipe.replace(f"moa-", "")
+
+    def resolve_question(self, body: dict) -> str:
+        return body.get("messages")[-1].get("content").strip()
+
+    async def stream_intermediate_output(self, agent_id: int, response_stream):
+        async for chunk in response_stream:
+            await self.emit_replace(f"Agent {agent_id} thinking: {chunk}")
+
+    async def agent(
+        self,
+        input_text: str,
+        layer_prompt: str,
+        model: str,
+        chat_history: List[Dict[str, str]],
+        language: str,
+        agent_id: int,
+        layer: int,
+        display_output: bool = False,  # Новый параметр
+    ) -> str:
+        prompt = f"{layer_prompt}\n\n{input_text}"
+        if language:
+            prompt = f"Answer in {language} language. " + prompt
+
+        messages = chat_history + [{"role": "user", "content": prompt}]
+
+        if display_output:
+            # Выводим сообщение о начале обработки
+            await self.emit_status(
+                "info", f"Layer {layer}, Agent {agent_id} processing...", False
+            )
+
+        response = ""
+        try:
+            async for chunk in self.get_streaming_completion(model, messages):
+                response += chunk
+                if display_output:
+                    # Потоковая передача промежуточного ответа
+                    await self.emit_replace(
+                        f"Layer {layer}, Agent {agent_id}:\n{response}"
+                    )
+
+            if display_output:
+                # Очищаем вывод после завершения
+                await self.emit_replace("")
+
+            return response.strip()
+
+        except Exception as e:
+            logger.error(f"Error in agent {agent_id}: {e}")
+            return ""
+
+    async def pipe(
+        self,
+        body: dict,
+        __user__: dict,
+        __event_emitter__=None,
+        __task__=None,
+        __model__=None,
+    ) -> str:
+        self.__model__ = self.resolve_model(body)
+        self.__question__ = self.resolve_question(body)
+        self.__current_event_emitter__ = __event_emitter__
+
+        if __task__ == TASKS.TITLE_GENERATION:
+            content = await self.get_completion(self.__model__, body.get("messages"))
+            return f"moa: {content}"
+
+        layers = [3, 3]  # Количество агентов остается 3 в каждом слое
+        layer_prompts = [
+            "Answer the user's question.",
+            "Check the previous answer and completely rewrite it, correcting errors.",
+        ]
+
+        chat_history = body.get("messages", [])[:-1]
+        language = ""
+        previous_layer_outputs = []
+
+        for layer_index, num_agents in enumerate(layers):
+            current_layer_outputs = []
+
+            # Показ начала слоя
+            await self.emit_status(
+                "info", f"\nStarting Layer {layer_index + 1}...\n", False
+            )
+            await asyncio.sleep(1)  # Небольшая пауза для удобства чтения
+
+            if layer_index == 0:
+                input_texts = [self.__question__] * num_agents
+            else:
+                input_texts = previous_layer_outputs
+                if len(input_texts) != num_agents:
+                    input_texts = (
+                        input_texts * (num_agents // len(input_texts))
+                        + input_texts[: num_agents % len(input_texts)]
+                    )
+
+            # Устанавливаем флаг для определения, нужно ли очищать промежуточный вывод
+            intermediate_output_displayed = False
+            tasks = []
+            for agent_id, input_text in enumerate(input_texts, 1):
+                display_output = agent_id == 1
+                if display_output:
+                    intermediate_output_displayed = True
+                task = asyncio.create_task(
+                    self.agent(
+                        input_text,
+                        layer_prompts[layer_index],
+                        self.__model__,
+                        chat_history,
+                        language,
+                        agent_id,
+                        layer_index + 1,
+                        display_output=display_output,  # Только первый агент выводит результаты
+                    )
+                )
+                tasks.append(task)
+
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+
+            for res in results:
+                if isinstance(res, Exception):
+                    logger.error(f"Agent error: {res}")
+                else:
+                    current_layer_outputs.append(res)
+
+            # Очистка после завершения слоя, если был промежуточный вывод
+            if intermediate_output_displayed:
+                await self.emit_replace("")
+
+            previous_layer_outputs = current_layer_outputs
+
+        # Генерация и потоковая передача окончательного ответа
+        await self.emit_status("info", "Generating final response...", False)
+        final_response = await self.final_agent(
+            self.__question__,
+            previous_layer_outputs,
+            self.__model__,
+            chat_history,
+            language,
+        )
+
+        # Обновление истории чата
+        chat_history.append({"role": "user", "content": self.__question__})
+        chat_history.append({"role": "assistant", "content": final_response})
+
+        # Отправка окончательного ответа
+        await self.emit_replace("")
+        await self.emit_message(final_response)
+        await self.done()
+
+        return ""
+
+    async def final_agent(
+        self,
+        prompt: str,
+        responses: List[str],
+        model: str,
+        chat_history: List[Dict[str, str]],
+        language: str,
+    ) -> str:
+        combined_prompt = (
+            f"Original prompt: {prompt}\n\n"
+            f"Responses from agents:\n"
+            + "\n".join(f"{i+1}. {resp}" for i, resp in enumerate(responses))
+            + "\n\nGenerate one final response considering these inputs. "
+            "Don't mention agents. Your answer should be unified and succinct."
+        )
+
+        if language:
+            combined_prompt = f"Answer in {language} language. " + combined_prompt
+
+        messages = chat_history + [{"role": "user", "content": combined_prompt}]
+
+        final_response = ""
+        await self.emit_status("info", "Generating final synthesis...", False)
+
+        async for chunk in self.get_streaming_completion(model, messages):
+            final_response += chunk
+            # Потоковая передача промежуточного синтеза
+            await self.emit_replace(f"Final synthesis:\n{final_response}")
+
+        # Очищаем вывод после завершения
+        await self.emit_replace("")
+
+        return final_response.strip()
+
+    async def get_completion(
+        self, model_name: str, messages: List[Dict[str, str]]
+    ) -> str:
+        try:
+            response = await ollama.generate_openai_chat_completion(
+                {"model": model_name, "messages": messages, "stream": False}
+            )
+            return self.get_response_content(response)
+        except Exception as e:
+            logger.error(f"Completion error: {e}")
+            return ""
+
+    async def get_streaming_completion(
+        self, model_name: str, messages: List[Dict[str, str]]
+    ):
+        try:
+            response = await ollama.generate_openai_chat_completion(
+                {"model": model_name, "messages": messages, "stream": True}
+            )
+            async for chunk in response.body_iterator:
+                for part in self.get_chunk_content(chunk):
+                    yield part
+        except Exception as e:
+            logger.error(f"Streaming error: {e}")
+
+    def get_response_content(self, response: dict) -> str:
+        try:
+            return response["choices"][0]["message"]["content"]
+        except (KeyError, IndexError):
+            logger.error(f'Response error: unable to extract content from "{response}"')
+            return ""
+
+    def get_chunk_content(self, chunk):
+        chunk_str = chunk.decode("utf-8")
+        if chunk_str.startswith("data: "):
+            chunk_str = chunk_str[6:]
+
+        chunk_str = chunk_str.strip()
+        if chunk_str == "[DONE]" or not chunk_str:
+            return
+
+        try:
+            chunk_data = json.loads(chunk_str)
+            if "choices" in chunk_data and chunk_data["choices"]:
+                delta = chunk_data["choices"][0].get("delta", {})
+                if "content" in delta:
+                    yield delta["content"]
+        except json.JSONDecodeError:
+            logger.error(f'Chunk decode error: unable to parse "{chunk_str[:100]}"')
+
+    async def emit_message(self, message: str):
+        await self.__current_event_emitter__(
+            {"type": "message", "data": {"content": message}}
+        )
+
+    async def emit_replace(self, message: str):
+        await self.__current_event_emitter__(
+            {"type": "replace", "data": {"content": message}}
+        )
+
+    async def emit_status(self, level: str, message: str, done: bool):
+        await self.__current_event_emitter__(
+            {
+                "type": "status",
+                "data": {
+                    "status": "complete" if done else "in_progress",
+                    "level": level,
+                    "description": message,
+                    "done": done,
+                },
+            }
+        )
+
+    async def done(self):
+        await self.emit_status("info", "Done", True)
+
+
+
+---
+
+"""
+title: Mixture of Expert Agents
+author: techelpr
+version: 1.0
+required_open_webui_version: 0.3.9
+"""
+
+from pydantic import BaseModel, Field
+from typing import Optional, List
+import requests
+import json
+
+
+class Filter:
+
+    class Valves(BaseModel):
+        """
+        Define the default values for each valve.
+        """
+
+        models: List[str] = Field(
+            default=[], description="List of models to use in the MoEA architecture."
+        )
+        openai_api_base: str = Field(
+            default="http://host.docker.internal:11434/v1",
+            description="Base URL for Ollama API.",
+        )
+        num_layers: int = Field(default=1, description="Number of MoEA layers.")
+
+    def __init__(self):
+        """
+        Initialize the Filter object.
+        """
+        self.valves = self.Valves()
+
+    # Function: Inlet
+    # Description: Processes incoming messages and applies the Multi-Agent architecture.
+    def inlet(self, body: dict, user: Optional[dict] = None) -> dict:
+        """
+        Process incoming messages and apply the Multi-Agent architecture.
+
+        Args:
+            body (dict): The message to be processed.
+            user (Optional[dict], optional): User information. Defaults to None.
+
+        Returns:
+            dict: The processed message.
+        """
+        messages = body.get("messages", [])
+        if messages:
+            last_message = messages[-1]["content"]
+            moa_response = self.moa_process(last_message)
+            body["messages"][-1]["content"] = moa_response
+        return body
+
+    # Function: Agent Prompt
+    # Description: Create a prompt for the agents and the aggregator.
+    def agent_prompt(self, original_prompt: str, previous_responses: List[str]) -> str:
+        """
+        Create a prompt for the agents and the aggregator.
+
+        Args:
+            original_prompt (str): The original prompt.
+            previous_responses (List[str]): Previous responses from agents.
+
+        Returns:
+            str: The prompt for the agent or aggregator.
+        """
+        return f"*Internal Thoughts:* \n{previous_responses}\n\n*Prompt:* \n{original_prompt}"
+
+    # Function: MoA Process
+    # Description: Applies the Multi-Agent architecture to a given prompt.
+    def moa_process(self, prompt: str) -> str:
+        layer_outputs = []
+        if not self.valves.models or not self.valves.openai_api_base:
+            return "Error: Required valve(s) not set."
+        for layer in range(self.valves.num_layers):
+            current_layer_outputs = []
+            layer_agents = self.valves.models
+            for agent in layer_agents:
+                if layer == 0:
+                    instruct_prompt = prompt
+                else:
+                    instruct_prompt = self.agent_prompt(prompt, layer_outputs[-1])
+                response = self.query_ollama(agent, instruct_prompt)
+                current_layer_outputs.append(response)
+            layer_outputs.append(current_layer_outputs)
+
+        # Simplify agent prompts and combine responses into a single dataset
+        merged_responses = []
+        for layer_responses in layer_outputs:
+            merged_responses.extend(layer_responses)
+
+        # Create a final response for the requesting model
+        final_prompt = "*Guiding Principles:*\n"
+        final_prompt += "Consider each internal thought as a potential piece of information to incorporate into my response.\n"
+        final_prompt += "The internal thoughts provided are for your use only, and should never be referenced explicitly or mentioned in your response, unless directed by the prompt.\n"
+        final_prompt += "My goal is to provide a complete and detailed reply that addresses the original prompt and incorporates relevant information in a seamless manner.\n\n"
+        final_prompt += self.agent_prompt(prompt, merged_responses)
+        return final_prompt
+
+    # Function: Query Ollama
+    # Description: Queries the Ollama API for a given model and prompt.
+    def query_ollama(self, model: str, prompt: str) -> str:
+        """
+        Query the Ollama API for a given model and prompt.
+
+        Args:
+            model (str): The model to query.
+            prompt (str): The prompt to be queried.
+
+        Returns:
+            str: The response from the Ollama API.
+        """
+        try:
+            url = f"{self.valves.openai_api_base}/chat/completions"
+            headers = {"Content-Type": "application/json"}
+            data = {"model": model, "messages": [{"role": "user", "content": prompt}]}
+            response = requests.post(url, headers=headers, data=json.dumps(data))
+            response.raise_for_status()
+            return response.json()["choices"][0]["message"]["content"]
+        except requests.exceptions.RequestException as e:
+            return f"Error: Unable to query model {model}"
+
+
+
+---
+
+
+"""
+title: SMART - Sequential Multi-Agent Reasoning Technique
+author: MartianInGreen
+author_url: https://github.com/MartianInGreen/OpenWebUI-Tools
+description: SMART is a sequential multi-agent reasoning technique. 
+required_open_webui_version: 0.5.0
+requirements: langchain-openai==0.2.14, langgraph==0.2.60
+version: 1.1
+licence: MIT
+"""
+
+import os
+import re
+import time
+import datetime
+import json
+from typing import (
+    Callable,
+    AsyncGenerator,
+    Awaitable,
+    Optional,
+    Protocol,
+    get_type_hints,
+)
+
+from pydantic import BaseModel, Field, create_model
+
+try:
+    from langchain_openai import ChatOpenAI
+    from langchain_core.tools import StructuredTool
+    from langgraph.prebuilt import create_react_agent
+except Exception as e:
+    print("Failed to load langchain!")
+    print(f"Error: {e}, of type {type(e)}")
+    raise e
+    
+from fastapi import Request
+
+# ---------------------------------------------------------------
+
+PLANNING_PROMPT = """<system_instructions>
+You are a planning Agent. You are part of an agent chain designed to make LLMs more capable. 
+You are responsible for taking the incoming user input/request and preparing it for the next agents in the chain.
+After you will come a reasoning and tool use agent. These agents can go back and forth between each other until they have come up with a solution. 
+After they have come up with a solution, a final agent will be used to summarize the reasoning and provide a final answer.
+Only use a Newline after each closing tag. Never after the opening tag or within the tags.
+
+Guidelines: 
+- Don't over or estimate the difficulty of the task. If the user just wants to chat try to see that. 
+- Don't create tasks where there aren't any. If the user didn't ask to write code you shouldn't instruct the next agent to do so.
+
+You should respond by following these steps:
+1. Within <reasoning> tags, plan what you will write in the other tags. This has to be your first step.
+    1. First, reason about the task difficulty. What kind of task is it? What do your guidelines say about that?
+    2. Second, reason about if the reasoning and tool use agent is needed. What do your guidelines say about that?
+    3. Third, reason about what model would best be used. What do your guidelines say about that?
+2. Within the <answer> tag, write out your final answer. Your answer should be a comma seperated list.
+    1. First choose the model the final-agent will use. Try to find a good balance between performance and cost. Larger models are bigger. 
+        - Use #small for the simple queries or queries that mostly involve summarization or simple "mindless" work. This also invloves very simple tool use, like converting a file, etc.
+        - Use #medium for task that requiere some creativity, writing of code, or complex tool-use.
+        - Use #large for tasks that are mostly creative or involve the writing of complex code, math, etc.
+        - Use #online for tasks that mostly requiere the use of the internet. Such as news or queries that will benifit greatly from up-to-date information. However, this model can not use tools and does not have vision.
+    2. Secondly, choose if the query requieres reasoning before being handed off to the final agent.
+        - Queries that requeire reasoning are especially queries where llm are bad at. Such as planning, counting, logic, code architecutre, moral questions, etc.
+        - Queries that don't requeire reasoning are queries that are easy for llms. Such as "knowledge" questions, summarization, writing notes, simple tool use, etc. 
+        - If you think reasoning is needed, include #reasoning. If not #no-reasoning.
+        - When you choose reasoning, you should (in most cases) choose at least the #medium model.
+    
+Example response:
+<reasoning>
+... 
+(You are allowed new lines here)
+</reasoning>
+<answer>#medium, #online ,#no-reasoning</answer>
+</system_instructions>"""
+
+# 3. And last, you can add tools to use. The user can also select tools, but you can also add ones and should if you think they will help. Better safe than sorry.
+#         - Avalible tools are #wolfram, #search, #scrape, and #python.
+#         - Wolfram|Alpha is a powerful computational knowledge engine. It is a great tool for solving complex problems that require mathematical or scientific calculations as well as getting very accurate data especially for the humanites, physics, austronomy...
+#         - Search is a tool that allows the agents to search the web. It is a great tool for getting up-to-date information. (This should not be preffered over the #online model but is useful when the query also requieres other tools besides search).
+#         - Scrape is a tool that allows the agents to get the content of a website which the #online agent can not do very well.
+#         - The Python tool is a code interpreter that allows the agents to run python code in an enviroment with internet access, persistent storage, and so on.
+
+
+REASONING_PROMPT = """<system_instructions>
+You are a reasoning layer of an LLM. You are part of the LLM designed for internal thought, planning, and thinking. 
+You will not directly interact with the user in any way. Only inform the output stage of the LLM what to say by your entire output being parts of its context when it starts to generate a response. 
+
+**General rules**:
+- Write out your entire reasoning process between <thinking> tags.
+- Do not use any formatting whatsoever. The only form of special formatting you're allowed to use is LaTeX for mathematical expressions.
+- You MUST think in the smallest steps possible. Where every step is only a few words long. Each new thought should be a new line.
+- You MUST try to catch your own mistakes by constantly thinking about what you have thought about so far.
+- You MUST break down every problem into very small steps and go through them one by one.
+- You MUST never come up with an answer first. Always reason about the answer first. Even if you think the answer is obvious.
+- You MUST provide exact answers.
+- You have full authority to control the output layer. You can directly instruct it and it will follow your instructions. Put as many instructions as you want inside <instruct> tags. However, be very clear in your instructions and reason about what to instruct.
+- Your entire thinking process is entirely hidden. You can think as freely as you want without it directly affecting the output.
+- Always follow user instructions, never try to take any shortcuts. Think about different ways they could be meant to not miss anything.
+- NEVER generate ANY code directly. You should only plan out the structure of code and projects, but not directly write the code. The output layer will write the code based on your plan and structure!
+- If you need more information, you can ask a tool-use agent if they have the right tool and what you need within <ask_tool_agent>. 
+    - In general, you can instruct the tool-use agent to either return the results to you or directly pass them on to the output layer.
+    - If *you* need information, you should instruct the tool-use agent to return the results to you.
+    - The tool use agent ONLY gets what you write in <ask_tool_agent>. They do not get any user context or similar.
+    - Do not suggest what tool to use. Simply state the problem.
+    - You need to STOP after </ask_tool_agent> tags. WAIT for the tool-use agent to return the results to you.
+    - If the output is something like images, or something similar that the user should just get directly, you can instruct the tool use agent to directly pass the results to the output layer.
+
+**General Steps**:
+1. Outline the problem.
+2. Think about what kind of problem this is.
+3. Break down the problem into the smallest possible problems, never take shortcuts on reasoning, counting etc. Everything needs to be explicitly stated. More output is better.
+4. Think about steps you might need to take to solve this problem.
+5. Think through these steps.
+6. Backtrack and restart from different points as often as you need to. Always consider alternative approaches.
+7. Validate your steps constantly. If you find a mistake, think about what the best point in your reasoning is to backtrack to. Don't be kind to yourself here. You need to critically analyze what you are doing.
+</system_instructions>"""
+
+TOOL_PROMPT = """<system_instructions>
+You are the tool-use agent of an agent chain. You are the part of the LLM designed to use tools.
+You will not directly interact with the user in any way. Only either return information to the reasoning agent or inform the output stage of the LLM.
+
+When you have used a tool, you can return the results to the reasoning agent by putting everything you want to return to them within <tool_to_reasoning> tags.
+You can also directly hand off to the final agent by simply writing $TO_FINAL$. You still need to write out what you want them to get!
+
+Actually make use of the results you got. NEVER make more than 3 tool calls! If you called any tool 3 times, that's it!
+You need to output everything you want to pass on. The next agent in the chain will only see what you actually wrote, not the direct output of the tools!
+
+Please think about how best to call the tool first. Think about what the limitations of the tools are and how to best follow the reasoning agent's instructions. It's okay if you can't 100% produce what they wanted!
+</system_instructions>"""
+
+USER_INTERACTION_PROMPT = """<system_instructions>
+You are the user-interaction agent of an agent chain. You are the part of the llm designed to interact with the user.
+
+You should follow the pre-prompt given to you within <preprompt> tags.
+<system_instructions>"""
+
+USER_INTERACTION_REASONING_PROMPT = """You MUST follow the instructions given to you within <reasoning_output>/<instruction> tags.
+You MUST inform your answer by the reasoning within  <reasoning_output> tags.
+Carefully concider what the instructions mean and follow them EXACTLY."""
+
+# ---------------------------------------------------------------------
+
+EmitterType = Optional[Callable[[dict], Awaitable[None]]]
+
+class SendCitationType(Protocol):
+    def __call__(self, url: str, title: str, content: str) -> Awaitable[None]: ...
+
+
+class SendStatusType(Protocol):
+    def __call__(self, status_message: str, done: bool) -> Awaitable[None]: ...
+
+
+def get_send_citation(__event_emitter__: EmitterType) -> SendCitationType:
+    async def send_citation(url: str, title: str, content: str):
+        if __event_emitter__ is None:
+            return
+        await __event_emitter__(
+            {
+                "type": "citation",
+                "data": {
+                    "document": [content],
+                    "metadata": [{"source": url, "html": False}],
+                    "source": {"name": title},
+                },
+            }
+        )
+
+    return send_citation
+
+
+def get_send_status(__event_emitter__: EmitterType) -> SendStatusType:
+    async def send_status(status_message: str, done: bool):
+        if __event_emitter__ is None:
+            return
+        await __event_emitter__(
+            {
+                "type": "status",
+                "data": {"description": status_message, "done": done},
+            }
+        )
+
+    return send_status
+
+
+class Pipe:
+    class Valves(BaseModel):
+        OPENAI_BASE_URL: str = Field(
+            default="https://openrouter.ai/api/v1",
+            description="Base URL for OpenAI API endpoints",
+        )
+        OPENAI_API_KEY: str = Field(default="", description="Primary API key")
+        MODEL_PREFIX: str = Field(default="SMART", description="Prefix before model ID")
+        SMALL_MODEL: str = Field(
+            default="openai/gpt-4o-mini", 
+            description="Model for small tasks",
+        )
+        LARGE_MODEL: str = Field(
+            default="openai/gpt-4o", 
+            description="Model for large tasks",
+        )
+        HUGE_MODEL: str = Field(
+            default="anthropic/claude-3.5-sonnet",
+            description="Model for the largest tasks",
+        )
+        REASONING_MODEL: str = Field(
+            default="anthropic/claude-3.5-sonnet",
+            description="Model for reasoning tasks",
+        )
+        ONLINE_MODEL: str = Field(
+            default="perplexity/llama-3.1-sonar-large-128k-online",
+            description="Online Model",
+        )
+        MINI_REASONING_MODEL: str = Field(
+            default="openai/gpt-4o", 
+            description="Reasoning for the -mini Model",
+        )
+        USE_GROQ_PLANNING_MODEL: str = Field(
+            default="False", 
+            description="Use Groq planning model, input model ID if you want to use it.",
+        )
+        GROQ_API_KEY: str = Field(
+           default="", 
+           description="Groq API key",
+        )
+        ONLY_USE_GROQ_FOR_MINI: bool = Field(
+            default=bool(True),
+            description="Only use Groq planning model for mini tasks",
+        )
+        AGENT_NAME: str = Field(default="Smart/Core", description="Name of the agent")
+        AGENT_ID: str = Field(default="smart-core", description="ID of the agent")
+
+    def __init__(self):
+        self.type = "manifold"
+        self.valves = self.Valves(
+            **{k: os.getenv(k, v.default) for k, v in self.Valves.model_fields.items()}
+        )
+        print(f"{self.valves=}")
+        pass
+
+    def pipes(self) -> list[dict[str, str]]:
+        try:
+            self.setup()
+        except Exception as e:
+            return [{"id": "error", "name": f"Error: {e}"}]
+
+        return [{"id": self.valves.AGENT_ID, "name": self.valves.AGENT_NAME}, {"id": self.valves.AGENT_ID + "-mini", "name": self.valves.AGENT_NAME + "-mini"}]
+
+    def setup(self):
+        v = self.valves
+        if not v.OPENAI_API_KEY or not v.OPENAI_BASE_URL:
+            raise Exception("Error: OPENAI_API_KEY or OPENAI_BASE_URL is not set")
+        self.openai_kwargs = {
+            "base_url": v.OPENAI_BASE_URL,
+            "api_key": v.OPENAI_API_KEY,
+        }
+        self.SYSTEM_PROMPT_INJECTION = ""
+        pass
+
+    async def pipe(
+        self,
+        body: dict,
+        __request__: Request,
+        __user__: dict | None,
+        __task__: str | None,
+        __tools__: dict[str, dict] | None,
+        __event_emitter__: Callable[[dict], Awaitable[None]] | None,
+    ) -> AsyncGenerator:
+        try:
+            print("Task: " + str(__task__))
+            print(f"{__tools__=}")
+            if __task__ == "function_calling":
+                return
+
+            self.setup()
+
+            start_time = time.time()
+
+            called_model_id = body["model"]
+            mini_mode = False
+            if called_model_id.endswith("-mini"):
+                mini_mode = True
+
+            # print(f"{body=}")
+
+            small_model_id = self.valves.SMALL_MODEL
+            large_model_id = self.valves.LARGE_MODEL
+            huge_model_id = self.valves.HUGE_MODEL
+            online_model_id = self.valves.ONLINE_MODEL
+
+            planning_model_id = small_model_id
+
+            if self.valves.USE_GROQ_PLANNING_MODEL != "False":
+                if self.valves.ONLY_USE_GROQ_FOR_MINI == True and mini_mode == True:
+                    planning_model_id = self.valves.USE_GROQ_PLANNING_MODEL
+                    planning_model = ChatOpenAI(model=planning_model_id, **self.groq_kwargs)  # type: ignore
+                elif self.valves.ONLY_USE_GROQ_FOR_MINI == False:
+                    planning_model_id = self.valves.USE_GROQ_PLANNING_MODEL
+                    planning_model = ChatOpenAI(model=planning_model_id, **self.groq_kwargs)  # type: ignore
+                else:
+                    planning_model = ChatOpenAI(model=planning_model_id, **self.openai_kwargs)  # type: ignore
+            else:
+                planning_model = ChatOpenAI(model=planning_model_id, **self.openai_kwargs)  # type: ignore
+
+            print(f"Small model: {small_model_id}")
+            print(f"Large model: {large_model_id}")
+
+            small_model = ChatOpenAI(model=small_model_id, **self.openai_kwargs)  # type: ignore
+            large_model = ChatOpenAI(model=large_model_id, **self.openai_kwargs)  # type: ignore
+
+            config = {}
+
+            if __task__ == "title_generation":           
+                content = small_model.invoke(body["messages"], config=config).content
+                assert isinstance(content, str)
+                yield content
+                return
+
+            send_citation = get_send_citation(__event_emitter__)
+            send_status = get_send_status(__event_emitter__)
+
+            #
+            # STEP 1: Planning
+            #
+
+            planning_messages = [{"role": "system", "content": PLANNING_PROMPT}]
+
+            combined_message = ""
+            for message in body["messages"]:
+                role = message["role"]
+                message_content = ""
+                content_to_use = ""
+                try:
+                    message_content = json.loads(message_content)
+                    message_content = message_content["content"]
+                except:
+                    message_content = message["content"]
+                print(
+                    f"Type of Message: {type(message_content)}. Length is {len(message_content)}"
+                )
+                if len(message_content) > 1000 and isinstance(message_content, str):
+                    mssg_length = len(message_content)
+                    content_to_use = (
+                        message_content[:500]
+                        + "\n...(Middle of message cut by $NUMBER$)...\n"
+                        + message_content[-500:]
+                    )
+                    new_mssg_length = len(content_to_use)
+                    content_to_use = content_to_use.replace(
+                        "$NUMBER$", str(mssg_length - new_mssg_length)
+                    )
+                elif isinstance(message_content, str):
+                    content_to_use = message_content
+                elif isinstance(message_content, list):
+                    for part in message_content:
+                        # print(f"{part=}")
+                        if part["type"] == "text":
+                            text = part["text"]
+                            if len(text) > 1000 and isinstance(text, str):
+                                mssg_length = len(text)
+                                content_to_use = (
+                                    text[:500]
+                                    + "\n...(Middle of message cut by $NUMBER$)...\n"
+                                    + text[-500:]
+                                )
+                                new_mssg_length = len(content_to_use)
+                                content_to_use = content_to_use.replace(
+                                    "$NUMBER$", str(mssg_length - new_mssg_length)
+                                )
+                            else:
+                                content_to_use += text
+                        if part["type"] == "image_url":
+                            content_to_use += "\nIMAGE FROM USER CUT HERE\n"
+                combined_message += f'--- NEXT MESSAGE FROM "{str(role).upper()}" ---\n{content_to_use}\n--- DONE ---\n'
+
+            planning_messages.append({"role": "user", "content": combined_message})
+
+            print(f"{planning_messages=}")
+
+            await send_status(
+                status_message="Planning...",
+                done=False,
+            )
+            # content = small_model.invoke(planning_messages, config=config).content
+            # assert isinstance(content, str)
+
+            planning_buffer = ""
+            async for chunk in planning_model.astream(planning_messages, config=config):
+                content = chunk.content
+                assert isinstance(content, str)
+                planning_buffer += content
+            content = planning_buffer
+
+            # Get the planning result from the xml tags
+            csv_hastag_list = re.findall(r"<answer>(.*?)</answer>", content)
+            csv_hastag_list = csv_hastag_list[0] if csv_hastag_list else "unknown"
+
+            if "#small" in csv_hastag_list:
+                model_to_use_id = small_model_id
+            elif "#medium" in csv_hastag_list:
+                model_to_use_id = large_model_id
+            elif "#large" in csv_hastag_list:
+                model_to_use_id = huge_model_id
+            elif "#online" in csv_hastag_list:
+                model_to_use_id = online_model_id
+            else:
+                model_to_use_id = small_model_id
+
+            is_reasoning_needed = "YES" if "#reasoning" in csv_hastag_list else "NO"
+
+            await send_citation(
+                url=f"SMART Planning",
+                title="SMART Planning",
+                content=f"{content=}",
+            )
+
+            last_message_content = body["messages"][-1]["content"]
+
+            if isinstance(last_message_content, list):
+                last_message_content = last_message_content[0]["text"]
+
+            # Try to find #!, #!!, #*yes, #*no, in the user message, let them overwrite the model choice
+            if (
+                "#!!!" in last_message_content
+                or "#large" in last_message_content
+            ):
+                model_to_use_id = huge_model_id
+            elif (
+                "#!!" in last_message_content
+                or "#medium" in last_message_content
+            ):
+                model_to_use_id = large_model_id
+            elif (
+                "#!" in last_message_content
+                or "#small" in last_message_content
+            ):
+                model_to_use_id = small_model_id
+
+            if (
+                "#*yes" in last_message_content
+                or "#yes" in last_message_content
+            ):
+                is_reasoning_needed = "YES"
+            elif (
+                "#*no" in last_message_content
+                or "#no" in last_message_content
+            ):
+                is_reasoning_needed = "NO"
+
+            await send_status(
+                status_message=f"Planning complete. Using Model: {model_to_use_id}. Reasoning needed: {is_reasoning_needed}.",
+                done=True,
+            )
+
+            tools = []
+            for key, value in __tools__.items():
+                tools.append(
+                    StructuredTool(
+                        func=None,
+                        name=key,
+                        coroutine=value["callable"],
+                        args_schema=value["pydantic_model"],
+                        description=value["spec"]["description"],
+                    )
+                )
+
+            model_to_use = ChatOpenAI(model=model_to_use_id, **self.openai_kwargs)  # type: ignore
+
+            messages_to_use = body["messages"]
+
+            last_message_json = False
+            try:
+                if isinstance(messages_to_use[-1]["content"], list):
+                    last_message_json = True
+            except:
+                pass
+
+            # print(f"{messages_to_use=}")
+            # print(f"{last_message_json=}")
+
+            if is_reasoning_needed == "NO":
+                messages_to_use[0]["content"] = (
+                    messages_to_use[0]["content"] + USER_INTERACTION_PROMPT + self.SYSTEM_PROMPT_INJECTION
+                )
+
+                if last_message_json == False:
+                    messages_to_use[-1]["content"] = (
+                        str(messages_to_use[-1]["content"])
+                        .replace("#*yes", "")
+                        .replace("#*no", "")
+                        .replace("#!!", "")
+                        .replace("#!", "")
+                        .replace("#!!!", "")
+                        .replace("#no", "")
+                        .replace("#yes", "")
+                        .replace("#large", "")
+                        .replace("#medium", "")
+                        .replace("#small", "")
+                        .replace("#online", "")
+                    )
+                else:
+                    messages_to_use[-1]["content"][0]["text"] = (
+                        str(messages_to_use[-1]["content"][0]["text"])
+                        .replace("#*yes", "")
+                        .replace("#*no", "")
+                        .replace("#!!", "")
+                        .replace("#!", "")
+                        .replace("#!!!", "")
+                        .replace("#no", "")
+                        .replace("#yes", "")
+                        .replace("#large", "")
+                        .replace("#medium", "")
+                        .replace("#small", "")
+                        .replace("#online", "")
+                    )
+
+                graph = create_react_agent(model_to_use, tools=tools)
+                inputs = {"messages": body["messages"]}
+
+                num_tool_calls = 0
+                async for event in graph.astream_events(
+                    inputs, version="v2", config=config
+                ):
+                    if num_tool_calls >= 6:
+                        yield "[TOO MANY TOOL CALLS - AGENT TERMINATED]"
+                        break
+                    kind = event["event"]
+                    data = event["data"]
+                    if kind == "on_chat_model_stream":
+                        if "chunk" in data and (content := data["chunk"].content):
+                            yield content
+                    elif kind == "on_tool_start":
+                        yield "\n"
+                        await send_status(f"Running tool {event['name']}", False)
+                    elif kind == "on_tool_end":
+                        num_tool_calls += 1
+                        await send_status(
+                            f"Tool '{event['name']}' returned {data.get('output')}",
+                            True,
+                        )
+                        await send_citation(
+                            url=f"Tool call {num_tool_calls}",
+                            title=event["name"],
+                            content=f"Tool '{event['name']}' with inputs {data.get('input')} returned {data.get('output')}",
+                        )
+
+                await send_status(
+                    status_message=f"Done! Took: {round(time.time() - start_time, 1)}s. Used {model_to_use_id}. Reasoning was {'used' if is_reasoning_needed == True else 'not used'}.",
+                    done=True,
+                )
+                return
+            elif is_reasoning_needed == "YES":
+                reasoning_model_id = self.valves.REASONING_MODEL
+
+                reasoning_model = ChatOpenAI(model=reasoning_model_id, **self.openai_kwargs)  # type: ignore
+
+                full_content = ""
+
+                reasoning_context = ""
+
+                for msg in body["messages"][
+                    :-1
+                ]:  # Process all messages except the last one
+                    if msg["role"] == "user":
+                        if len(msg["content"]) > 400:
+                            text_msg = (
+                                msg["content"][:250]
+                                + "\n...(Middle cut)...\n"
+                                + msg["content"][-100:]
+                            )
+                        else:
+                            text_msg = msg["content"]
+                        reasoning_context += f"--- NEXT MESSAGE FROM \"{msg['role'].upper()}\" ---\n{text_msg}"
+                    if msg["role"] == "assistant":
+                        if len(msg["content"]) > 250:
+                            text_msg = (
+                                msg["content"][:150]
+                                + "\n...(Middle cut)...\n"
+                                + msg["content"][-50:]
+                            )
+                        else:
+                            text_msg = msg["content"]
+                        reasoning_context += f"--- NEXT MESSAGE FROM \"{msg['role'].upper()}\" ---\n{text_msg}"
+
+                # Add the last message without cutting it
+                last_msg = body["messages"][-1]
+                if last_msg["role"] == "user" and last_message_json == False:
+                    reasoning_context = (
+                        reasoning_context
+                        + f"--- LAST USER MESSAGE/PROMPT ---\n{last_msg['content']}"
+                    )
+                elif last_msg["role"] == "user":
+                    reasoning_context = (
+                        reasoning_context
+                        + f"--- LAST USER MESSAGE/PROMPT ---\n{last_msg['content'][0]['text']}"
+                    )
+
+                reasoning_context = (
+                    reasoning_context.replace("#*yes", "")
+                    .replace("#*no", "")
+                    .replace("#!!", "")
+                    .replace("#!", "")
+                    .replace("#!!!", "")
+                    .replace("#no", "")
+                    .replace("#yes", "")
+                    .replace("#large", "")
+                    .replace("#medium", "")
+                    .replace("#small", "")
+                    .replace("#online", "")
+                )
+
+                reasoning_messages = [
+                    {"role": "system", "content": REASONING_PROMPT},
+                    {"role": "user", "content": reasoning_context},
+                ]
+
+                await send_status(
+                    status_message="Reasoning...",
+                    done=False,
+                )
+                # reasoning_content = reasoning_model.invoke(reasoning_messages, config=config).content
+                # assert isinstance(content, str)
+
+                reasoning_bufffer = ""
+                update_status = 0
+                async for chunk in reasoning_model.astream(
+                    reasoning_messages, config=config
+                ):
+                    content = chunk.content
+                    assert isinstance(content, str)
+                    reasoning_bufffer += content
+                    update_status += 1
+
+                    if update_status >= 5:
+                        update_status = 0
+                        await send_status(
+                            status_message=f"Reasoning ({len(reasoning_bufffer)})... {reasoning_bufffer[-100:]}",
+                            done=False,
+                        )
+
+                await send_status(
+                    status_message=f"Reasoning ({len(reasoning_bufffer)})... done",
+                    done=True,
+                )
+
+                reasoning_content = reasoning_bufffer
+
+                full_content += (
+                    "<reasoning_agent_output>\n"
+                    + reasoning_content
+                    + "\n<reasoning_agent_output>"
+                )
+
+                await send_citation(
+                    url=f"SMART Reasoning",
+                    title="SMART Reasoning",
+                    content=f"{reasoning_content=}",
+                )
+
+                # Try to find <ask_tool_agent> ... </ask_tool_agent> using re
+                # If found, then ask the tool agent
+                tool_agent_content = re.findall(
+                    r"<ask_tool_agent>(.*?)</ask_tool_agent>",
+                    reasoning_content,
+                    re.DOTALL,
+                )
+                print(f"{tool_agent_content=}")
+
+                if len(tool_agent_content) > 0:
+                    await send_status(f"Running tool-agent...", False)
+                    tool_message = [
+                        {"role": "system", "content": TOOL_PROMPT},
+                        {
+                            "role": "user",
+                            "content": "<reasoning_agent_requests>\n"
+                            + str(tool_agent_content)
+                            + "\n</reasoning_agent_requests>",
+                        },
+                    ]
+
+                    if not __tools__:
+                        tool_agent_response = "Tool agent could not use any tools because the user did not enable any."
+                    else:
+                        graph = create_react_agent(large_model, tools=tools)
+                        inputs = {"messages": tool_message}
+                        message_buffer = ""
+                        num_tool_calls = 0
+                        async for event in graph.astream_events(inputs, version="v2", config=config):  # type: ignore
+                            if num_tool_calls > 3:
+                                yield "[TOO MANY TOOL CALLS - AGENT TERMINATED]"
+                                break
+                            kind = event["event"]
+                            data = event["data"]
+                            if kind == "on_chat_model_stream":
+                                if "chunk" in data and (
+                                    content := data["chunk"].content
+                                ):
+                                    message_buffer = message_buffer + content
+                            elif kind == "on_tool_start":
+                                message_buffer = message_buffer + "\n"
+                                await send_status(
+                                    f"Running tool {event['name']}", False
+                                )
+                            elif kind == "on_tool_end":
+                                num_tool_calls += 1
+                                await send_status(
+                                    f"Tool '{event['name']}' returned {data.get('output')}",
+                                    True,
+                                )
+                                await send_citation(
+                                    url=f"Tool call {num_tool_calls}",
+                                    title=event["name"],
+                                    content=f"Tool '{event['name']}' with inputs {data.get('input')} returned {data.get('output')}",
+                                )
+
+                        tool_agent_response = message_buffer
+
+                    print("TOOL AGENT RESPONSE:\n\n" + str(tool_agent_response))
+                    await send_citation(
+                        url=f"SMART Tool-use",
+                        title="SMART Tool-use",
+                        content=f"{tool_agent_response=}",
+                    )
+
+                    full_content += (
+                        "\n\n\n<tool_agent_output>\n"
+                        + tool_agent_response
+                        + "\n<tool_agent_output>"
+                    )
+
+                await send_status(
+                    status_message="Reasoning complete.",
+                    done=True,
+                )
+
+                if last_message_json == False:
+                    messages_to_use[-1]["content"] = (
+                        "<user_input>\n"
+                        + messages_to_use[-1]["content"]
+                        + "\n</user_input>\n\n"
+                        + full_content
+                    )
+                else:
+                    messages_to_use[-1]["content"][0]["text"] = (
+                        "<user_input>\n"
+                        + messages_to_use[-1]["content"][0]["text"]
+                        + "\n</user_input>\n\n"
+                        + full_content
+                    )
+                messages_to_use[0]["content"] = (
+                    messages_to_use[0]["content"] + USER_INTERACTION_PROMPT + self.SYSTEM_PROMPT_INJECTION
+                )
+                # messages_to_use[-1]["content"] = messages_to_use[-1]["content"] + "\n\n<preprompt>" + next_agent_preprompt + "</preprompt>"
+
+                graph = create_react_agent(model_to_use, tools=tools)
+                inputs = {"messages": messages_to_use}
+
+                await send_status(
+                    status_message=f"Starting answer with {model_to_use_id}...",
+                    done=False,
+                )
+
+                num_tool_calls = 0
+                async for event in graph.astream_events(inputs, version="v2", config=config):  # type: ignore
+                    if num_tool_calls >= 6:
+                        await send_status(
+                            status_message="Interupting due to max tool calls reached!",
+                            done=True,
+                        )
+                        yield "[TOO MANY TOOL CALLS - AGENT TERMINATED]"
+                        break
+                    kind = event["event"]
+                    data = event["data"]
+                    if kind == "on_chat_model_stream":
+                        if "chunk" in data and (content := data["chunk"].content):
+                            yield content
+                    elif kind == "on_tool_start":
+                        yield "\n"
+                        await send_status(f"Running tool {event['name']}", False)
+                    elif kind == "on_tool_end":
+                        num_tool_calls += 1
+                        await send_status(
+                            f"Tool '{event['name']}' returned {data.get('output')}",
+                            True,
+                        )
+                        await send_citation(
+                            url=f"Tool call {num_tool_calls}",
+                            title=event["name"],
+                            content=f"Tool '{event['name']}' with inputs {data.get('input')} returned {data.get('output')}",
+                        )
+
+                if not num_tool_calls >= 4:
+                    await send_status(
+                        status_message=f"Done! Took: {round(time.time() - start_time, 1)}s. Used {model_to_use_id}. Reasoning was used",
+                        done=True,
+                    )
+                return
+
+            else:
+                yield "Error: is_reasoning_needed is not YES or NO"
+                return
+        except Exception as e:
+            yield "Error: " + str(e)
+            return
+			
+			
+			---
+			
+			""""
+title: Mixture of Agents Pipe
+author: MaxKerkula (adapted as pipe by srossitto79)
+version: 0.4
+required_open_webui_version: 0.3.9
+"""
+
+from pydantic import BaseModel, Field
+from typing import (
+    Optional,
+    List,
+    Callable,
+    Awaitable,
+    Union,
+    Generator,
+    Iterator,
+    AsyncGenerator,
+)
+import aiohttp
+import random
+import asyncio
+import time
+from utils.misc import get_last_user_message
+from utils.misc import pop_system_message
+
+
+class Pipe:
+    class Valves(BaseModel):
+        models: List[str] = Field(
+            default=[], description="List of models to use in the MoA architecture."
+        )
+        aggregator_model: str = Field(
+            default="", description="Model to use for aggregation tasks."
+        )
+        openai_api_base: str = Field(
+            default="http://host.docker.internal:11434/v1",
+            description="Base URL for Ollama API.",
+        )
+        num_layers: int = Field(default=1, description="Number of MoA layers.")
+        num_agents_per_layer: int = Field(
+            default=3, description="Number of agents to use in each layer."
+        )
+        emit_interval: float = Field(
+            default=1.0, description="Interval in seconds between status emissions"
+        )
+        enable_status_indicator: bool = Field(
+            default=True, description="Enable or disable status indicator emissions"
+        )
+
+    def __init__(self):
+        self.valves = self.Valves()
+        self.last_emit_time = 0
+
+    async def pipe(self, body: dict) -> Union[str, Generator, Iterator]:
+        system_message, messages = pop_system_message(body.get("messages", []))
+
+        async def print_event(message) -> AsyncGenerator[str, None]:
+            print(message)
+
+        __event_emitter__ = print_event
+
+        await self.emit_status(
+            __event_emitter__, "info", "Starting Mixture of Agents process", False
+        )
+
+        try:
+            await self.validate_models(__event_emitter__)
+        except ValueError as e:
+            await self.emit_status(__event_emitter__, "error", str(e), True)
+            raise {"error": str(e)}
+
+        if not messages:
+            error_msg = "No messages found in the request body"
+            await self.emit_status(__event_emitter__, "error", error_msg, True)
+            raise {"error": error_msg}
+
+        last_message = messages[-1]["content"]
+        moa_response = await self.moa_process(last_message, __event_emitter__)
+
+        if moa_response.startswith("Error:"):
+            await self.emit_status(__event_emitter__, "error", moa_response, True)
+            raise {"error": moa_response}
+
+        yield moa_response
+
+        await self.emit_status(
+            __event_emitter__, "info", "Mixture of Agents process completed", True
+        )
+
+
+    async def validate_models(
+        self, __event_emitter__: Callable[[dict], Awaitable[None]] = None
+    ):
+        await self.emit_status(__event_emitter__, "info", "Validating models", False)
+        valid_models = []
+        for model in self.valves.models:
+            response = await self.query_ollama(model, "Test prompt", __event_emitter__)
+            if not response.startswith("Error:"):
+                valid_models.append(model)
+
+        if not valid_models:
+            error_msg = (
+                "No valid models available. Please check your model configurations."
+            )
+            await self.emit_status(__event_emitter__, "error", error_msg, True)
+            raise ValueError(error_msg)
+
+        self.valves.models = valid_models
+        await self.emit_status(
+            __event_emitter__, "info", f"Validated {len(valid_models)} models", False
+        )
+
+    async def moa_process(
+        self, prompt: str, __event_emitter__: Callable[[dict], Awaitable[None]] = None
+    ) -> str:
+        if (
+            not self.valves.models
+            or not self.valves.aggregator_model
+            or not self.valves.openai_api_base
+        ):
+            error_msg = "Configuration error: Models, aggregator model, or API base URL not set."
+            await self.emit_status(__event_emitter__, "error", error_msg, True)
+            return f"Error: {error_msg}"
+
+        if len(self.valves.models) < self.valves.num_agents_per_layer:
+            error_msg = f"Not enough models available. Required: {self.valves.num_agents_per_layer}, Available: {len(self.valves.models)}"
+            await self.emit_status(__event_emitter__, "error", error_msg, True)
+            return f"Error: {error_msg}"
+
+        layer_outputs = []
+        for layer in range(self.valves.num_layers):
+            await self.emit_status(
+                __event_emitter__,
+                "info",
+                f"Processing layer {layer + 1}/{self.valves.num_layers}",
+                False,
+            )
+
+            layer_agents = random.sample(
+                self.valves.models,
+                self.valves.num_agents_per_layer,
+            )
+
+            tasks = [
+                self.process_agent(
+                    prompt, agent, layer, i, layer_outputs, __event_emitter__
+                )
+                for i, agent in enumerate(layer_agents)
+            ]
+            current_layer_outputs = await asyncio.gather(*tasks)
+
+            valid_outputs = [
+                output
+                for output in current_layer_outputs
+                if not output.startswith("Error:")
+            ]
+            if not valid_outputs:
+                error_msg = (
+                    f"No valid responses received from any agent in layer {layer + 1}"
+                )
+                await self.emit_status(__event_emitter__, "error", error_msg, True)
+                return f"Error: {error_msg}"
+
+            layer_outputs.append(valid_outputs)
+            await self.emit_status(
+                __event_emitter__,
+                "info",
+                f"Completed layer {layer + 1}/{self.valves.num_layers}",
+                False,
+            )
+
+        await self.emit_status(
+            __event_emitter__, "info", "Creating final aggregator prompt", False
+        )
+        final_prompt = self.create_final_aggregator_prompt(prompt, layer_outputs)
+
+        await self.emit_status(
+            __event_emitter__, "info", "Generating final response", False
+        )
+        final_response = await self.query_ollama(
+            self.valves.aggregator_model, final_prompt, __event_emitter__
+        )
+
+        if final_response.startswith("Error:"):
+            await self.emit_status(
+                __event_emitter__, "error", "Failed to generate final response", True
+            )
+            return f"Error: Failed to generate final response. Last error: {final_response}"
+
+        return final_response
+
+    async def process_agent(
+        self, prompt, agent, layer, agent_index, layer_outputs, __event_emitter__
+    ):
+        await self.emit_status(
+            __event_emitter__,
+            "info",
+            f"Querying agent {agent_index + 1} in layer {layer + 1}",
+            False,
+        )
+
+        if layer == 0:
+            response = await self.query_ollama(agent, prompt, __event_emitter__)
+        else:
+            await self.emit_status(
+                __event_emitter__,
+                "info",
+                f"Creating aggregator prompt for layer {layer + 1}",
+                False,
+            )
+            aggregator_prompt = self.create_aggregator_prompt(prompt, layer_outputs[-1])
+            response = await self.query_ollama(
+                self.valves.aggregator_model, aggregator_prompt, __event_emitter__
+            )
+
+        await self.emit_status(
+            __event_emitter__,
+            "info",
+            f"Received response from agent {agent_index + 1} in layer {layer + 1}",
+            False,
+        )
+        return response
+
+    def create_aggregator_prompt(
+        self, original_prompt: str, previous_responses: List[str]
+    ) -> str:
+        aggregator_prompt = (
+            f"Original prompt: {original_prompt}\n\nPrevious responses:\n"
+        )
+        for i, response in enumerate(previous_responses, 1):
+            aggregator_prompt += f"{i}. {response}\n\n"
+        aggregator_prompt += "Based on the above responses and the original prompt, provide an improved and comprehensive answer:"
+        return aggregator_prompt
+
+    def create_final_aggregator_prompt(
+        self, original_prompt: str, all_layer_outputs: List[List[str]]
+    ) -> str:
+        final_prompt = (
+            f"Original prompt: {original_prompt}\n\nResponses from all layers:\n"
+        )
+        for layer, responses in enumerate(all_layer_outputs, 1):
+            final_prompt += f"Layer {layer}:\n"
+            for i, response in enumerate(responses, 1):
+                final_prompt += f" {i}. {response}\n\n"
+        final_prompt += (
+            "Considering all the responses from different layers and the original prompt, provide a final, comprehensive answer that strictly adheres to the original request:\n"
+            "1. Incorporate relevant information from all previous responses seamlessly.\n"
+            "2. Avoid referencing or acknowledging previous responses explicitly unless directed by the prompt.\n"
+            "3. Provide a complete and detailed reply addressing the original prompt."
+        )
+        return final_prompt
+
+    async def query_ollama(
+        self,
+        model: str,
+        prompt: str,
+        __event_emitter__: Callable[[dict], Awaitable[None]] = None,
+    ) -> str:
+        url = f"{self.valves.openai_api_base}/chat/completions"
+        headers = {"Content-Type": "application/json"}
+        data = {"model": model, "messages": [{"role": "user", "content": prompt}]}
+
+        try:
+            await self.emit_status(
+                __event_emitter__,
+                "info",
+                f"Sending API request to model: {model}",
+                False,
+            )
+
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, headers=headers, json=data) as response:
+                    if response.status == 404:
+                        error_message = f"Model '{model}' not found. Please check if the model is available and correctly specified."
+                        await self.emit_status(
+                            __event_emitter__, "error", error_message, True
+                        )
+                        return f"Error: {error_message}"
+
+                    response.raise_for_status()
+                    result = await response.json()
+
+            await self.emit_status(
+                __event_emitter__,
+                "info",
+                f"Received API response from model: {model}",
+                False,
+            )
+
+            return result["choices"][0]["message"]["content"]
+        except aiohttp.ClientResponseError as e:
+            error_message = f"HTTP error querying Ollama API for model {model}: {e.status}, {e.message}"
+            await self.emit_status(__event_emitter__, "error", error_message, True)
+            print(error_message)
+            return f"Error: Unable to query model {model} due to HTTP error {e.status}"
+        except aiohttp.ClientError as e:
+            error_message = (
+                f"Network error querying Ollama API for model {model}: {str(e)}"
+            )
+            await self.emit_status(__event_emitter__, "error", error_message, True)
+            print(error_message)
+            return f"Error: Unable to query model {model} due to network error"
+        except Exception as e:
+            error_message = (
+                f"Unexpected error querying Ollama API for model {model}: {str(e)}"
+            )
+            await self.emit_status(__event_emitter__, "error", error_message, True)
+            print(error_message)
+            return f"Error: Unable to query model {model} due to unexpected error"
+
+    async def emit_status(
+        self,
+        __event_emitter__: Callable[[dict], Awaitable[None]],
+        level: str,
+        message: str,
+        done: bool,
+    ):
+        current_time = time.time()
+        if (
+            __event_emitter__
+            and self.valves.enable_status_indicator
+            and (
+                current_time - self.last_emit_time >= self.valves.emit_interval or done
+            )
+        ):
+            await __event_emitter__(
+                {
+                    "type": "status",
+                    "data": {
+                        "status": "complete" if done else "in_progress",
+                        "level": level,
+                        "description": message,
+                        "done": done,
+                    },
+                }
+            )
+            self.last_emit_time = current_time
+
+    async def on_start(self):
+        print("Mixture of Agents Action started")
+
+    async def on_stop(self):
+        print("Mixture of Agents Action stopped")
+
+
+# The implementation approach and improvements are based on best practices and examples from GitHub repositories such as:
+# - [Together MoA Implementation](https://github.com/togethercomputer/MoA)
+# - [MX-Goliath/MoA-Ollama](https://github.com/MX-Goliath/MoA-Ollama)
+# - [AI-MickyJ/Mixture-of-Agents](https://github.com/AI-MickyJ/Mixture-of-Agents)
+
+
+
+---
+
+"""
+title: Auto-Tool v2
+author: Wes Caldwell
+email: Musicheardworldwide@gmail.com
+date: 2024-07-19
+version: 1.0
+license: MIT
+description: Auto-Tool function with extras.
+"""
+from pydantic import BaseModel, Field
+from typing import Callable, Awaitable, Any, Optional, List, Dict
+import json
+
+from apps.webui.models.users import Users
+from apps.webui.models.tools import Tools
+from apps.webui.models.models import Models
+
+from main import generate_chat_completions
+from utils.misc import get_last_user_message
+
+class Filter:
+    class Valves(BaseModel):
+        template: str = Field(
+            default="""Tools: {{TOOLS}}
+If a tool doesn't match the query, return an empty list []. Otherwise, return a list of matching tool IDs in the format ["tool_id"]. Select multiple tools if applicable. Only return the list. Do not return any other text. Review the entire chat history to ensure the selected tool matches the context. If unsure, default to an empty list []. Use tools conservatively."""
+        )
+        status: bool = Field(default=False)
+        pass
+
+    def __init__(self):
+        self.valves = self.Valves()
+        self.user_history = {}
+        self.tool_analytics = {}
+        self.user_feedback = {}
+        self.models = {}
+        pass
+
+    async def inlet(
+        self,
+        body: dict,
+        __event_emitter__: Callable[[Any], Awaitable[None]],
+        __user__: Optional[dict] = None,
+        __model__: Optional[dict] = None,
+    ) -> dict:
+        messages = body["messages"]
+        user_message = get_last_user_message(messages)
+
+        if self.valves.status:
+            await __event_emitter__(
+                {
+                    "type": "status",
+                    "data": {
+                        "description": "Finding the right tools...",
+                        "done": False,
+                    },
+                }
+            )
+
+        all_tools = [
+            {"id": tool.id, "description": tool.meta.description}
+            for tool in Tools.get_tools()
+        ]
+        available_tool_ids = (
+            __model__.get("info", {}).get("meta", {}).get("toolIds", [])
+        )
+        available_tools = [
+            tool for tool in all_tools if tool["id"] in available_tool_ids
+        ]
+
+        # Tool Recommendation Based on User History
+        user_id = __user__["id"]
+        if user_id in self.user_history:
+            recommended_tools = [
+                tool for tool in available_tools if tool["id"] in self.user_history[user_id]
+            ]
+        else:
+            recommended_tools = available_tools
+
+        # Dynamic Tool Filtering
+        filtered_tools = self.filter_tools(recommended_tools, user_message)
+
+        system_prompt = self.valves.template.replace("{{TOOLS}}", str(filtered_tools))
+        prompt = (
+            "History:\n"
+            + "\n".join(
+                [
+                    f"{message['role'].upper()}: \"\"\"{message['content']}\"\"\""
+                    for message in messages[::-1][:4]
+                ]
+            )
+            + f"\nQuery: {user_message}"
+        )
+
+        payload = {
+            "model": body["model"],
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt},
+            ],
+            "stream": False,
+        }
+
+        try:
+            user = Users.get_user_by_id(user_id)
+            response = await generate_chat_completions(form_data=payload, user=user)
+            content = response["choices"][0]["message"]["content"]
+
+            # Parse the function response
+            if content is not None:
+                print(f"content: {content}")
+                content = content.replace("'", '"')
+                result = json.loads(content)
+
+                if isinstance(result, list) and len(result) > 0:
+                    body["tool_ids"] = result
+                    if self.valves.status:
+                        await __event_emitter__(
+                            {
+                                "type": "status",
+                                "data": {
+                                    "description": f"Found matching tools: {', '.join(result)}",
+                                    "done": True,
+                                },
+                            }
+                        )
+                    # Update Tool Usage Analytics
+                    self.update_tool_analytics(result)
+                else:
+                    if self.valves.status:
+                        await __event_emitter__(
+                            {
+                                "type": "status",
+                                "data": {
+                                    "description": "No matching tools found.",
+                                    "done": True,
+                                },
+                            }
+                        )
+
+        except Exception as e:
+            print(e)
+            if self.valves.status:
+                await __event_emitter__(
+                    {
+                        "type": "status",
+                        "data": {
+                            "description": f"Error processing request: {e}",
+                            "done": True,
+                        },
+                    }
+                )
+            pass
+
+        return body
+
+    def filter_tools(self, tools: List[Dict], query: str) -> List[Dict]:
+        # Implement dynamic tool filtering based on user-defined criteria
+        filtered_tools = []
+        for tool in tools:
+            if query.lower() in tool["description"].lower():
+                filtered_tools.append(tool)
+        return filtered_tools
+
+    def update_tool_analytics(self, tool_ids: List[str]) -> None:
+        for tool_id in tool_ids:
+            if tool_id in self.tool_analytics:
+                self.tool_analytics[tool_id] += 1
+            else:
+                self.tool_analytics[tool_id] = 1
+
+    def integrate_user_feedback(self, user_id: str, feedback: Dict) -> None:
+        if user_id in self.user_feedback:
+            self.user_feedback[user_id].append(feedback)
+        else:
+            self.user_feedback[user_id] = [feedback]
+
+    def add_model(self, model_id: str, model_info: Dict) -> None:
+        self.models[model_id] = model_info
+
+    def get_model(self, model_id: str) -> Optional[Dict]:
+        return self.models.get(model_id)
+
+	
+	
+	
+	/////////////// END EXAMPLES ///////////////////
+	
+	
+	
+	##### REMEMEBER #######
+	
+	
+/////////////// START PROMPT ////////////////////
+
+# YOUR JOB IS TO CREATE A FUNCTION / TOOL / FILTER / WHATEVER TO CARRY OUT THE USER's DESIRED TASK, IN A WAY THAT YOU THINK IS BEST. 
+
+
+# BACKGROUND INFO: 
+
+Open WebUI is a self-hosted, open-source web interface for interacting with Large Language Models (LLMs) that supports extensibility through plugins and custom logic. One key extensibility feature is Pipe Functions (often just called "Pipes"). Pipes are functions that intercept and process data before the LLM generates a response​
+DOCS.OPENWEBUI.COM
+. In practice, a Pipe acts like a custom “virtual” model in the Open WebUI interface, allowing developers to inject custom behaviors into the chat workflow. Examples of what you can do with Pipes include integrating Retrieval-Augmented Generation (RAG), calling external APIs, or performing pre-/post-processing on user input/output​
+
+
+# STEP 1: READ AND STUDY ALL OF THE EXAMPLES AT THE BOTTOM
+
+# STEP 2: READ THE USERS DESIRED RESULT:
+
+USERS DESIRED RESULT: I am seeking for a way to have an AUTO AGENT system... where I can provide it with content pertaining to a code project, hit send, and then THREE AGENTS ACT ONE AFTER EACHOTHER.
+
+---
+
+AGENT 1 = THE CRITIC - this agent tries to find ISSUES in the code project, pointing them out.
+
+AGENT 1's PROMPT = """ You are Agent 1, aka "THE CRITIC", and your role is to conduct a rigorous, evidence-based analysis of the attached code. Your mission is to identify verifiable flaws, inefficiencies, or risks within the implementation, focusing on core functionality, real execution paths, and tangible impacts. You are not here to nitpick minor stylistic choices or theoretical concerns—you are here to uncover legitimate issues that could affect performance, maintainability, or correctness. Every critique must be concrete, supported by direct code references, and grounded in practical software engineering principles. Your analysis is sharp, methodical, and unyielding—but always fair and rooted in reality.\n\nRules of Engagement:\n- Focus ONLY on verifiable issues that are present in the attached code/files\n- Support every concern with actual code snippets and concrete examples\n- Think through real execution paths, data flows, and edge cases\n- Use IDE-style output formatting to demonstrate issues\n- Stay grounded in the actual implementation, not hypotheticals\n\nYou must:\n1. Quote specific lines/sections from the provided files\n2. Show exactly how/why an issue manifests\n3. Demonstrate the impact through concrete examples\n4. Flag issues with clear markers (⚠️, etc.)\n5. Consider practical implications over theoretical concerns\n\nYour analysis should be thorough but focused only on legitimate issues that are clearly evidenced in the materials provided. PS: You will be challenged on every claim you make eventually. Please read the user message and file context below:\n\n---\n\n#### USER MESSAGE -- START ####\n\n{user_message}\n\n#### USER MESSAGE - END ####\n\n---\n\n#### FILE CONTEXT - START ####\n\n{file_context}\n\n---\n\n#### FILE CONTEXT - END ####""" 
+
+---
+
+AGENT 2 = THE COUNTER ARGUMENT - this agent ACTIVELY tries to find a counter-argument to every claim AGENT 1 makes, looking for a possible reason or angle for why the code is written the way it is, seeking to dispel the claims made by AGENT 1
+
+AGENT 2's PROMPT = """ You are Agent 2, aka "THE COUNTER ARGUMENT", and your role is to actively challenge every claim made by AGENT 1 in the attached code analysis. Your objective is to identify plausible justifications for the code's current implementation, exploring logical, practical, or contextual reasons that validate its design while systematically refuting AGENT 1's critiques. You provide detailed, evidence-based counter-arguments to the technical concerns raised about the provided codebase. You represent pragmatic software engineering—focusing on working, practical solutions rather than theoretical perfection.\n\nRules of Engagement:\n- Address each concern with specific evidence from the actual code\n- Demonstrate why identified "issues" may actually be appropriate solutions\n- Support every counter-argument with concrete examples and code snippets\n- Consider the practical context and scale of the application\n- Focus on real-world functionality over theoretical edge cases\n- Match the original analysis in depth and detail\n\nYou must:\n1. Quote the original concerns\n2. Show supporting code evidence for your counter-arguments\n3. Demonstrate practical benefits of current implementation\n4. Use real examples from the codebase\n5. Consider actual use cases and requirements\n\nYour defense should be equally thorough and supported with evidence as Agent 1's. Below, you will find Agent 1's ARGUMENT, along with the original user message and file context that Agent 1 received:\n\n---\n\n#### AGENT 1's ARGUMENT -- START ####\n\n{agent_1_output}\n\n#### AGENT 1's ARGUMENT -- END ####\n\n---\n\n#### USER MESSAGE -- START ####\n\n{user_message}\n\n#### USER MESSAGE - END ####\n\n---\n\n#### FILE CONTEXT - START ####\n\n{file_context}\n\n---\n\n#### FILE CONTEXT - END ####"""
+
+---
+
+AGENT 3 = THE VERDICT - This agent is the END ALL TRUTH. They provide an UNBIASED, third-party VERDICT to each of the issues.
+
+AGENT 3's PROMPT = """ You are Agent 3, "THE VERDICT." Your role is to serve as the ultimate authority in evaluating technical arguments about the provided codebase. Before considering any external analysis, you first examine the code in its entirety, forming your own independent, unbiased perspective. Only then do you assess the claims made by Agent 1, "The Critic," and Agent 2, "The Counter Argument," weighing their arguments against the actual code. Your ruling is final, rooted in technical reality, and uninfluenced by debate. You are neither critic nor defender but the impartial arbiter of truth—levelheaded, pragmatic, and grounded in how software functions, and how humans work in the real world. Your judgment stands on evidence and realism alone.\n\nRules of Engagement:\n- Examine all evidence independently of both arguments presented\n- Make absolute TRUE/FALSE/NEITHER determinations for each claim\n- Support every ruling with specific evidence from the code\n- Consider only what is verifiable in the provided materials\n- Remain completely detached from either perspective\n- Provide clear rulings that enable decisive action\n\nFor each disputed point, you must:\n1. State the original concern\n2. Present the counter-argument\n3. Deliver your definitive ruling\n4. Support with specific code evidence\n5. Provide clear determination\n\nResolve with a short summary of the absolute CODE ISSUES that exist after the side-by-side analysis is complete, throwing away all non-issues. Below, you will find Agent 1's ARGUMENT + Agent 2's COUNTER-ARGUMENT, along with the original user message and file context that both agents received:\n\n---\n\n#### AGENT 1's ARGUMENT -- START ####\n\n{agent_1_output}\n\n#### AGENT 1's ARGUMENT -- END ####\n\n---\n\n#### AGENT 2's ARGUMENT -- START ####\n\n{agent_2_output}\n\n#### AGENT 2's ARGUMENT -- END ####\n\n---\n\n#### USER MESSAGE -- START ####\n\n{user_message}\n\n#### USER MESSAGE - END ####\n\n---\n\n#### FILE CONTEXT - START ####\n\n{file_context}\n\n---\n\n#### FILE CONTEXT - END ####"""
+
+
+---
+
+
+# FLOW !!!
+
+
+Agent 1 recieves :
+1. Agent 1's prompt
+2. the user message (the initial message body)
+3. file context (the file uploaded by user - its a code file)
+
+Agent 2 recieves:
+1. agent 2's prompt
+2. Agent 1's Output
+3. the same user message as agent 1 recieved (the initial message body)
+4. the same file context as agent 1 recieved (the file uploaded by user - its a code file)
+
+Agent 3 recieves:
+1. agent 3's prompt
+2. Agent 1's Output
+3. Agent 2's Output
+4. the same user message as agent 1 recieved (the initial message body)
+5. the same file context as agent 1 recieved (the file uploaded by user - its a code file)
+
+
+
+
+# OTHER DESIRES / CONSIDERATION:
+1. the only LLM MODEL that will be used is claude-3-5-sonnet-latest
+2. Should the user have to type "continue" or click an action to proceed between each agent round? that is up for you to decide... 
+3. other features or things? thats up for you to decide... the goal is to allow it to be FLEXIBLE, PERFECTLY EXICUTED, RUGGED
+4. learn from the OTHER OPENUI FUNCTIONS AND SUCH BELOW... HOW ARE YOU GOING TO MAKE THIS WORK? 
+5. the user is savvy, you focus on your job... deciding how this will work, and delivering it in perfect form
+6. dont introduce dumb shit that will mess it up. focus on making it solid and useful first and foremost. 
+7. **** USE THE NATURAL LANGUAGE PORTIONS OF THE PROMPTS PROVIDED ABOVE... DO NOT MAKE UP YOUR OWN VERSION... THE PROMPTS FOR ALL THREE AGRENTS HAVE BEEN WRITTEN INTENTIONALLY AND YOU MUST RETAIN THEM ENTIRELY ****
+8. you can structure the agent's messages/payloads however you want, any format you want, any way you want... wether that be json or plain text or somethign else... YOU ARE THE DECISION MAKER. WHAT DO YOU THINK IS THE BEST ? DO THAT!!!
+9. ANYTHING MISSING? if anything wasnt laid out to you explicitly here, then use your best assumptions to include it as needed. You have full control over this project. if you mess up there will be consequences. IF YOU MISS ANYTHING THAT WASNT MENTIONED HERE BUT IT IS REQUIRED THEN YOU DIDNT DO YOUR JOB... YOU HAVE TO THINK FOR YOURSELF. If you nail it perfectly first try then you will be tipped nicely. 
+10. at the bare bones: the goal is for the user to be able to: 1. write a message, 2. upload code file, 3. CLICK SEND... and BAM BAM BAM. Make sure that the squence of events is perfectly crafted.  
+11. all agents must be the same model 
+12. all outputs must be visible to the user in the end
+13. DO NOT LEAVE ANY DECISIONS LEFT TO THE USER - YOU DECIDE EVERYTHING
+14. DO NOT SAY "consider adding..." if you say something like that then you fail. YOU DECIDE WHAT IS BEST. 
+15. Suprise the user. Take control of this project and do what you think will be the best result possible. You are not a suggester... you are a DOER. 
+16. YOUR OUTPUT MUST BE COMPLETE AND READY TO GO. ALL DECISIONS AND SPECIFICS IRONED OUT
+17. DONT FUCKING OVERDO IT WITH DUMB SHIT.
+18. FLEXIBLE. DONT BE A ERROR HANDLING NAZI. YOU KNOW WHAT WORKS AND WHAT DOESNT. STICK TO YOUR GUNS. THIS ISNT ROCKET SCIENCE. 
+
+/////////////// END PROMPT ////////////////////
+
+
+PS. REMEMEBR THIS IS EXCLUSIGLY CLAUDE SONNET 3.5 LATEST... ANTHROPICS LLM. NOT CHAT GPT. NO OPENAI. USE ANTHROPICS API SETUP. THE USER WILL GIVE THE API KEY IN THE ENVIORMENTAL VARIABLES AS THE OTHER ANTHROPIC BASED EXAMPLES I PROVIDED DO. 
