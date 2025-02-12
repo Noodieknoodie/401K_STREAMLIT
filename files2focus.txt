@@ -1,0 +1,4148 @@
+
+############### official docs ##############
+--------
+# Streamlit Documentation (Tailored for Data-Driven Applications)
+This document provides a focused guide to Streamlit features relevant for building data-driven, interactive applications. It emphasizes best practices, efficient data handling, and user interface design.
+## I. Core Concepts
+### 1. Caching
+Efficiently manage data loading and computations to prevent redundant operations.
+*   **`st.cache_data` (For Data)**
+    *   **Purpose:** Cache functions that return data (DataFrames, NumPy arrays, API responses, database query results, etc.).
+    *   **Behavior:**
+        *   Stores serialized (pickled) copies of return values. Prevents unintended mutations.
+           _Returns a_ copy* of the cached object, ensuring data integrity across sessions and reruns.
+        *   Hashes input parameters and function code to detect changes.
+        *   Use `st.cache_data.clear()` to clear the cache.
+        * Has static element replay.
+    *   **Best Practices:**
+           _Use for_ all* data loading and transformation functions.
+        *   Set `ttl` (time-to-live) for data that may become stale (e.g., API data, database queries).
+        *   Set `max_entries` to limit cache size and prevent memory issues.
+           _Use_ `experimental_allow_widgets=True` only* when a widget's value _directly_ affects the cached data. Be extremely mindful of potential memory issues.
+        *   Use `hash_funcs` for custom hashing of unhashable input parameters:
+            ```python
+            @st.cache_data(hash_funcs={MyClass: lambda obj: hash(obj.some_attribute)})
+            def my_func(obj: MyClass): ...
+            ```
+        *   Use `show_spinner` to disable or customize the loading spinner.
+    * **Example:**
+    ```python
+        @st.cache_data(ttl=3600, max_entries=100)  # Cache for 1 hour, max 100 entries
+        def load_data(url):
+            return pd.read_csv(url)
+    ```
+*   **`st.cache_resource` (For Global Resources)**
+    *   **Purpose:** Cache global resources like database connections, ML models, or other expensive-to-create objects.
+    *   **Behavior:**
+           _Stores the_ actual* object instance (singleton).  Returns the _same_ object to all users and sessions.
+           _Does_ not* create copies.  Mutations affect the cached object directly.
+        *   Hashes input parameters and function code.
+    *   **Best Practices:**
+        *   Use for resources that should be shared globally and are expensive to create.
+        *   Ensure the cached object is thread-safe if concurrent access is possible.
+        *   Use `ttl` to periodically refresh the resource (e.g., reconnect to a database).
+        * Use `show_spinner` to disable or customize the loading spinner.
+        * Has static element replay.
+        *   Use `hash_funcs` as needed, similar to `st.cache_data`.
+    * **Example:**
+    ```python
+    @st.cache_resource(ttl=86400)  # Reconnect every 24 hours
+    def get_db_connection():
+        return connect_to_database(...)
+    ```
+### 2. Session State (`st.session_state`)
+Manage user-specific data and interactions across reruns.
+*   **Purpose:** Store variables that need to persist between reruns within a single user session (e.g., filter selections, form input, page navigation state).
+*   **API:** Dictionary-like access (`st.session_state['key']`) and attribute access (`st.session_state.key`).
+*   **Best Practices:**
+    *   **Initialization:**  Always initialize variables:
+        ```python
+        if 'my_variable' not in st.session_state:
+            st.session_state.my_variable = initial_value
+        ```
+    *   **Callbacks:** Use `on_change` (most widgets) or `on_click` (buttons) to update session state when widgets change.  Define the callback function _before_ the widget:
+        ```python
+        def my_callback():
+            st.session_state.my_variable = st.session_state.my_widget_key
+        st.selectbox("Select an option", options, key="my_widget_key", on_change=my_callback)
+        ```
+    *   **Forms:** Widgets inside `st.form` _do not_ trigger immediate updates.  Use `st.form_submit_button` with an `on_click` callback to process form data. Access form inputs via `st.session_state`.
+    *   **Order of Execution:** Callbacks execute _before_ the main script reruns.
+*   **Limitations:**
+       _Do_ not* modify a widget's value in session state _after_ the widget has been created.
+       _Do_ not* directly set the state of button-like widgets (`st.button`, `st.download_button`). Use callbacks.
+    *  use `st.session_state.clear()` to clear the state.
+### 3. Forms (`st.form`)
+Batch user input to prevent reruns on every individual widget change within the form.
+*   **Purpose:**  Group related input widgets.  Only submit data when a `st.form_submit_button` is clicked.
+*   **Usage:**
+    ```python
+    with st.form(key='my_form'):
+        # ... input widgets ...
+        submit_button = st.form_submit_button("Submit", on_click=my_submit_callback)
+    ```
+* form inputs values are accessed through st.session_state.
+*   **Best Practices:**
+    *   Always use a `key`.
+       _Place all related input widgets_ inside* the `with st.form():` block.
+    *   Use `st.form_submit_button` with an `on_click` callback to handle form submission.
+*   **Limitations:**
+       _Only_ `st.form_submit_button` _can have a callback_ within* a form.
+    *   Cannot nest forms.
+## II. Layout and Containers
+Organize and structure your app's UI.
+*   **`st.container()`:**
+    *   **Purpose:** Group related UI elements logically.  Improves visual organization and enables targeted updates.
+    *   **Best Practice:** Use extensively for a clean, structured layout.
+*   **`st.columns()`:**
+    *   **Purpose:** Create horizontal layouts.
+    *   **Best Practice:** _Always_ use inside containers (`st.container`, `st.sidebar`, etc.).  Favor symmetrical column splits (e.g., `[2, 2, 2]`, `[3, 3]`).
+*   **`st.expander()`:**
+    *   **Purpose:** Hide/show content.  Useful for less frequently accessed information or details.
+*   **`st.tabs()`:**
+    *   **Purpose:** Organize content into separate tabbed views.
+*   **`st.sidebar`:**
+    *   **Purpose:**  Create a sidebar for navigation, filters, settings, or less prominent content.
+    *   **Usage:** `st.sidebar.widget()` or `with st.sidebar:`
+* **Context Managers:**
+    * Use `with` to increase readability.
+## III. Displaying Data
+Show data in various formats, with interactivity.
+*   **`st.dataframe()`:**
+    *   **Purpose:** Display interactive tables (sorting, filtering).
+    *   **Best Practice:** Use for tabular data where user interaction (sorting, filtering) is desired.
+    *   **Column Configuration API:**  Customize column display and behavior (data types, formatting, editing).
+*   **`st.data_editor()`:**
+    *  Edit tables.
+*   **`st.table()`:**
+    *   **Purpose:** Display static tables (non-editable).
+*   **`st.metric()`:**
+    *   **Purpose:** Display key metrics prominently.
+    *   **Best Practice:** Use for highlighting important values.
+*  **`st.code`**:
+    * Display code.
+* **`st.divider`**:
+    * Insert a divider.
+## IV. User Input Widgets
+Collect input from users through various interactive elements.
+*   **Common Widgets:**
+    *   `st.selectbox`: Dropdown selection.
+    *   `st.date_input`: Date selection.
+    *   `st.number_input`: Numeric input.
+    *   `st.text_input`: Single-line text input.
+    *  `st.toggle`: Toggle input.
+    *   `st.checkbox`: Boolean input.
+    *   `st.radio`: Radio button selection.
+    *   `label_visibility`: Control label visibility.
+*   **Best Practices:**
+    *   Use `key` parameter to uniquely identify widgets, especially when using them dynamically.
+    *   Use `on_change` (or `on_click` for buttons) callbacks to respond to user interaction.
+    *   Within forms, use `st.form_submit_button` and access values through `st.session_state`.
+## V. Status & Feedback
+Provide feedback to users about the app's state and actions.
+*   **`st.error()`:** Display error messages.
+*   **`st.warning()`:** Display warning messages.
+*   **`st.success()`:** Display success messages.
+*   **`st.info()`:** Display informational messages.
+*   **`st.toast()`:** Display brief, non-intrusive notifications.
+*   **`st.spinner()`:**  Show a loading spinner while a block of code is executing:
+    ```python
+    with st.spinner("Loading data..."):
+        data = load_data()
+    ```
+* **`st.status`**: Show status.
+*  **`st.help`**: shows docstrings
+## VI. Multipage Apps
+* Use `st.Page` and `st.navigation` for flexibility.
+    ```python
+    import streamlit as st
+    pg = st.navigation([st.Page("page_1.py"), st.Page("page_2.py")])
+    pg.run()
+    ```
+* Use `pages/` directory for a quick solution.
+* Use `st.switch_page` to change pages.
+## VII. Advanced Concepts
+* **`st.fragment`:**
+  * Run sections independently.
+  * Use `run_every` to automatically rerun.
+  * Can draw to main body.
+  * Cannot render widgets outside of main body.
+*   **Custom Components:**  Extend Streamlit's functionality with custom HTML, CSS, and JavaScript.
+*   **Error Handling:** Use `try...except` blocks to gracefully handle potential errors (e.g., database connection issues).
+*   **Data Validation:** Perform client-side validation within forms to provide immediate feedback to users and prevent unnecessary processing.
+* **Timezone Handling**
+  * Streamlit shows datetime objects exactly as they are, be sure to consider that.
+  * Convert to a specific timezone before displaying, if necessary.
+## VIII. Deprecated Features (Avoid)
+*   `st.experimental_memo` (use `st.cache_data`)
+*   `st.experimental_singleton` (use `st.cache_resource`)
+*   `st.experimental_rerun` (use `st.rerun`)
+* `st.experimental_data_editor` (use `st.data_editor`)
+*   `st.experimental_get_query_params` and `st.experimental_set_query_params` (use `st.query_params`)
+*   `st.cache` (use `st.cache_data` or `st.cache_resource`)
+This document provides a comprehensive yet concise guide to building effective Streamlit applications, tailored for data-centric use cases. It emphasizes best practices and efficient techniques, serving as a reliable foundation for your Streamlit projects.
+----------------
+CREATE TABLE sqlite_sequence(name,seq)
+CREATE TABLE "contacts" (
+"contact_id" INTEGER NOT NULL,
+"client_id" INTEGER NOT NULL,
+"contact_type" TEXT NOT NULL,
+"contact_name" TEXT,
+"phone" TEXT,
+"email" TEXT,
+"fax" TEXT,
+"physical_address" TEXT,
+"mailing_address" TEXT, valid_from DATETIME, valid_to DATETIME,
+PRIMARY KEY("contact_id" AUTOINCREMENT),
+FOREIGN KEY("client_id") REFERENCES "clients"("client_id")
+)
+CREATE TABLE "payments" (
+"payment_id" INTEGER NOT NULL,
+"contract_id" INTEGER NOT NULL,
+"client_id" INTEGER NOT NULL,
+"received_date" TEXT,
+"applied_start_quarter" INTEGER,
+"applied_start_year" INTEGER,
+"applied_end_quarter" INTEGER,
+"applied_end_year" INTEGER,
+"total_assets" INTEGER,
+"expected_fee" REAL,
+"actual_fee" REAL,
+"method" TEXT,
+"notes" TEXT, valid_from DATETIME, valid_to DATETIME,
+PRIMARY KEY("payment_id" AUTOINCREMENT),
+FOREIGN KEY("client_id") REFERENCES "clients"("client_id"),
+FOREIGN KEY("contract_id") REFERENCES "contracts"("contract_id")
+)
+CREATE INDEX idx_contacts_client_id ON contacts(client_id)
+CREATE INDEX idx_payments_client_id ON payments(client_id)
+CREATE INDEX idx_payments_contract_id ON payments(contract_id)
+CREATE INDEX idx_payments_date ON payments(client_id, received_date DESC)
+CREATE INDEX idx_contacts_type ON contacts(client_id, contact_type)
+CREATE INDEX idx_payments_quarter_year ON payments(client_id, applied_start_quarter, applied_start_year)
+CREATE TABLE "contracts" (
+"contract_id" INTEGER NOT NULL,
+"client_id" INTEGER NOT NULL,
+"active" TEXT,
+"contract_number" TEXT,
+"provider_name" TEXT,
+"contract_start_date" TEXT,
+"fee_type" TEXT,
+"percent_rate" REAL,
+"flat_rate" REAL,
+"payment_schedule" TEXT,
+"num_people" INTEGER,
+"notes" TEXT, valid_from DATETIME, valid_to DATETIME,
+PRIMARY KEY("contract_id" AUTOINCREMENT),
+FOREIGN KEY("client_id") REFERENCES "clients"("client_id")
+)
+CREATE INDEX idx_contracts_active ON contracts(client_id, active)
+CREATE INDEX idx_contracts_client_id ON contracts(client_id)
+CREATE INDEX idx_contracts_provider ON contracts(provider_name)
+CREATE TABLE "clients" (
+"client_id" INTEGER NOT NULL,
+"display_name" TEXT NOT NULL,
+"full_name" TEXT,
+"ima_signed_date" TEXT,
+"file_path_account_documentation" TEXT,
+"file_path_consulting_fees" TEXT,
+"file_path_meetings" TEXT, valid_from DATETIME, valid_to DATETIME,
+PRIMARY KEY("client_id" AUTOINCREMENT)
+)
+CREATE INDEX idx_contracts_provider_active
+ON contracts(provider_name, active)
+CREATE TABLE quarterly_summaries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    client_id INTEGER NOT NULL,
+    year INTEGER NOT NULL,
+    quarter INTEGER NOT NULL,
+    total_payments REAL,
+    total_assets REAL,
+    payment_count INTEGER,
+    avg_payment REAL,
+    expected_total REAL,
+    last_updated TEXT,
+    FOREIGN KEY(client_id) REFERENCES clients(client_id),
+    UNIQUE(client_id, year, quarter)
+)
+CREATE TABLE yearly_summaries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    client_id INTEGER NOT NULL,
+    year INTEGER NOT NULL,
+    total_payments REAL,
+    total_assets REAL,
+    payment_count INTEGER,
+    avg_payment REAL,
+    yoy_growth REAL,
+    last_updated TEXT,
+    FOREIGN KEY(client_id) REFERENCES clients(client_id),
+    UNIQUE(client_id, year)
+)
+CREATE TABLE client_metrics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    client_id INTEGER NOT NULL,
+    last_payment_date TEXT,
+    last_payment_amount REAL,
+    last_payment_quarter INTEGER,
+    last_payment_year INTEGER,
+    total_ytd_payments REAL,
+    avg_quarterly_payment REAL,
+    last_recorded_assets REAL,
+    last_updated TEXT,
+    FOREIGN KEY(client_id) REFERENCES clients(client_id),
+    UNIQUE(client_id)
+)
+CREATE INDEX idx_quarterly_lookup ON quarterly_summaries(client_id, year, quarter)
+CREATE INDEX idx_yearly_lookup ON yearly_summaries(client_id, year)
+CREATE INDEX idx_client_metrics_lookup ON client_metrics(client_id)
+CREATE TRIGGER update_quarterly_after_insert
+            AFTER INSERT ON payments
+            BEGIN
+                INSERT INTO quarterly_summaries (
+                    client_id, year, quarter, total_payments,
+                    total_assets, payment_count, avg_payment,
+                    expected_total, last_updated
+                )
+                SELECT
+                    NEW.client_id,
+                    NEW.applied_start_year,
+                    NEW.applied_start_quarter,
+                    COALESCE(SUM(actual_fee), 0),
+                    AVG(total_assets),
+                    COUNT(*),
+                    CASE
+                        WHEN COUNT(*) > 0 THEN COALESCE(SUM(actual_fee), 0) / COUNT(*)
+                        ELSE 0
+                    END,
+                    MAX(expected_fee),
+                    datetime('now')
+                FROM payments
+                WHERE client_id = NEW.client_id
+                AND applied_start_year = NEW.applied_start_year
+                AND applied_start_quarter = NEW.applied_start_quarter
+                ON CONFLICT(client_id, year, quarter) DO UPDATE SET
+                    total_payments = excluded.total_payments,
+                    total_assets = excluded.total_assets,
+                    payment_count = excluded.payment_count,
+                    avg_payment = excluded.avg_payment,
+                    expected_total = excluded.expected_total,
+                    last_updated = excluded.last_updated;
+            END
+CREATE TRIGGER update_quarterly_after_update
+            AFTER UPDATE ON payments
+            BEGIN
+                -- Update old quarter summary
+                INSERT INTO quarterly_summaries (
+                    client_id, year, quarter, total_payments,
+                    total_assets, payment_count, avg_payment,
+                    expected_total, last_updated
+                )
+                SELECT
+                    OLD.client_id,
+                    OLD.applied_start_year,
+                    OLD.applied_start_quarter,
+                    COALESCE(SUM(actual_fee), 0),
+                    AVG(total_assets),
+                    COUNT(*),
+                    CASE
+                        WHEN COUNT(*) > 0 THEN COALESCE(SUM(actual_fee), 0) / COUNT(*)
+                        ELSE 0
+                    END,
+                    MAX(expected_fee),
+                    datetime('now')
+                FROM payments
+                WHERE client_id = OLD.client_id
+                AND applied_start_year = OLD.applied_start_year
+                AND applied_start_quarter = OLD.applied_start_quarter
+                ON CONFLICT(client_id, year, quarter) DO UPDATE SET
+                    total_payments = excluded.total_payments,
+                    total_assets = excluded.total_assets,
+                    payment_count = excluded.payment_count,
+                    avg_payment = excluded.avg_payment,
+                    expected_total = excluded.expected_total,
+                    last_updated = excluded.last_updated;
+                -- Update new quarter summary
+                INSERT INTO quarterly_summaries (
+                    client_id, year, quarter, total_payments,
+                    total_assets, payment_count, avg_payment,
+                    expected_total, last_updated
+                )
+                SELECT
+                    NEW.client_id,
+                    NEW.applied_start_year,
+                    NEW.applied_start_quarter,
+                    COALESCE(SUM(actual_fee), 0),
+                    AVG(total_assets),
+                    COUNT(*),
+                    CASE
+                        WHEN COUNT(*) > 0 THEN COALESCE(SUM(actual_fee), 0) / COUNT(*)
+                        ELSE 0
+                    END,
+                    MAX(expected_fee),
+                    datetime('now')
+                FROM payments
+                WHERE client_id = NEW.client_id
+                AND applied_start_year = NEW.applied_start_year
+                AND applied_start_quarter = NEW.applied_start_quarter
+                ON CONFLICT(client_id, year, quarter) DO UPDATE SET
+                    total_payments = excluded.total_payments,
+                    total_assets = excluded.total_assets,
+                    payment_count = excluded.payment_count,
+                    avg_payment = excluded.avg_payment,
+                    expected_total = excluded.expected_total,
+                    last_updated = excluded.last_updated;
+            END
+CREATE TRIGGER update_quarterly_after_delete
+            AFTER DELETE ON payments
+            BEGIN
+                INSERT INTO quarterly_summaries (
+                    client_id, year, quarter, total_payments,
+                    total_assets, payment_count, avg_payment,
+                    expected_total, last_updated
+                )
+                SELECT
+                    OLD.client_id,
+                    OLD.applied_start_year,
+                    OLD.applied_start_quarter,
+                    COALESCE(SUM(actual_fee), 0),
+                    AVG(total_assets),
+                    COUNT(*),
+                    CASE
+                        WHEN COUNT(*) > 0 THEN COALESCE(SUM(actual_fee), 0) / COUNT(*)
+                        ELSE 0
+                    END,
+                    MAX(expected_fee),
+                    datetime('now')
+                FROM payments
+                WHERE client_id = OLD.client_id
+                AND applied_start_year = OLD.applied_start_year
+                AND applied_start_quarter = OLD.applied_start_quarter
+                ON CONFLICT(client_id, year, quarter) DO UPDATE SET
+                    total_payments = excluded.total_payments,
+                    total_assets = excluded.total_assets,
+                    payment_count = excluded.payment_count,
+                    avg_payment = excluded.avg_payment,
+                    expected_total = excluded.expected_total,
+                    last_updated = excluded.last_updated;
+                -- Remove empty summaries
+                DELETE FROM quarterly_summaries
+                WHERE payment_count = 0;
+            END
+CREATE TRIGGER update_yearly_after_quarterly_change
+            AFTER INSERT ON quarterly_summaries
+            BEGIN
+                INSERT INTO yearly_summaries (
+                    client_id, year, total_payments, total_assets,
+                    payment_count, avg_payment, yoy_growth, last_updated
+                )
+                SELECT
+                    NEW.client_id,
+                    NEW.year,
+                    COALESCE(SUM(total_payments), 0),
+                    AVG(total_assets),
+                    SUM(payment_count),
+                    CASE
+                        WHEN SUM(payment_count) > 0
+                        THEN COALESCE(SUM(total_payments), 0) / SUM(payment_count)
+                        ELSE 0
+                    END,
+                    CASE
+                        WHEN (SELECT total_payments FROM yearly_summaries
+                              WHERE client_id = NEW.client_id
+                              AND year = NEW.year - 1) > 0
+                        THEN ((COALESCE(SUM(total_payments), 0) -
+                              (SELECT total_payments FROM yearly_summaries
+                               WHERE client_id = NEW.client_id
+                               AND year = NEW.year - 1)) /
+                              (SELECT total_payments FROM yearly_summaries
+                               WHERE client_id = NEW.client_id
+                               AND year = NEW.year - 1)) * 100
+                        ELSE NULL
+                    END,
+                    datetime('now')
+                FROM quarterly_summaries
+                WHERE client_id = NEW.client_id AND year = NEW.year
+                GROUP BY client_id, year
+                ON CONFLICT(client_id, year) DO UPDATE SET
+                    total_payments = excluded.total_payments,
+                    total_assets = excluded.total_assets,
+                    payment_count = excluded.payment_count,
+                    avg_payment = excluded.avg_payment,
+                    yoy_growth = excluded.yoy_growth,
+                    last_updated = excluded.last_updated;
+            END
+CREATE TRIGGER update_client_metrics_after_payment_change
+            AFTER INSERT ON payments
+            BEGIN
+                INSERT INTO client_metrics (
+                    client_id, last_payment_date, last_payment_amount,
+                    last_payment_quarter, last_payment_year,
+                    total_ytd_payments, avg_quarterly_payment,
+                    last_recorded_assets, last_updated
+                )
+                SELECT
+                    p.client_id,
+                    p.received_date,
+                    p.actual_fee,
+                    p.applied_start_quarter,
+                    p.applied_start_year,
+                    (SELECT COALESCE(SUM(actual_fee), 0)
+                     FROM payments
+                     WHERE client_id = p.client_id
+                     AND applied_start_year = strftime('%Y', 'now')),
+                    (SELECT AVG(total_payments)
+                     FROM quarterly_summaries
+                     WHERE client_id = p.client_id
+                     AND total_payments > 0
+                     ORDER BY year DESC, quarter DESC
+                     LIMIT 4),
+                    p.total_assets,
+                    datetime('now')
+                FROM payments p
+                WHERE p.payment_id = NEW.payment_id
+                ON CONFLICT(client_id) DO UPDATE SET
+                    last_payment_date = excluded.last_payment_date,
+                    last_payment_amount = excluded.last_payment_amount,
+                    last_payment_quarter = excluded.last_payment_quarter,
+                    last_payment_year = excluded.last_payment_year,
+                    total_ytd_payments = excluded.total_ytd_payments,
+                    avg_quarterly_payment = excluded.avg_quarterly_payment,
+                    last_recorded_assets = excluded.last_recorded_assets,
+                    last_updated = excluded.last_updated;
+            END
+CREATE TRIGGER version_clients
+BEFORE UPDATE ON clients
+FOR EACH ROW
+BEGIN
+    INSERT INTO clients SELECT *, OLD.valid_from, DATETIME('now')
+    FROM clients WHERE id = OLD.id;
+    UPDATE clients
+    SET valid_from = DATETIME('now'),
+        valid_to = NULL
+    WHERE id = OLD.id;
+END
+CREATE TRIGGER version_contracts
+BEFORE UPDATE ON contracts
+FOR EACH ROW
+BEGIN
+    INSERT INTO contracts SELECT *, OLD.valid_from, DATETIME('now')
+    FROM contracts WHERE id = OLD.id;
+    UPDATE contracts
+    SET valid_from = DATETIME('now'),
+        valid_to = NULL
+    WHERE id = OLD.id;
+END
+CREATE TRIGGER version_payments
+BEFORE UPDATE ON payments
+FOR EACH ROW
+BEGIN
+    INSERT INTO payments SELECT *, OLD.valid_from, DATETIME('now')
+    FROM payments WHERE id = OLD.id;
+    UPDATE payments
+    SET valid_from = DATETIME('now'),
+        valid_to = NULL
+    WHERE id = OLD.id;
+END
+/////////////////// CODE PROJECT //////////////////////
+"""
+Client Payments Module Documentation
+==================================
+This module handles the payment management interface for the 401K Payment Tracker application.
+It provides functionality for adding, editing, and viewing payment history with specific validation
+and display requirements.
+"""
+import streamlit as st
+from datetime import datetime
+from typing import Dict, Any, Optional, Tuple
+from utils.utils import ensure_summaries_initialized
+from utils.utils import (
+    get_payment_history,
+    get_active_contract,
+    format_currency_ui,
+    format_currency_db,
+    validate_payment_data,
+    add_payment,
+    update_payment,
+    delete_payment,
+    get_payment_by_id,
+    get_unique_payment_methods,
+    update_payment_note,
+    get_payment_year_quarters
+)
+from .client_payment_utils import (
+    get_period_options,
+    parse_period_option,
+    validate_period_range,
+    calculate_expected_fee,
+    get_current_period,
+    format_period_display
+)
+from utils.database import get_database_connection
+### THE ONLY REQUIRED FIELDS ARE: Payment Date, Payment Amount
+def init_payment_state():
+    """Initialize payment-related session state variables."""
+    if 'show_payment_form' not in st.session_state:
+        st.session_state.show_payment_form = False
+    if 'editing_payment_id' not in st.session_state:
+        st.session_state.editing_payment_id = None
+    if 'payment_form_data' not in st.session_state:
+        st.session_state.payment_form_data = {}
+    if 'payment_validation_errors' not in st.session_state:
+        st.session_state.payment_validation_errors = []
+    if 'delete_payment_id' not in st.session_state:
+        st.session_state.delete_payment_id = None
+    if 'show_delete_confirm' not in st.session_state:
+        st.session_state.show_delete_confirm = False
+    if 'payment_filter' not in st.session_state:
+        st.session_state.payment_filter = {
+            'time_filter': 'All Time',
+            'year': datetime.now().year,
+            'quarter': None
+        }
+def reset_payment_form():
+    """Reset payment form state."""
+    st.session_state.show_payment_form = False
+    st.session_state.editing_payment_id = None
+    st.session_state.payment_form_data = {}
+    st.session_state.payment_validation_errors = []
+def show_payment_form(client_id: int, contract: Tuple):
+    """Display the payment form for adding/editing payments."""
+    from streamlit_extras.grid import grid
+    # Header and initial setup
+    st.subheader("Add Payment" if not st.session_state.editing_payment_id else "Edit Payment")
+    # Load existing payment data if editing
+    if st.session_state.editing_payment_id:
+        payment_data = get_payment_by_id(st.session_state.editing_payment_id)
+        current_payment = payment_data if payment_data else None
+    else:
+        current_payment = None
+    # Display contract info
+    if not display_contract_info(contract):
+        return
+    # Get schedule info early for use throughout form
+    schedule = contract[3].lower() if contract[3] else ""
+    is_monthly = schedule == "monthly"
+    period_label = "Month" if is_monthly else "Quarter"
+    # Show validation errors if any
+    if st.session_state.payment_validation_errors:
+        for error in st.session_state.payment_validation_errors:
+            st.error(error)
+        # Clear errors after displaying
+        st.session_state.payment_validation_errors = []
+    # Create a centered container for the form
+    col1, col2, col3 = st.columns([1, 3, 1])
+    with col2:
+        with st.form(key="payment_form"):
+            # === MAIN FORM LAYOUT ===
+            # Top row grid: Date | Start Period | End Period
+            top_row = grid([1.2, 1.5, 1.5], gap="small", vertical_align="bottom")
+            with top_row.container():
+                st.markdown("Payment Date<span style='color: red'>*</span>", unsafe_allow_html=True)
+                received_date = st.date_input(
+                    "Payment Date",
+                    value=datetime.strptime(current_payment[0], '%Y-%m-%d') if current_payment else datetime.now(),
+                    format="MM/DD/YYYY",
+                    label_visibility="collapsed"
+                )
+            with top_row.container():
+                st.markdown(f"Start {period_label}<span style='color: red'>*</span>", unsafe_allow_html=True)
+                period_options = get_period_options(schedule)
+                if not period_options:
+                    st.error(f"No valid {period_label.lower()}s available for payment")
+                    return
+                current_period = get_current_period(schedule)
+                if current_payment:
+                    default_period = format_period_display(current_payment[1], current_payment[2], schedule)
+                    default_index = period_options.index(default_period) if default_period in period_options else 0
+                else:
+                    default_index = 0
+                start_period_option = st.selectbox(
+                    f"Start {period_label}",
+                    options=period_options,
+                    index=default_index,
+                    key="start_period",
+                    label_visibility="collapsed"
+                )
+                start_period, start_year = parse_period_option(start_period_option, schedule)
+            with top_row.container():
+                st.markdown(f"End {period_label}", unsafe_allow_html=True)
+                # Get valid end options based on start period
+                valid_end_options = [
+                    opt for opt in period_options
+                    if validate_period_range(
+                        start_period, start_year,
+                        *parse_period_option(opt, schedule),
+                        schedule
+                    )
+                ]
+                # Default to start period
+                if current_payment and current_payment[1] != current_payment[3]:
+                    default_end_period = format_period_display(current_payment[3], current_payment[4], schedule)
+                    default_end_index = valid_end_options.index(default_end_period) if default_end_period in valid_end_options else 0
+                else:
+                    default_end_index = valid_end_options.index(start_period_option) if start_period_option in valid_end_options else 0
+                end_period_option = st.selectbox(
+                    f"End {period_label}",
+                    options=valid_end_options,
+                    index=default_end_index,
+                    key="end_period",
+                    label_visibility="collapsed"
+                )
+                end_period, end_year = parse_period_option(end_period_option, schedule)
+            # Financial Details Row
+            finance_grid = grid([1, 1, 1], gap="small", vertical_align="top")
+            with finance_grid.container():
+                st.markdown("Assets Under Management")
+                total_assets = st.text_input(
+                    "Assets",
+                    value=format_currency_ui(current_payment[5]) if current_payment else "",
+                    key="total_assets",
+                    label_visibility="collapsed"
+                )
+            with finance_grid.container():
+                st.markdown("Payment Amount<span style='color: red'>*</span>", unsafe_allow_html=True)
+                actual_fee = st.text_input(
+                    "Payment",
+                    value=format_currency_ui(current_payment[6]) if current_payment else "",
+                    key="actual_fee",
+                    label_visibility="collapsed"
+                )
+            with finance_grid.container():
+                st.markdown("Payment Method")
+                method_options = get_unique_payment_methods()
+                current_method = current_payment[7] if current_payment else "None Specified"
+                method = st.selectbox(
+                    "Method",
+                    options=method_options,
+                    index=method_options.index(current_method) if current_method in method_options else 0,
+                    label_visibility="collapsed"
+                )
+                if method == "Other":
+                    other_method = st.text_input(
+                        "Specify Method",
+                        value=current_payment[7] if current_payment else "",
+                        label_visibility="collapsed"
+                    )
+                else:
+                    other_method = None
+            # Notes field (full width but compact)
+            notes = st.text_area(
+                "Notes",
+                value=current_payment[8] if current_payment else "",
+                placeholder=("Add any additional notes here..." if start_period_option == end_period_option else
+                            "Add any additional notes here (e.g., reason for multi-period payment)..."),
+                height=75
+            )
+            # Calculate expected fee
+            expected = None
+            if total_assets:
+                try:
+                    assets = float(total_assets.replace('$', '').replace(',', ''))
+                    expected = calculate_expected_fee(contract, assets)
+                    st.info(f"Expected Fee: ${expected:,.2f}")
+                except ValueError:
+                    st.warning("Please enter a valid number for assets")
+            # Add CSS for compact preview
+            st.markdown("""
+                <style>
+                .preview-container {
+                    background-color: #f0f2f6;
+                    border-radius: 4px;
+                    padding: 12px 20px;
+                    margin: 15px 0 10px 0;
+                }
+                .preview-container p {
+                    margin: 0;
+                    padding: 2px 0;
+                    line-height: 1.3;
+                }
+                .button-row {
+                    display: flex;
+                    gap: 10px;
+                    margin-top: 10px;
+                }
+                </style>
+            """, unsafe_allow_html=True)
+            # Preview section using grid like the rest of the form
+            preview_grid = grid([1], gap="small")
+            with preview_grid.container():
+                # Date and Period line
+                period_info = f"Date: {received_date.strftime('%m/%d/%Y')}"
+                if start_period_option == end_period_option:
+                    period_info += f" | Period: {start_period_option}"
+                else:
+                    period_info += f" | Period: {start_period_option} → {end_period_option}"
+                st.write(period_info)
+                # Financial details line
+                financial_info = []
+                if total_assets:
+                    financial_info.append(f"Assets: {format_currency_ui(total_assets)}")
+                if expected is not None:
+                    financial_info.append(f"Expected: ${expected:,.2f}")
+                if actual_fee:
+                    financial_info.append(f"Payment: {format_currency_ui(actual_fee)}")
+                if financial_info:
+                    st.write(' | '.join(financial_info))
+                # Method line
+                st.write(f"Method: {method if method != 'Other' else other_method}")
+            # Buttons using grid like other sections
+            button_grid = grid([1, 1], gap="small")
+            with button_grid.container():
+                submitted = st.form_submit_button("Save Payment", type="primary", use_container_width=True)
+            with button_grid.container():
+                cancelled = st.form_submit_button("Cancel", use_container_width=True)
+    # Handle form submission
+    if submitted:
+        with st.spinner("Processing payment..."):
+            # Clean currency values
+            db_total_assets = format_currency_db(total_assets) if total_assets else None
+            db_actual_fee = format_currency_db(actual_fee) if actual_fee else None
+            # Prepare form data
+            form_data = {
+                'received_date': received_date.strftime('%Y-%m-%d'),
+                'applied_start_period': start_period,
+                'applied_start_year': start_year,
+                'applied_end_period': end_period,
+                'applied_end_year': end_year,
+                'total_assets': db_total_assets,
+                'actual_fee': db_actual_fee,
+                'expected_fee': expected,
+                'method': other_method if method == "Other" else method,
+                'notes': notes,
+                'payment_schedule': schedule
+            }
+            # Validate and save
+            validation_errors = validate_payment_data(form_data)
+            if validation_errors:
+                # Store validation errors
+                st.session_state.payment_validation_errors = validation_errors
+                # Show errors without rerun
+                for error in validation_errors:
+                    st.error(error)
+                return
+            else:
+                try:
+                    if st.session_state.editing_payment_id:
+                        success = update_payment(st.session_state.editing_payment_id, form_data)
+                        if success:
+                            st.toast("Payment updated successfully!", icon="✅")
+                            reset_payment_form()
+                            st.rerun()
+                        else:
+                            st.error("Failed to update payment")
+                    else:
+                        payment_id = add_payment(client_id, form_data)
+                        if payment_id:
+                            st.toast("Payment added successfully!", icon="✅")
+                            reset_payment_form()
+                            st.rerun()
+                        else:
+                            st.error("Failed to add payment. Please try again.")
+                except Exception as e:
+                    st.error(f"An error occurred: {str(e)}")
+                    # Keep form data on error
+                    st.session_state.payment_form_data = form_data
+    if cancelled:
+        reset_payment_form()
+        st.rerun()
+def display_contract_info(contract: Tuple):
+    """Display contract information above the payment form."""
+    fee_type = contract[4].title() if contract[4] else "N/A"
+    rate = (
+        f"{contract[5]*100:.3f}%" if contract[4] == 'percentage' and contract[5]
+        else f"${contract[6]:,.2f}" if contract[4] == 'flat' and contract[6]
+        else "N/A"
+    )
+    schedule = contract[3].title() if contract[3] else "N/A"
+    provider = contract[1] or "N/A"
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.info(f"Provider: {provider} | Fee Type: {fee_type} | Rate: {rate} | Schedule: {schedule} | All payments processed in arrears")
+    return True
+# ============================================================================
+# Payment History Display
+# ============================================================================
+def show_payment_history(client_id: int):
+    """Display the payment history table using summary data."""
+    contract = get_active_contract(client_id)
+    left_col, middle_col, right_col = st.columns([4, 2, 4])
+    with left_col:
+        selected_filter = st.radio(
+            "Time Period Filter",
+            options=["All Time", "This Year", "Custom"],
+            key="time_filter",
+            horizontal=True,
+            label_visibility="collapsed"
+        )
+        if selected_filter == "Custom":
+            col1, col2, _ = st.columns([1, 1, 2])
+            with col1:
+                # Use summary table for years
+                conn = get_database_connection()
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT DISTINCT year
+                    FROM quarterly_summaries
+                    WHERE client_id = ?
+                    ORDER BY year DESC
+                """, (client_id,))
+                available_years = [row[0] for row in cursor.fetchall()]
+                conn.close()
+                year = st.selectbox(
+                    "Select Year",
+                    options=available_years if available_years else [datetime.now().year],
+                    key="filter_year"
+                )
+            with col2:
+                quarter = st.selectbox(
+                    "Select Quarter",
+                    options=["All Quarters", "Q1", "Q2", "Q3", "Q4"],
+                    key="filter_quarter"
+                )
+    with middle_col:
+        if not contract or not contract[3]:
+            st.error("Payment schedule must be set in the contract before adding payments.")
+        else:
+            def show_add_payment_form():
+                st.session_state.show_payment_form = True
+                st.session_state.editing_payment_id = None
+                st.session_state.payment_form_data = {}
+            st.button(
+                "Add Payment",
+                type="primary",
+                use_container_width=True,
+                on_click=show_add_payment_form
+            )
+    with right_col:
+        filter_text = (
+            "Showing all payments" if selected_filter == "All Time"
+            else f"Showing payments from {datetime.now().year}" if selected_filter == "This Year"
+            else f"Showing payments from {year}" + (f" Q{quarter[1]}" if quarter != "All Quarters" else "")
+        )
+        st.markdown(f"<div style='text-align: right'>{filter_text}</div>", unsafe_allow_html=True)
+    # Get filtered data using summary tables
+    years = None
+    quarters = None
+    if selected_filter == "This Year":
+        years = [datetime.now().year]
+    elif selected_filter == "Custom":
+        years = [year]
+        if quarter != "All Quarters":
+            quarters = [int(quarter[1])]
+    # Get payments with summary data
+    raw_payments = get_payment_history(client_id, years=years, quarters=quarters)
+    if not raw_payments:
+        st.info("No payment history available for this client.")
+        return
+    formatted_payments = format_payment_data(raw_payments)
+    display_payment_table(formatted_payments)
+def delete_payment_confirm(payment_id):
+    """Set up confirmation dialog for payment deletion"""
+    st.session_state.delete_payment_id = payment_id
+    st.session_state.show_delete_confirm = True
+    st.rerun()  # Force rerun to show confirmation immediately
+def handle_delete_confirmed(payment_id):
+    """Handle the actual deletion after confirmation"""
+    with st.spinner("Deleting payment..."):
+        if delete_payment(payment_id):
+            st.toast("Payment deleted successfully!", icon="✅")
+        else:
+            st.error("Failed to delete payment")
+    # Clear states after operation
+    st.session_state.delete_payment_id = None
+    st.session_state.show_delete_confirm = False
+    st.rerun()  # Refresh to show updated list
+def handle_delete_cancelled():
+    """Handle cancellation of delete operation"""
+    st.session_state.delete_payment_id = None
+    st.session_state.show_delete_confirm = False
+    st.rerun()
+def display_payment_table(payments: list):
+    """Display the formatted payment history table."""
+    # Add CSS for table styling
+    st.markdown("""
+        <style>
+        div.payment-table div[data-testid="column"] > div > div > div > div {
+            padding: 0;
+            margin: 0;
+            line-height: 0.8;
+        }
+        div.payment-table p {
+            margin: 0;
+            padding: 0;
+            line-height: 1;
+        }
+        div.payment-table div[data-testid="stHorizontalBlock"] {
+            margin-bottom: 0.1rem;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    st.markdown('<div class="payment-table">', unsafe_allow_html=True)
+    # Table headers
+    cols = st.columns([1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1, 1])
+    headers = [
+        "Provider", "Period", "Frequency", "Method", "Received",
+        "Total Assets", "Expected Fee", "Actual Fee", "Discrepancy",
+        "Notes", "Actions"
+    ]
+    for col, header in zip(cols, headers):
+        with col:
+            st.markdown(f"<p style='font-weight: bold'>{header}</p>", unsafe_allow_html=True)
+    st.markdown("<hr style='margin: 0.1rem 0; border-color: #eee;'>", unsafe_allow_html=True)
+    # Display data rows
+    for payment in payments:
+        with st.container():
+            cols = st.columns([1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1, 1])
+            # Display payment data
+            for i, (col, key) in enumerate(zip(cols[:-2], [
+                "Provider", "Period", "Frequency", "Method", "Received",
+                "Total Assets", "Expected Fee", "Actual Fee", "Discrepancy"
+            ])):
+                with col:
+                    st.markdown(f"<p>{payment[key]}</p>", unsafe_allow_html=True)
+            # Notes column
+            with cols[-2]:
+                if payment['Notes']:
+                    st.markdown(f"<p title='{payment['Notes']}'>🟢</p>", unsafe_allow_html=True)
+                else:
+                    st.markdown("<p>◯</p>", unsafe_allow_html=True)
+            # Actions column
+            with cols[-1]:
+                action_cols = st.columns([1, 1])
+                with action_cols[0]:
+                    def set_payment_to_edit(payment_id):
+                        st.session_state.show_payment_form = True
+                        st.session_state.editing_payment_id = payment_id
+                        # Load payment data for editing
+                        payment_data = get_payment_by_id(payment_id)
+                        if payment_data:
+                            # Convert quarters to months if monthly schedule
+                            schedule = payment_data[9].lower() if payment_data[9] else ""
+                            if schedule == "monthly":
+                                # Convert quarters back to months
+                                start_period = (payment_data[1] - 1) * 3 + 1
+                                end_period = (payment_data[3] - 1) * 3 + 3
+                            else:
+                                # Keep as quarters
+                                start_period = payment_data[1]
+                                end_period = payment_data[3]
+                            # Only treat as multi-period if start and end are actually different
+                            is_multi_period = (payment_data[1] != payment_data[3] or payment_data[2] != payment_data[4])
+                            st.session_state.payment_form_data = {
+                                'received_date': payment_data[0],
+                                'applied_start_period': start_period,
+                                'applied_start_year': payment_data[2],
+                                'applied_end_period': end_period,
+                                'applied_end_year': payment_data[4],
+                                'total_assets': payment_data[5],
+                                'actual_fee': payment_data[6],
+                                'method': payment_data[7],
+                                'notes': payment_data[8],
+                                'payment_schedule': payment_data[9],
+                                'is_multi_period': is_multi_period  # Add this to control checkbox state
+                            }
+                    st.button(
+                        "✏️",
+                        key=f"edit_payment_{payment['payment_id']}_{datetime.now().strftime('%Y%m%d')}",
+                        help="Edit payment",
+                        on_click=set_payment_to_edit,
+                        args=(payment['payment_id'],)
+                    )
+                with action_cols[1]:
+                    def delete_payment_confirm(payment_id):
+                        # Clear any other delete confirmations first
+                        if st.session_state.delete_payment_id is not None and st.session_state.delete_payment_id != payment_id:
+                            st.session_state.show_delete_confirm = False
+                        # Set new delete confirmation
+                        st.session_state.delete_payment_id = payment_id
+                        st.session_state.show_delete_confirm = True
+                    st.button(
+                        "🗑️",
+                        key=f"delete_payment_{payment['payment_id']}_{datetime.now().strftime('%Y%m%d')}",
+                        help="Delete payment",
+                        on_click=delete_payment_confirm,
+                        args=(payment['payment_id'],)
+                    )
+            # Show delete confirmation if active
+            if st.session_state.show_delete_confirm and st.session_state.delete_payment_id == payment['payment_id']:
+                # Use a modal-like container for confirmation
+                with st.container():
+                    st.markdown("---")  # Visual separator
+                    confirm_cols = st.columns([6, 2, 2])
+                    with confirm_cols[0]:
+                        st.warning(f"Delete this payment for {payment['Period']}?")
+                    with confirm_cols[1]:
+                        if st.button(
+                            "Yes, Delete",
+                            key=f"confirm_delete_payment_{payment['payment_id']}_{datetime.now().strftime('%Y%m%d')}",
+                            type="primary",
+                            use_container_width=True
+                        ):
+                            handle_delete_confirmed(payment['payment_id'])
+                    with confirm_cols[2]:
+                        if st.button(
+                            "Cancel",
+                            key=f"cancel_delete_payment_{payment['payment_id']}_{datetime.now().strftime('%Y%m%d')}",
+                            use_container_width=True
+                        ):
+                            handle_delete_cancelled()
+                    st.markdown("---")  # Visual separator
+    st.markdown('</div>', unsafe_allow_html=True)
+# ============================================================================
+# Main Display Function
+# ============================================================================
+def display_payments_section(client_id: int):
+    """Main entry point for the payments section."""
+    # Initialize state and ensure summaries are ready
+    init_payment_state()
+    ensure_summaries_initialized()
+    # Rest of the function remains the same
+    contract = get_active_contract(client_id)
+    if not contract:
+        st.error("No active contract found. Please set up a contract first.")
+        return
+    if not contract[3]:
+        st.error("Payment schedule must be set in the contract before adding payments.")
+        return
+    if st.session_state.show_payment_form:
+        show_payment_form(client_id, contract)
+    else:
+        show_payment_history(client_id)
+def format_payment_data(payments: list) -> list:
+    """Format payment data for display using summary data when available."""
+    table_data = []
+    for payment in payments:
+        provider_name = payment[0] or "N/A"
+        def format_currency(value):
+            try:
+                if value is None or value == "":
+                    return "N/A"
+                return f"${float(value):,.2f}"
+            except (ValueError, TypeError):
+                return "N/A"
+        frequency = payment[5].title() if payment[5] else "N/A"
+        if frequency.lower() == "monthly":
+            start_month = ((payment[1] - 1) * 3) + 1
+            end_month = ((payment[3] - 1) * 3) + 3
+            if payment[2] payment[4] and start_month end_month:
+                period = f"{datetime.strptime(f'2000-{start_month}-1', '%Y-%m-%d').strftime('%b')} {payment[2]}"
+            else:
+                start_date = datetime.strptime(f'2000-{start_month}-1', '%Y-%m-%d')
+                end_date = datetime.strptime(f'2000-{end_month}-1', '%Y-%m-%d')
+                if payment[2] == payment[4]:
+                    period = f"{start_date.strftime('%b')} - {end_date.strftime('%b')} {payment[2]}"
+                else:
+                    period = f"{start_date.strftime('%b')} {payment[2]} - {end_date.strftime('%b')} {payment[4]}"
+        else:
+            if payment[1] payment[3] and payment[2] payment[4]:
+                period = f"Q{payment[1]} {payment[2]}"
+            else:
+                period = f"Q{payment[1]} {payment[2]} - Q{payment[3]} {payment[4]}"
+        received_date = "N/A"
+        if payment[6]:
+            try:
+                date_obj = datetime.strptime(payment[6], '%Y-%m-%d')
+                received_date = date_obj.strftime('%b %d, %Y')
+            except:
+                received_date = payment[6]
+        total_assets = format_currency(payment[7])
+        expected_fee = format_currency(payment[8])
+        actual_fee = format_currency(payment[9])
+        try:
+            if payment[8] is not None and payment[9] is not None and payment[8] != "" and payment[9] != "":
+                discrepancy = float(payment[9]) - float(payment[8])
+                discrepancy_str = f"${discrepancy:,.2f}" if discrepancy >= 0 else f"-${abs(discrepancy):,.2f}"
+            else:
+                discrepancy_str = "N/A"
+        except (ValueError, TypeError):
+            discrepancy_str = "N/A"
+        notes = payment[10] or ""
+        payment_id = payment[11]
+        method = payment[12] or "N/A"
+        table_data.append({
+            "Provider": provider_name,
+            "Period": period,
+            "Frequency": frequency,
+            "Method": method,
+            "Received": received_date,
+            "Total Assets": total_assets,
+            "Expected Fee": expected_fee,
+            "Actual Fee": actual_fee,
+            "Discrepancy": discrepancy_str,
+            "Notes": notes,
+            "payment_id": payment_id
+        })
+    return table_data
+if **name** == "__main__":
+    st.set_page_config(page_title="Client Payments", layout="wide")
+    # For testing
+    display_payments_section(1)
+----------------------------------
+from datetime import datetime
+import streamlit as st
+from utils.utils import format_currency_ui, get_database_connection
+def get_current_period(schedule):
+    """Get the current period (month or quarter) based on schedule"""
+    current_month = datetime.now().month
+    if schedule and schedule.lower() == 'monthly':
+        return current_month
+    return (current_month - 1) // 3 + 1  # Quarter
+def get_period_options(schedule):
+    """Get available period options based on payment schedule"""
+    if not schedule:
+        return []  # Return empty list for null schedule
+    current_month = datetime.now().month
+    current_year = datetime.now().year
+    is_monthly = schedule.lower() == 'monthly'
+    current_period = current_month if is_monthly else (current_month - 1) // 3 + 1
+    # Start from previous period
+    if is_monthly:
+        # For monthly, start from last month
+        prev_period = current_month - 1 if current_month > 1 else 12
+        prev_year = current_year if current_month > 1 else current_year - 1
+        periods_to_show = 24  # Show last 24 months
+        period_format = lambda p, y: f"{datetime(y, p, 1).strftime('%b')} {y}"
+    else:
+        # For quarterly, start from last quarter
+        prev_period = current_period - 1 if current_period > 1 else 4
+        prev_year = current_year if current_period > 1 else current_year - 1
+        periods_to_show = 8  # Show last 8 quarters
+        period_format = lambda p, y: f"Q{p} {y}"
+    # Generate options
+    options = []
+    period = prev_period
+    year = prev_year
+    for _in range(periods_to_show):
+        options.append(period_format(period, year))
+        period -= 1
+        if is_monthly and period < 1:
+            period = 12
+            year -= 1
+        elif not is_monthly and period < 1:
+            period = 4
+            year -= 1
+    return options
+def parse_period_option(period_option, schedule):
+    """Parse period option string into period and year based on schedule"""
+    if not period_option or not schedule:
+        return None, None
+    try:
+        if schedule.lower() == 'monthly':
+            # Parse "MMM YYYY" format (e.g., "Jan 2024")
+            date = datetime.strptime(period_option, "%b %Y")
+            return date.month, date.year
+        else:
+            # Parse "QN YYYY" format (e.g., "Q1 2024")
+            quarter = int(period_option[1])  # Extract number after 'Q'
+            year = int(period_option[-4:])  # Extract year
+            return quarter, year
+    except (ValueError, IndexError):
+        return None, None
+def validate_period_range(start_period, start_year, end_period, end_year, schedule):
+    """Validate that the period range is in arrears and logically valid"""
+    if not schedule:
+        return False
+    is_monthly = schedule.lower() == 'monthly'
+    periods_per_year = 12 if is_monthly else 4
+    current_month = datetime.now().month
+    current_year = datetime.now().year
+    # For monthly payments, the current period is the current month
+    # For quarterly payments, it's the current quarter
+    current_period = current_month if is_monthly else (current_month - 1) // 3 + 1
+    # Convert to absolute periods for comparison
+    start_absolute = start_year * periods_per_year + start_period
+    end_absolute = end_year * periods_per_year + end_period
+    current_absolute = current_year * periods_per_year + current_period
+    # For arrears, the payment period should be less than the current period
+    # Allow payment for the previous period
+    if start_absolute >= current_absolute:
+        return False
+    if end_absolute >= current_absolute:
+        return False
+    # Ensure end is not before start
+    if end_absolute < start_absolute:
+        return False
+    return True
+def format_period_display(period, year, schedule):
+    """Format period and year for display based on schedule"""
+    if not schedule:
+        return "N/A"
+    if schedule.lower() == 'monthly':
+        return datetime(year, period, 1).strftime("%b %Y")
+    return f"Q{period} {year}"
+def calculate_expected_fee(contract_data, total_assets):
+    """Calculate expected fee based on contract terms and total assets"""
+    if not contract_data or not total_assets:
+        return None
+    try:
+        total_assets = float(str(total_assets).replace('$', '').replace(',', ''))
+        if contract_data[4] 'percentage' and contract_data[5]:  # fee_type 'percentage'
+            return total_assets * contract_data[5]  # percent_rate
+        elif contract_data[4] 'flat' and contract_data[6]:  # fee_type 'flat'
+            return contract_data[6]  # flat_rate
+        return None
+    except (ValueError, TypeError):
+        return None
+def get_current_quarter():
+    """Get the current quarter (1-4) based on current month."""
+    return (datetime.now().month - 1) // 3 + 1
+def get_previous_quarter(current_quarter, current_year):
+    """Get the previous quarter and its year.
+    Args:
+        current_quarter (int): Current quarter (1-4)
+        current_year (int): Current year
+    Returns:
+        tuple: (previous_quarter, previous_year)
+    """
+    if current_quarter == 1:
+        return 4, current_year - 1
+    return current_quarter - 1, current_year
+def get_quarter_month_range(quarter, year):
+    """Get the start and end months for a given quarter.
+    Args:
+        quarter (int): Quarter number (1-4)
+        year (int): Year
+    Returns:
+        tuple: (start_month, end_month)
+    """
+    start_month = ((quarter - 1) * 3) + 1
+    end_month = start_month + 2
+    return start_month, end_month
+def get_unique_payment_methods():
+    """Get unique payment methods from the database."""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT DISTINCT method
+            FROM payments
+            WHERE method IS NOT NULL AND method != ''
+            ORDER BY method
+        """)
+        methods = [row[0] for row in cursor.fetchall()]
+        # Add default options
+        default_methods = ["None Specified", "Check", "Wire", "ACH", "Other"]
+        for method in default_methods:
+            if method not in methods:
+                methods.append(method)
+        return sorted(methods)
+    finally:
+        conn.close()
+def format_payment_amount_on_change(field_name: str):
+    """Format payment amount fields on change."""
+    if field_name not in st.session_state:
+        return
+    value = st.session_state[field_name]
+    if not value:
+        return
+    # Remove any existing formatting
+    cleaned = ''.join(c for c in value if c.isdigit() or c == '.')
+    try:
+        # Convert to float and format
+        amount = float(cleaned)
+        st.session_state[field_name] = f"${amount:,.2f}"
+    except ValueError:
+        pass
+def display_contract_info(contract: tuple) -> bool:
+    """Display contract information at the top of the payment form.
+    Args:
+        contract: Tuple containing contract data
+    Returns:
+        bool: True if contract is valid and displayed, False otherwise
+    """
+    if not contract:
+        st.error("No active contract found for this client. Please add a contract first.")
+        return False
+    fee_type = contract[4].title() if contract[4] else "N/A"
+    rate = (
+        f"{contract[5]*100:.3f}%" if contract[4] == 'percentage' and contract[5]
+        else f"${contract[6]:,.2f}" if contract[4] == 'flat' and contract[6]
+        else "N/A"
+    )
+    schedule = contract[3].title() if contract[3] else "N/A"
+    provider = contract[1] or "N/A"
+    st.info(f"Provider: {provider} | Fee Type: {fee_type} | Rate: {rate} | Schedule: {schedule}")
+    st.caption("All payments are processed in arrears")
+    if not contract[3]:
+        st.warning("Please set the payment schedule in the contract before adding payments.")
+        return False
+    return True
+def get_client_payments(client_id: int, limit: int = None):
+    """Get payments for a client"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        query = """
+            SELECT
+                p.payment_id,
+                p.received_date,
+                p.total_assets,
+                p.expected_fee,
+                p.actual_fee,
+                p.applied_start_quarter,
+                p.applied_start_year,
+                p.applied_end_quarter,
+                p.applied_end_year,
+                p.notes,
+                c.provider_name,
+                c.payment_schedule
+            FROM payments p
+            JOIN contracts c ON p.contract_id = c.contract_id
+            WHERE p.client_id = ?
+            AND p.valid_to IS NULL
+            AND c.valid_to IS NULL
+            ORDER BY p.received_date DESC
+        """
+        if limit:
+            query += " LIMIT ?"
+            cursor.execute(query, (client_id, limit))
+        else:
+            cursor.execute(query, (client_id,))
+        return cursor.fetchall()
+    finally:
+        conn.close()
+def get_payment_details(payment_id: int):
+    """Get detailed payment information"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT
+                p.*,
+                c.provider_name,
+                c.payment_schedule,
+                c.fee_type,
+                c.percent_rate,
+                c.flat_rate
+            FROM payments p
+            JOIN contracts c ON p.contract_id = c.contract_id
+            WHERE p.payment_id = ?
+            AND p.valid_to IS NULL
+            AND c.valid_to IS NULL
+        """, (payment_id,))
+        return cursor.fetchone()
+    finally:
+        conn.close()
+------------------------------------------------------
+# pages\client_dashboard\client_dashboard.py
+"""
+Client Dashboard Module
+=====================
+This module serves as the main dashboard for the 401K Payment Tracker application.
+It integrates all client management components into a cohesive interface while
+maintaining the legacy layout and UX patterns but with modern state management.
+"""
+import streamlit as st
+from typing import Optional, Tuple
+import time
+from utils.utils import get_clients
+from .client_metrics import show_client_metrics
+from .client_contacts import display_contacts_section
+from .client_contracts import display_contracts_section
+from .client_payments import display_payments_section
+from utils.utils import get_client_details
+def init_dashboard_state():
+    if 'client_selector_dashboard' not in st.session_state:
+        st.session_state.client_selector_dashboard = None
+    if 'previous_client' not in st.session_state:
+        st.session_state.previous_client = None
+    if 'show_contract_form' not in st.session_state:
+        st.session_state.show_contract_form = False
+    if 'contract_form_data' not in st.session_state:
+        st.session_state.contract_form_data = {}
+    if 'contract_edit_id' not in st.session_state:
+        st.session_state.contract_edit_id = None
+    if 'contract_validation_errors' not in st.session_state:
+        st.session_state.contract_validation_errors = []
+    if 'show_contract_history' not in st.session_state:
+        st.session_state.show_contract_history = False
+    if 'sidebar_state' not in st.session_state:
+        st.session_state.sidebar_state = 'collapsed'
+    if 'split_mode' not in st.session_state:
+        st.session_state.split_mode = False
+def get_selected_client() -> Optional[Tuple]:
+    st.markdown("""
+        <style>
+        .client-select-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .client-select-container > div {
+            flex: 1;
+        }
+        .edit-contract-button {
+            margin-top: -1rem;
+        }
+        div[data-testid="stCheckbox"] {
+            margin-bottom: 0 !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    with st.container():
+        col1, col2, col3 = st.columns([6, 1, 1.5])
+        with col1:
+            clients = get_clients()
+            if not clients:
+                st.error("No clients found in the database")
+                return None
+            client_names = ["Select a client..."] + [client[1] for client in clients]
+            selected_name = st.selectbox(
+                "🔍 Search or select a client",
+                options=client_names,
+                key='client_selector_dashboard',
+                label_visibility="collapsed"
+            )
+        with col2:
+            if selected_name != "Select a client...":
+                if st.button("✏️", key="edit_contract", help="Manage Contract", use_container_width=True):
+                    client_id = next(
+                        client[0] for client in clients if client[1] == selected_name
+                    )
+                    st.session_state.show_contract_form = True
+                    st.session_state.contract_client_id = client_id
+                    st.rerun()
+        with col3:
+            st.checkbox(
+                "📄 Viewer",
+                value=st.session_state.split_mode,
+                on_change=lambda: st.session_state.update({"split_mode": not st.session_state.split_mode}),
+                help="Enable Document Viewer"
+            )
+    if selected_name == "Select a client...":
+        return None
+    if st.session_state.previous_client != selected_name:
+        st.session_state.previous_client = selected_name
+    return next((client for client in clients if client[1] == selected_name), None)
+def display_client_dashboard():
+    start_time = time.time()
+    init_dashboard_state()
+    st.markdown("""
+        <style>
+        .stApp {
+            transition: margin-right 0.3s ease-in-out;
+            margin-right: 0 !important;
+        }
+        .document-viewer {
+            transition: all 0.3s ease-in-out;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 0;
+            height: 100vh;
+            background: #f0f2f6;
+            border-left: 1px solid #ddd;
+            padding: 0;
+            box-sizing: border-box;
+            z-index: 1000;
+            overflow: hidden;
+            opacity: 0;
+        }
+        .document-viewer.active {
+            width: 40%;
+            padding: 1rem;
+            opacity: 1;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    # Document viewer overlay
+    st.markdown(
+        f"""
+        <div class="document-viewer{' active' if st.session_state.split_mode else ''}">
+            <div style="display: flex; height: 100%; align-items: center; justify-content: center; color: #666;">
+                <div style="text-align: center;">
+                    <h3>Document Viewer</h3>
+                    <p>Coming soon...</p>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    if st.session_state.split_mode:
+        st.markdown("""
+            <style>
+            .stApp {
+                margin-right: 40% !important;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+    selected_client = get_selected_client()
+    if not selected_client:
+        st.info("Please select a client to view their dashboard")
+        return
+    client_id = selected_client[0]
+    if st.session_state.show_contract_form:
+        display_contracts_section(client_id)
+    show_client_metrics(client_id)
+    st.markdown("<div style='margin: 1rem 0;'></div>", unsafe_allow_html=True)
+    display_contacts_section(client_id)
+    st.markdown("<div style='margin: 1rem 0;'></div>", unsafe_allow_html=True)
+    display_payments_section(client_id)
+def show_client_dashboard():
+    display_client_dashboard()
+if **name** == "__main__":
+    st.set_page_config(
+        page_title="Client Dashboard",
+        page_icon="👥",
+        layout="wide"
+    )
+    display_client_dashboard()
+---------------------------------
+client_data.py
+```py
+# utils/client_data.py
+"""
+Performance optimization module for client data.
+This module provides consolidated database queries to replace multiple separate calls.
+The original functions in utils.py remain unchanged for safety and backward compatibility.
+"""
+import streamlit as st
+from .database import get_database_connection
+from typing import Dict, Any
+def get_consolidated_client_data(client_id: int) -> Dict[str, Any]:
+    """Get consolidated client data using summary tables."""
+    from .utils import ensure_summaries_initialized
+    ensure_summaries_initialized()  # Ensure summaries are ready
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            WITH LatestSummaries AS (
+                SELECT
+                    qs.client_id,
+                    qs.total_payments as quarterly_total,
+                    qs.total_assets as latest_assets,
+                    qs.payment_count,
+                    qs.year,
+                    qs.quarter,
+                    cm.last_payment_date,
+                    cm.last_payment_amount,
+                    ys.yoy_growth
+                FROM quarterly_summaries qs
+                LEFT JOIN client_metrics cm ON qs.client_id = cm.client_id
+                LEFT JOIN yearly_summaries ys ON
+                    qs.client_id = ys.client_id AND
+                    qs.year = ys.year
+                WHERE qs.client_id = ?
+                ORDER BY qs.year DESC, qs.quarter DESC
+                LIMIT 1
+            )
+            SELECT
+                c.display_name,
+                c.full_name,
+                -- Active Contract
+                ac.contract_id,
+                ac.provider_name,
+                ac.contract_number,
+                ac.payment_schedule,
+                ac.fee_type,
+                ac.percent_rate,
+                ac.flat_rate,
+                ac.num_people,
+                -- Latest Payment Metrics
+                ls.quarterly_total,
+                ls.last_payment_date,
+                ls.latest_assets,
+                ls.quarter,
+                ls.year,
+                ls.yoy_growth,
+                -- Contacts
+                co.contact_type,
+                co.contact_name,
+                co.phone,
+                co.email,
+                co.fax,
+                co.physical_address,
+                co.mailing_address,
+                co.contact_id
+            FROM clients c
+            LEFT JOIN (
+                SELECT * FROM contracts
+                WHERE active = 'TRUE'
+                AND valid_to IS NULL  -- Add temporal condition for contracts
+            ) ac ON c.client_id = ac.client_id
+            LEFT JOIN LatestSummaries ls ON c.client_id = ls.client_id
+            LEFT JOIN contacts co ON c.client_id = co.client_id
+            WHERE c.client_id = ?
+            AND c.valid_to IS NULL  -- Add temporal condition for clients
+            AND (co.valid_to IS NULL OR co.valid_to IS NULL)  -- Add temporal condition for contacts
+        """, (client_id, client_id))
+        rows = cursor.fetchall()
+        if not rows:
+            return {}
+        # First row has all the non-contact data
+        first_row = rows[0]
+        # Build contacts list
+        contacts = []
+        for row in rows:
+            if row[16]:  # if contact_type exists
+                contacts.append({
+                    'contact_type': row[16],
+                    'contact_name': row[17],
+                    'phone': row[18],
+                    'email': row[19],
+                    'fax': row[20],
+                    'physical_address': row[21],
+                    'mailing_address': row[22],
+                    'contact_id': row[23]
+                })
+        # Structure the data
+        consolidated_data = {
+            'client': {
+                'display_name': first_row[0],
+                'full_name': first_row[1],
+                'has_contract': first_row[2] is not None,
+                'has_payments': first_row[10] is not None,
+                'contact_count': len(contacts)
+            },
+            'active_contract': {
+                'contract_id': first_row[2],
+                'provider_name': first_row[3],
+                'contract_number': first_row[4],
+                'payment_schedule': first_row[5],
+                'fee_type': first_row[6],
+                'percent_rate': first_row[7],
+                'flat_rate': first_row[8],
+                'num_people': first_row[9]
+            } if first_row[2] else None,
+            'latest_payment': {
+                'actual_fee': first_row[10],  # quarterly_total
+                'received_date': first_row[11],  # last_payment_date
+                'total_assets': first_row[12],  # latest_assets
+                'quarter': first_row[13],
+                'year': first_row[14],
+                'yoy_growth': first_row[15]  # Added YoY growth
+            } if first_row[10] else None,
+            'contacts': contacts
+        }
+        return consolidated_data
+    finally:
+        conn.close()
+# Wrapper functions that match the original API but use consolidated query
+def get_client_details_optimized(client_id):
+    """Get client details using consolidated query"""
+    data = get_consolidated_client_data(client_id)
+    if not data:
+        return None
+    return (data['client']['display_name'], data['client']['full_name'])
+def get_active_contract_optimized(client_id):
+    """Get active contract using consolidated query"""
+    data = get_consolidated_client_data(client_id)
+    if not data or not data['active_contract']:
+        return None
+    contract = data['active_contract']
+    return (
+        contract['contract_id'],
+        contract['provider_name'],
+        contract['contract_number'],
+        contract['payment_schedule'],
+        contract['fee_type'],
+        contract['percent_rate'],
+        contract['flat_rate'],
+        contract['num_people']
+    )
+def get_latest_payment_optimized(client_id):
+    """Get latest payment using consolidated query"""
+    data = get_consolidated_client_data(client_id)
+    if not data or not data['latest_payment']:
+        return None
+    payment = data['latest_payment']
+    return (
+        payment['actual_fee'],
+        payment['received_date'],
+        payment['total_assets'],
+        payment['quarter'],
+        payment['year']
+    )
+def get_contacts_optimized(client_id):
+    """Get contacts using consolidated query"""
+    data = get_consolidated_client_data(client_id)
+    if not data:
+        return []
+    return [
+        (
+            contact['contact_type'],
+            contact['contact_name'],
+            contact['phone'],
+            contact['email'],
+            contact['fax'],
+            contact['physical_address'],
+            contact['mailing_address'],
+            contact['contact_id']
+        )
+        for contact in data['contacts']
+        if contact['contact_type']  # Filter out null entries
+    ]
+```
+database.py
+```py
+import sqlite3
+import os
+import logging
+logger = logging.getLogger(__name__)
+def get_database_connection():
+    """Create and return a database connection to the local database."""
+    try:
+        # Use a simple relative path from the project root
+        database_path = 'DATABASE/401kDATABASE.db'
+        if not os.path.exists(database_path):
+            raise FileNotFoundError(
+                "Database file not found. Please ensure:\n"
+                "1. The DATABASE folder exists in the project root\n"
+                f"2. The database file exists at: {database_path}"
+            )
+        return sqlite3.connect(database_path)
+    except Exception as e:
+        logger.error(f"Error connecting to database: {str(e)}")
+        raise
+```
+summaries.py
+```py
+"""
+Summaries Module
+===============
+This module handles the maintenance and updates of summary tables that optimize
+query performance for the 401K Payment Tracker application.
+Key Components:
+- Quarterly summary management
+- Yearly summary calculations
+- Client metrics updates
+- Bulk data population
+- Cache invalidation
+"""
+import sqlite3
+from typing import Dict, Any, List, Optional, Tuple
+from datetime import datetime
+from .database import get_database_connection
+def update_all_summaries(client_id: int, year: int, quarter: int) -> bool:
+    """
+    Update all summaries (quarterly, yearly, and client metrics) in a single transaction.
+    This is the preferred way to update summaries as it maintains data consistency
+    and avoids database locks.
+    """
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        # Start transaction
+        cursor.execute("BEGIN TRANSACTION")
+        # Update quarterly first as yearly depends on it
+        success = _update_quarterly_summary(cursor, client_id, year, quarter)
+        if not success:
+            raise Exception("Failed to update quarterly summary")
+        # Update yearly next as it depends on quarterly
+        success = _update_yearly_summary(cursor, client_id, year)
+        if not success:
+            raise Exception("Failed to update yearly summary")
+        # Finally update client metrics
+        success = _update_client_metrics(cursor, client_id)
+        if not success:
+            raise Exception("Failed to update client metrics")
+        # If we got here, all updates succeeded
+        conn.commit()
+        return True
+    except Exception as e:
+        # If anything fails, roll back all changes
+        conn.rollback()
+        print(f"Error updating summaries: {str(e)}")
+        return False
+    finally:
+        conn.close()
+def _update_quarterly_summary(cursor: sqlite3.Cursor, client_id: int, year: int, quarter: int) -> bool:
+    """Internal function to update quarterly summary using existing cursor."""
+    try:
+        # Get payment data for the quarter
+        cursor.execute("""
+            SELECT
+                SUM(actual_fee) as total_payments,
+                AVG(total_assets) as avg_assets,
+                COUNT(*) as payment_count,
+                MAX(expected_fee) as expected_total
+            FROM payments
+            WHERE client_id = ?
+            AND applied_start_year = ?
+            AND applied_start_quarter = ?
+        """, (client_id, year, quarter))
+        payment_data = cursor.fetchone()
+        if not payment_data or payment_data[0] is None:
+            # No payments for this quarter, delete any existing summary
+            cursor.execute("""
+                DELETE FROM quarterly_summaries
+                WHERE client_id = ? AND year = ? AND quarter = ?
+            """, (client_id, year, quarter))
+        else:
+            # Calculate average payment
+            avg_payment = payment_data[0] / payment_data[2] if payment_data[2] > 0 else 0
+            # Upsert the quarterly summary
+            cursor.execute("""
+                INSERT INTO quarterly_summaries (
+                    client_id, year, quarter, total_payments,
+                    total_assets, payment_count, avg_payment,
+                    expected_total, last_updated
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                ON CONFLICT(client_id, year, quarter)
+                DO UPDATE SET
+                    total_payments = excluded.total_payments,
+                    total_assets = excluded.total_assets,
+                    payment_count = excluded.payment_count,
+                    avg_payment = excluded.avg_payment,
+                    expected_total = excluded.expected_total,
+                    last_updated = excluded.last_updated
+            """, (
+                client_id, year, quarter,
+                payment_data[0],  # total_payments
+                payment_data[1],  # avg_assets
+                payment_data[2],  # payment_count
+                avg_payment,      # avg_payment
+                payment_data[3]   # expected_total
+            ))
+        return True
+    except Exception as e:
+        print(f"Error in _update_quarterly_summary: {str(e)}")
+        return False
+def _update_yearly_summary(cursor: sqlite3.Cursor, client_id: int, year: int) -> bool:
+    """Internal function to update yearly summary using existing cursor."""
+    try:
+        # Get quarterly data for the year
+        cursor.execute("""
+            SELECT
+                SUM(total_payments) as yearly_total,
+                AVG(total_assets) as avg_assets,
+                SUM(payment_count) as total_payments
+            FROM quarterly_summaries
+            WHERE client_id = ? AND year = ?
+        """, (client_id, year))
+        current_year_data = cursor.fetchone()
+        if not current_year_data or current_year_data[0] is None:
+            # No data for this year, delete any existing summary
+            cursor.execute("""
+                DELETE FROM yearly_summaries
+                WHERE client_id = ? AND year = ?
+            """, (client_id, year))
+            return True
+        # Get previous year's total for YoY calculation
+        cursor.execute("""
+            SELECT total_payments
+            FROM yearly_summaries
+            WHERE client_id = ? AND year = ?
+        """, (client_id, year - 1))
+        prev_year_total = cursor.fetchone()
+        prev_total = prev_year_total[0] if prev_year_total else None
+        # Calculate YoY growth
+        yoy_growth = None
+        if prev_total and prev_total > 0:
+            yoy_growth = ((current_year_data[0] - prev_total) / prev_total) * 100
+        # Calculate average payment
+        avg_payment = current_year_data[0] / current_year_data[2] if current_year_data[2] > 0 else 0
+        # Upsert the yearly summary
+        cursor.execute("""
+            INSERT INTO yearly_summaries (
+                client_id, year, total_payments, total_assets,
+                payment_count, avg_payment, yoy_growth, last_updated
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+            ON CONFLICT(client_id, year)
+            DO UPDATE SET
+                total_payments = excluded.total_payments,
+                total_assets = excluded.total_assets,
+                payment_count = excluded.payment_count,
+                avg_payment = excluded.avg_payment,
+                yoy_growth = excluded.yoy_growth,
+                last_updated = excluded.last_updated
+        """, (
+            client_id, year,
+            current_year_data[0],  # total_payments
+            current_year_data[1],  # avg_assets
+            current_year_data[2],  # payment_count
+            avg_payment,           # avg_payment
+            yoy_growth            # yoy_growth
+        ))
+        return True
+    except Exception as e:
+        print(f"Error in _update_yearly_summary: {str(e)}")
+        return False
+def _update_client_metrics(cursor: sqlite3.Cursor, client_id: int) -> bool:
+    """Internal function to update client metrics using existing cursor."""
+    try:
+        # Get latest payment info
+        cursor.execute("""
+            SELECT
+                received_date,
+                actual_fee,
+                applied_start_quarter,
+                applied_start_year,
+                total_assets
+            FROM payments
+            WHERE client_id = ?
+            ORDER BY received_date DESC, payment_id DESC
+            LIMIT 1
+        """, (client_id,))
+        latest_payment = cursor.fetchone()
+        if not latest_payment:
+            # No payments for this client, delete any existing metrics
+            cursor.execute("""
+                DELETE FROM client_metrics
+                WHERE client_id = ?
+            """, (client_id,))
+            return True
+        # Get YTD payments
+        current_year = datetime.now().year
+        cursor.execute("""
+            SELECT COALESCE(SUM(actual_fee), 0)
+            FROM payments
+            WHERE client_id = ?
+            AND applied_start_year = ?
+        """, (client_id, current_year))
+        ytd_payments = cursor.fetchone()[0]
+        # Calculate average quarterly payment
+        cursor.execute("""
+            SELECT AVG(total_payments)
+            FROM quarterly_summaries
+            WHERE client_id = ?
+            AND total_payments > 0
+            ORDER BY year DESC, quarter DESC
+            LIMIT 4
+        """, (client_id,))
+        avg_quarterly = cursor.fetchone()[0] or 0
+        # Upsert the client metrics
+        cursor.execute("""
+            INSERT INTO client_metrics (
+                client_id, last_payment_date, last_payment_amount,
+                last_payment_quarter, last_payment_year,
+                total_ytd_payments, avg_quarterly_payment,
+                last_recorded_assets, last_updated
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+            ON CONFLICT(client_id)
+            DO UPDATE SET
+                last_payment_date = excluded.last_payment_date,
+                last_payment_amount = excluded.last_payment_amount,
+                last_payment_quarter = excluded.last_payment_quarter,
+                last_payment_year = excluded.last_payment_year,
+                total_ytd_payments = excluded.total_ytd_payments,
+                avg_quarterly_payment = excluded.avg_quarterly_payment,
+                last_recorded_assets = excluded.last_recorded_assets,
+                last_updated = excluded.last_updated
+        """, (
+            client_id,
+            latest_payment[0],    # last_payment_date
+            latest_payment[1],    # last_payment_amount
+            latest_payment[2],    # last_payment_quarter
+            latest_payment[3],    # last_payment_year
+            ytd_payments,         # total_ytd_payments
+            avg_quarterly,        # avg_quarterly_payment
+            latest_payment[4]     # last_recorded_assets
+        ))
+        return True
+    except Exception as e:
+        print(f"Error in _update_client_metrics: {str(e)}")
+        return False
+# Legacy functions for backward compatibility
+def update_quarterly_summary(client_id: int, year: int, quarter: int) -> bool:
+    """Legacy function - prefer using update_all_summaries instead."""
+    return update_all_summaries(client_id, year, quarter)
+def update_yearly_summary(client_id: int, year: int) -> bool:
+    """Legacy function - prefer using update_all_summaries instead."""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        success = _update_yearly_summary(cursor, client_id, year)
+        if success:
+            conn.commit()
+        return success
+    except Exception as e:
+        print(f"Error updating yearly summary: {str(e)}")
+        return False
+    finally:
+        conn.close()
+def update_client_metrics(client_id: int) -> bool:
+    """Legacy function - prefer using update_all_summaries instead."""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        success = _update_client_metrics(cursor, client_id)
+        if success:
+            conn.commit()
+        return success
+    except Exception as e:
+        print(f"Error updating client metrics: {str(e)}")
+        return False
+    finally:
+        conn.close()
+def populate_all_summaries() -> bool:
+    """Populate all summary tables from scratch."""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        # Get all client IDs
+        cursor.execute("SELECT DISTINCT client_id FROM clients")
+        client_ids = [row[0] for row in cursor.fetchall()]
+        # Get all year/quarter combinations
+        cursor.execute("""
+            SELECT DISTINCT
+                client_id,
+                applied_start_year as year,
+                applied_start_quarter as quarter
+            FROM payments
+            ORDER BY year, quarter
+        """)
+        periods = cursor.fetchall()
+        # Clear existing summaries
+        cursor.execute("DELETE FROM quarterly_summaries")
+        cursor.execute("DELETE FROM yearly_summaries")
+        cursor.execute("DELETE FROM client_metrics")
+        # Process each period
+        for client_id, year, quarter in periods:
+            update_quarterly_summary(client_id, year, quarter)
+        # Process each year
+        years = set((client_id, year) for client_id, year, _ in periods)
+        for client_id, year in years:
+            update_yearly_summary(client_id, year)
+        # Update current metrics for each client
+        for client_id in client_ids:
+            update_client_metrics(client_id)
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error populating summaries: {str(e)}")
+        return False
+    finally:
+        conn.close()
+def get_latest_summaries(client_id: int) -> Dict[str, Any]:
+    """Get latest summary data for a client."""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        # Get current quarter metrics
+        current_year = datetime.now().year
+        current_quarter = (datetime.now().month - 1)
+        cursor.execute("""
+            SELECT
+                qs.total_payments,
+                qs.total_assets,
+                qs.payment_count,
+                qs.avg_payment,
+                qs.expected_total,
+                cm.last_payment_date,
+                cm.last_payment_amount,
+                cm.total_ytd_payments,
+                cm.avg_quarterly_payment,
+                ys.yoy_growth
+            FROM quarterly_summaries qs
+            LEFT JOIN client_metrics cm ON qs.client_id = cm.client_id
+            LEFT JOIN yearly_summaries ys ON
+                qs.client_id = ys.client_id AND
+                qs.year = ys.year
+            WHERE qs.client_id = ?
+            AND qs.year = ?
+            AND qs.quarter = ?
+        """, (client_id, current_year, current_quarter))
+        result = cursor.fetchone()
+        if not result:
+            return {
+                'current_quarter': {
+                    'total_payments': 0,
+                    'total_assets': 0,
+                    'payment_count': 0,
+                    'avg_payment': 0,
+                    'expected_total': 0
+                },
+                'metrics': {
+                    'last_payment_date': None,
+                    'last_payment_amount': 0,
+                    'total_ytd_payments': 0,
+                    'avg_quarterly_payment': 0,
+                    'yoy_growth': None
+                }
+            }
+        return {
+            'current_quarter': {
+                'total_payments': result[0],
+                'total_assets': result[1],
+                'payment_count': result[2],
+                'avg_payment': result[3],
+                'expected_total': result[4]
+            },
+            'metrics': {
+                'last_payment_date': result[5],
+                'last_payment_amount': result[6],
+                'total_ytd_payments': result[7],
+                'avg_quarterly_payment': result[8],
+                'yoy_growth': result[9]
+            }
+        }
+    finally:
+        conn.close()
+```
+triggers.py
+```py
+#utils/triggers.py
+"""
+Triggers Module
+=============
+This module manages SQLite triggers that maintain summary table consistency.
+It provides functions to create and manage triggers that automatically update
+summary tables when payments are added, modified, or deleted.
+Key Components:
+- Trigger creation/management for quarterly summaries
+- Trigger creation/management for yearly summaries  
+- Trigger creation/management for client metrics
+- Helper functions for trigger maintenance
+"""
+from typing import List
+from .utils import get_database_connection
+def create_summary_triggers() -> bool:
+    """Create all necessary triggers for maintaining summary tables."""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        # First drop existing triggers
+        drop_all_triggers()
+        # Create triggers for payment changes
+        triggers = [
+            # After INSERT trigger for quarterly summaries
+            """
+            CREATE TRIGGER IF NOT EXISTS update_quarterly_after_insert
+            AFTER INSERT ON payments
+            BEGIN
+                INSERT INTO quarterly_summaries (
+                    client_id, year, quarter, total_payments,
+                    total_assets, payment_count, avg_payment,
+                    expected_total, last_updated
+                )
+                SELECT
+                    NEW.client_id,
+                    NEW.applied_start_year,
+                    NEW.applied_start_quarter,
+                    COALESCE(SUM(actual_fee), 0),
+                    AVG(total_assets),
+                    COUNT(*),
+                    CASE
+                        WHEN COUNT(*) > 0 THEN COALESCE(SUM(actual_fee), 0) / COUNT(*)
+                        ELSE 0
+                    END,
+                    MAX(expected_fee),
+                    datetime('now')
+                FROM payments
+                WHERE client_id = NEW.client_id
+                AND applied_start_year = NEW.applied_start_year
+                AND applied_start_quarter = NEW.applied_start_quarter
+                ON CONFLICT(client_id, year, quarter) DO UPDATE SET
+                    total_payments = excluded.total_payments,
+                    total_assets = excluded.total_assets,
+                    payment_count = excluded.payment_count,
+                    avg_payment = excluded.avg_payment,
+                    expected_total = excluded.expected_total,
+                    last_updated = excluded.last_updated;
+            END;
+            """,
+            # After UPDATE trigger for quarterly summaries
+            """
+            CREATE TRIGGER IF NOT EXISTS update_quarterly_after_update
+            AFTER UPDATE ON payments
+            BEGIN
+                -- Update old quarter summary
+                INSERT INTO quarterly_summaries (
+                    client_id, year, quarter, total_payments,
+                    total_assets, payment_count, avg_payment,
+                    expected_total, last_updated
+                )
+                SELECT
+                    OLD.client_id,
+                    OLD.applied_start_year,
+                    OLD.applied_start_quarter,
+                    COALESCE(SUM(actual_fee), 0),
+                    AVG(total_assets),
+                    COUNT(*),
+                    CASE
+                        WHEN COUNT(*) > 0 THEN COALESCE(SUM(actual_fee), 0) / COUNT(*)
+                        ELSE 0
+                    END,
+                    MAX(expected_fee),
+                    datetime('now')
+                FROM payments
+                WHERE client_id = OLD.client_id
+                AND applied_start_year = OLD.applied_start_year
+                AND applied_start_quarter = OLD.applied_start_quarter
+                ON CONFLICT(client_id, year, quarter) DO UPDATE SET
+                    total_payments = excluded.total_payments,
+                    total_assets = excluded.total_assets,
+                    payment_count = excluded.payment_count,
+                    avg_payment = excluded.avg_payment,
+                    expected_total = excluded.expected_total,
+                    last_updated = excluded.last_updated;
+                -- Update new quarter summary
+                INSERT INTO quarterly_summaries (
+                    client_id, year, quarter, total_payments,
+                    total_assets, payment_count, avg_payment,
+                    expected_total, last_updated
+                )
+                SELECT
+                    NEW.client_id,
+                    NEW.applied_start_year,
+                    NEW.applied_start_quarter,
+                    COALESCE(SUM(actual_fee), 0),
+                    AVG(total_assets),
+                    COUNT(*),
+                    CASE
+                        WHEN COUNT(*) > 0 THEN COALESCE(SUM(actual_fee), 0) / COUNT(*)
+                        ELSE 0
+                    END,
+                    MAX(expected_fee),
+                    datetime('now')
+                FROM payments
+                WHERE client_id = NEW.client_id
+                AND applied_start_year = NEW.applied_start_year
+                AND applied_start_quarter = NEW.applied_start_quarter
+                ON CONFLICT(client_id, year, quarter) DO UPDATE SET
+                    total_payments = excluded.total_payments,
+                    total_assets = excluded.total_assets,
+                    payment_count = excluded.payment_count,
+                    avg_payment = excluded.avg_payment,
+                    expected_total = excluded.expected_total,
+                    last_updated = excluded.last_updated;
+            END;
+            """,
+            # After DELETE trigger for quarterly summaries
+            """
+            CREATE TRIGGER IF NOT EXISTS update_quarterly_after_delete
+            AFTER DELETE ON payments
+            BEGIN
+                INSERT INTO quarterly_summaries (
+                    client_id, year, quarter, total_payments,
+                    total_assets, payment_count, avg_payment,
+                    expected_total, last_updated
+                )
+                SELECT
+                    OLD.client_id,
+                    OLD.applied_start_year,
+                    OLD.applied_start_quarter,
+                    COALESCE(SUM(actual_fee), 0),
+                    AVG(total_assets),
+                    COUNT(*),
+                    CASE
+                        WHEN COUNT(*) > 0 THEN COALESCE(SUM(actual_fee), 0) / COUNT(*)
+                        ELSE 0
+                    END,
+                    MAX(expected_fee),
+                    datetime('now')
+                FROM payments
+                WHERE client_id = OLD.client_id
+                AND applied_start_year = OLD.applied_start_year
+                AND applied_start_quarter = OLD.applied_start_quarter
+                ON CONFLICT(client_id, year, quarter) DO UPDATE SET
+                    total_payments = excluded.total_payments,
+                    total_assets = excluded.total_assets,
+                    payment_count = excluded.payment_count,
+                    avg_payment = excluded.avg_payment,
+                    expected_total = excluded.expected_total,
+                    last_updated = excluded.last_updated;
+                -- Remove empty summaries
+                DELETE FROM quarterly_summaries
+                WHERE payment_count = 0;
+            END;
+            """,
+            # After quarterly summary changes, update yearly summary
+            """
+            CREATE TRIGGER IF NOT EXISTS update_yearly_after_quarterly_change
+            AFTER INSERT ON quarterly_summaries
+            BEGIN
+                INSERT INTO yearly_summaries (
+                    client_id, year, total_payments, total_assets,
+                    payment_count, avg_payment, yoy_growth, last_updated
+                )
+                SELECT
+                    NEW.client_id,
+                    NEW.year,
+                    COALESCE(SUM(total_payments), 0),
+                    AVG(total_assets),
+                    SUM(payment_count),
+                    CASE
+                        WHEN SUM(payment_count) > 0
+                        THEN COALESCE(SUM(total_payments), 0) / SUM(payment_count)
+                        ELSE 0
+                    END,
+                    CASE
+                        WHEN (SELECT total_payments FROM yearly_summaries
+                              WHERE client_id = NEW.client_id
+                              AND year = NEW.year - 1) > 0
+                        THEN ((COALESCE(SUM(total_payments), 0) -
+                              (SELECT total_payments FROM yearly_summaries
+                               WHERE client_id = NEW.client_id
+                               AND year = NEW.year - 1)) /
+                              (SELECT total_payments FROM yearly_summaries
+                               WHERE client_id = NEW.client_id
+                               AND year = NEW.year - 1)) * 100
+                        ELSE NULL
+                    END,
+                    datetime('now')
+                FROM quarterly_summaries
+                WHERE client_id = NEW.client_id AND year = NEW.year
+                GROUP BY client_id, year
+                ON CONFLICT(client_id, year) DO UPDATE SET
+                    total_payments = excluded.total_payments,
+                    total_assets = excluded.total_assets,
+                    payment_count = excluded.payment_count,
+                    avg_payment = excluded.avg_payment,
+                    yoy_growth = excluded.yoy_growth,
+                    last_updated = excluded.last_updated;
+            END;
+            """,
+            # After any payment change, update client metrics
+            """
+            CREATE TRIGGER IF NOT EXISTS update_client_metrics_after_payment_change
+            AFTER INSERT ON payments
+            BEGIN
+                INSERT INTO client_metrics (
+                    client_id, last_payment_date, last_payment_amount,
+                    last_payment_quarter, last_payment_year,
+                    total_ytd_payments, avg_quarterly_payment,
+                    last_recorded_assets, last_updated
+                )
+                SELECT
+                    p.client_id,
+                    p.received_date,
+                    p.actual_fee,
+                    p.applied_start_quarter,
+                    p.applied_start_year,
+                    (SELECT COALESCE(SUM(actual_fee), 0)
+                     FROM payments
+                     WHERE client_id = p.client_id
+                     AND applied_start_year = strftime('%Y', 'now')),
+                    (SELECT AVG(total_payments)
+                     FROM quarterly_summaries
+                     WHERE client_id = p.client_id
+                     AND total_payments > 0
+                     ORDER BY year DESC, quarter DESC
+                     LIMIT 4),
+                    p.total_assets,
+                    datetime('now')
+                FROM payments p
+                WHERE p.payment_id = NEW.payment_id
+                ON CONFLICT(client_id) DO UPDATE SET
+                    last_payment_date = excluded.last_payment_date,
+                    last_payment_amount = excluded.last_payment_amount,
+                    last_payment_quarter = excluded.last_payment_quarter,
+                    last_payment_year = excluded.last_payment_year,
+                    total_ytd_payments = excluded.total_ytd_payments,
+                    avg_quarterly_payment = excluded.avg_quarterly_payment,
+                    last_recorded_assets = excluded.last_recorded_assets,
+                    last_updated = excluded.last_updated;
+            END;
+            """
+        ]
+        # Create each trigger
+        for trigger in triggers:
+            cursor.execute(trigger)
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error creating triggers: {str(e)}")
+        return False
+    finally:
+        conn.close()
+def drop_all_triggers() -> bool:
+    """Drop all existing summary table triggers."""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        # Get list of all triggers
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='trigger';")
+        triggers = cursor.fetchall()
+        # Drop each trigger
+        for trigger in triggers:
+            cursor.execute(f"DROP TRIGGER IF EXISTS {trigger[0]};")
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error dropping triggers: {str(e)}")
+        return False
+    finally:
+        conn.close()
+def check_triggers_exist() -> List[str]:
+    """Check which summary triggers exist.
+    Returns:
+        List of existing trigger names
+    """
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        # Get all triggers that are part of our summary system
+        cursor.execute("""
+            SELECT name
+            FROM sqlite_master
+            WHERE type='trigger'
+            AND name LIKE 'update_%';
+        """)
+        return [row[0] for row in cursor.fetchall()]
+    finally:
+        conn.close()
+def verify_trigger_functionality() -> bool:
+    """Verify that all summary triggers are functioning correctly."""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        # Insert test payment
+        cursor.execute("""
+            INSERT INTO payments (
+                client_id, contract_id, received_date,
+                applied_start_quarter, applied_start_year,
+                applied_end_quarter, applied_end_year,
+                total_assets, actual_fee, method
+            ) VALUES (
+                1, 1, date('now'),
+                1, strftime('%Y', 'now'),
+                1, strftime('%Y', 'now'),
+                100000, 1000, 'TEST'
+            );
+        """)
+        # Verify quarterly summary was created
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM quarterly_summaries
+            WHERE client_id = 1
+            AND year = strftime('%Y', 'now')
+            AND quarter = 1;
+        """)
+        quarterly_exists = cursor.fetchone()[0] > 0
+        # Verify yearly summary was updated
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM yearly_summaries
+            WHERE client_id = 1
+            AND year = strftime('%Y', 'now');
+        """)
+        yearly_exists = cursor.fetchone()[0] > 0
+        # Verify client metrics were updated
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM client_metrics
+            WHERE client_id = 1;
+        """)
+        metrics_exist = cursor.fetchone()[0] > 0
+        # Cleanup test data
+        cursor.execute("DELETE FROM payments WHERE method = 'TEST';")
+        conn.commit()
+        return quarterly_exists and yearly_exists and metrics_exist
+    except Exception as e:
+        print(f"Error verifying triggers: {str(e)}")
+        return False
+    finally:
+        conn.close()
+def initialize_triggers() -> bool:
+    """Initialize or reinitialize all summary triggers."""
+    try:
+        # Drop existing triggers
+        if not drop_all_triggers():
+            return False
+        # Create new triggers
+        if not create_summary_triggers():
+            return False
+        # Verify functionality
+        if not verify_trigger_functionality():
+            return False
+        return True
+    except Exception as e:
+        print(f"Error initializing triggers: {str(e)}")
+        return False
+```
+utils.py
+```py
+# utils/utils.py
+import sqlite3
+import streamlit as st
+from datetime import datetime
+from typing import Dict, Any, Optional, Tuple
+import os
+import logging
+from pathlib import Path
+import platform
+from .summaries import (
+    update_quarterly_summary,
+    update_yearly_summary,
+    update_client_metrics
+)
+from .database import get_database_connection
+"""
+File Path Handling System Documentation
+=====================================
+Overview
+--------
+This system enables universal file access across different user machines by storing
+relative paths in the database and dynamically reconstructing full paths for each user.
+Key Components
+-------------
+1. Path Storage:
+   - Paths are stored relative to 'Hohimer Wealth Management' folder
+   - Example stored path: 'Hohimer Wealth Management/Client Files/ABC Corp/Documents'
+2. Path Reconstruction:
+   - Each user's OneDrive root is detected automatically
+   - Relative paths are combined with the user's root to create valid local paths
+   - Example: 'C:/Users/UserA/OneDrive - Hohimer Wealth Management/Client Files/ABC Corp/Documents'
+How It Works
+-----------
+1. When a user inputs a path:
+   - Input: 'C:/Users/UserA/OneDrive - Hohimer Wealth Management/Client Files/ABC Corp'
+   - normalize_shared_path() extracts: 'Hohimer Wealth Management/Client Files/ABC Corp'
+   - This relative path is stored in the database
+2. When accessing files:
+   - get_onedrive_root() finds the user's OneDrive location
+   - reconstruct_full_path() combines the root with the stored relative path
+   - Result is a valid path for the current user's system
+Example Usage
+------------
+# Storing a path:
+full_path = "C:/Users/UserA/OneDrive - Hohimer Wealth Management/Client Files/ABC Corp"
+relative_path = normalize_shared_path(full_path)
+# Stores: "Hohimer Wealth Management/Client Files/ABC Corp"
+# Accessing files (on different machine):
+relative_path = get_client_file_paths(client_id)['account_documentation']
+local_path = reconstruct_full_path(relative_path)
+# Returns: "C:/Users/UserB/OneDrive - Hohimer Wealth Management/Client Files/ABC Corp"
+For File Preview Implementation
+-----------------------------
+1. Get the stored path:
+   relative_path = get_client_file_paths(client_id)['account_documentation']
+2. Reconstruct for current user:
+   local_path = reconstruct_full_path(relative_path)
+3. Use local_path with file preview component:
+   if local_path:
+       # Show file preview using local_path
+   else:
+       # Handle invalid/inaccessible path
+Notes
+-----
+- All paths are normalized to use forward slashes
+- Validation ensures paths exist and are within the shared system
+- Error handling is in place for missing/invalid paths
+"""
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+def get_database_connection():
+    """Create and return a database connection to the local database."""
+    try:
+        # Use a simple relative path from the project root
+        database_path = 'DATABASE/401kDATABASE.db'
+        if not os.path.exists(database_path):
+            raise FileNotFoundError(
+                "Database file not found. Please ensure:\n"
+                "1. The DATABASE folder exists in the project root\n"
+                f"2. The database file exists at: {database_path}"
+            )
+        return sqlite3.connect(database_path)
+    except Exception as e:
+        logger.error(f"Error connecting to database: {str(e)}")
+        raise
+def get_clients():
+    """Get all clients from the database"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT client_id, display_name
+            FROM clients
+            WHERE valid_to IS NULL
+            ORDER BY display_name
+        """)
+        return cursor.fetchall()
+    finally:
+        conn.close()
+def get_active_contract(client_id):
+    """Get active contract for a client"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT
+                contract_id,
+                provider_name,
+                contract_number,
+                payment_schedule,
+                fee_type,
+                percent_rate,
+                flat_rate,
+                num_people
+            FROM contracts
+            WHERE client_id = ?
+            AND active = 'TRUE'
+            AND valid_to IS NULL
+            LIMIT 1
+        """, (client_id,))
+        return cursor.fetchone()
+    finally:
+        conn.close()
+def get_client_contracts(client_id: int):
+    """Get all contracts for a client ordered by active status and start date."""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT
+                contract_id,
+                client_id,
+                active,
+                contract_number,
+                provider_name,
+                contract_start_date,
+                fee_type,
+                percent_rate,
+                flat_rate,
+                payment_schedule,
+                notes,
+                num_people
+            FROM contracts
+            WHERE client_id = ?
+            AND valid_to IS NULL
+            ORDER BY
+                CASE WHEN active = 'TRUE' THEN 0 ELSE 1 END,
+                contract_start_date DESC
+        """, (client_id,))
+        return cursor.fetchall()
+    finally:
+        conn.close()
+def get_latest_payment(client_id):
+    """Get latest payment for a client"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT p.actual_fee, p.received_date, p.total_assets,
+                   p.applied_start_quarter, p.applied_start_year
+            FROM payments p
+            WHERE p.client_id = ?
+            AND p.valid_to IS NULL
+            ORDER BY p.received_date DESC
+            LIMIT 1
+        """, (client_id,))
+        return cursor.fetchone()
+    finally:
+        conn.close()
+def get_client_details(client_id):
+    """Get client details"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT display_name, full_name
+            FROM clients
+            WHERE client_id = ? AND valid_to IS NULL
+        """, (client_id,))
+        return cursor.fetchone()
+    finally:
+        conn.close()
+def calculate_rate_conversions(rate_value, fee_type, schedule):
+    """Calculate rate conversions based on payment schedule"""
+    if not rate_value or rate_value == 'N/A' or not schedule:
+        return 'N/A', None
+    try:
+        if fee_type == 'percentage':
+            rate = float(rate_value.strip('%')) / 100
+            if schedule.lower() == 'monthly':
+                return f"{rate*100:.3f}%", f"Q: {rate*3*100:.3f}% | A: {rate*12*100:.3f}%"
+            elif schedule.lower() == 'quarterly':
+                monthly = rate / 3
+                return f"{rate*100:.3f}%", f"M: {monthly*100:.3f}% | A: {rate*4*100:.3f}%"
+            else:  # annual
+                monthly = rate / 12
+                quarterly = rate / 4
+                return f"{rate*100:.3f}%", f"M: {monthly*100:.3f}% | Q: {quarterly*100:.3f}%"
+        else:  # flat rate
+            rate = float(rate_value.strip('$').replace(',', ''))
+            if schedule.lower() == 'monthly':
+                return f"${rate:,.2f}", f"Q: ${rate*3:,.2f} | A: ${rate*12:,.2f}"
+            elif schedule.lower() == 'quarterly':
+                monthly = rate / 3
+                return f"${rate:,.2f}", f"M: ${monthly:,.2f} | A: ${rate*4:,.2f}"
+            else:  # annual
+                monthly = rate / 12
+                quarterly = rate / 4
+                return f"${rate:,.2f}", f"M: ${monthly:,.2f} | Q: ${quarterly*100:.3f}%"
+    except:
+        return rate_value, None
+def get_contacts(client_id):
+    """Get all contacts for a client"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT contact_type, contact_name, phone, email, fax,
+                   physical_address, mailing_address, contact_id
+            FROM contacts
+            WHERE client_id = ?
+            AND valid_to IS NULL
+            ORDER BY
+                CASE contact_type
+                    WHEN 'Primary' THEN 1
+                    WHEN 'Authorized' THEN 2
+                    WHEN 'Provider' THEN 3
+                    ELSE 4
+                END,
+                contact_name
+        """, (client_id,))
+        return cursor.fetchall()
+    finally:
+        conn.close()
+def get_all_contracts(client_id):
+    """Get all contracts for a client"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT contract_id, active, contract_number, provider_name,
+                   contract_start_date, fee_type, percent_rate, flat_rate,
+                   payment_schedule, payment_type, num_people, notes
+            FROM contracts
+            WHERE client_id = ?
+            ORDER BY
+                CASE WHEN active = 'TRUE' THEN 0 ELSE 1 END,
+                contract_start_date DESC
+        """, (client_id,))
+        return cursor.fetchall()
+    finally:
+        conn.close()
+def get_payment_history(client_id, years=None, quarters=None):
+    """Get payment history for a client with optional year/quarter filters"""
+    ensure_summaries_initialized()  # Add this line
+    base_query = """
+        SELECT
+            c.provider_name,
+            p.applied_start_quarter,
+            p.applied_start_year,
+            p.applied_end_quarter,
+            p.applied_end_year,
+            c.payment_schedule,
+            p.received_date,
+            p.total_assets,
+            p.expected_fee,
+            p.actual_fee,
+            p.notes,
+            p.payment_id,
+            p.method
+        FROM payments p
+        JOIN contracts c ON p.contract_id = c.contract_id
+        JOIN quarterly_summaries qs ON  -- Add this JOIN
+            p.client_id = qs.client_id AND
+            p.applied_start_year = qs.year AND
+            p.applied_start_quarter = qs.quarter
+        WHERE p.client_id = ?
+    """
+    params = [client_id]
+    if years and len(years) > 0:
+        year_placeholders = ','.join(['?' for _ in years])
+        base_query += f" AND p.applied_start_year IN ({year_placeholders})"
+        params.extend(years)
+    if quarters and len(quarters) > 0:
+        quarter_placeholders = ','.join(['?' for _ in quarters])
+        base_query += f" AND p.applied_start_quarter IN ({quarter_placeholders})"
+        params.extend(quarters)
+    base_query += " ORDER BY p.received_date DESC, p.payment_id DESC"
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(base_query, params)
+        return cursor.fetchall()
+    finally:
+        conn.close()
+def update_payment_note(payment_id, new_note):
+    """Update payment note"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE payments
+            SET notes = ?
+            WHERE payment_id = ?
+        """, (new_note, payment_id))
+        conn.commit()
+        # Clear any cached data that might include this payment
+        if 'get_payment_history' in st.session_state:
+            st.session_state.get_payment_history.clear()
+    finally:
+        conn.close()
+    return True
+def format_phone_number_ui(number):
+    """Format phone number for UI display: (XXX) XXX-XXXX"""
+    if not number:
+        return ""
+    # Remove any non-digit characters
+    digits = ''.join(filter(str.isdigit, number))
+    # Progressive formatting as user types
+    if len(digits) <= 3:
+        return digits
+    elif len(digits) <= 6:
+        return f"({digits[:3]}) {digits[3:]}"
+    elif len(digits) <= 10:
+        return f"({digits[:3]}) {digits[3:6]}-{digits[6:]}"
+    return f"({digits[:3]}) {digits[3:6]}-{digits[6:10]}"
+def format_phone_number_db(number):
+    """Format phone number for database storage: XXX-XXX-XXXX"""
+    if not number:
+        return ""
+    # Remove any non-digit characters
+    digits = ''.join(filter(str.isdigit, number))
+    if len(digits) == 10:
+        return f"{digits[:3]}-{digits[3:6]}-{digits[6:]}"
+    return number
+def validate_phone_number(number):
+    """Validate phone number format"""
+    if not number:
+        return True  # Empty is valid as field is optional
+    digits = ''.join(filter(str.isdigit, number))
+    return len(digits) == 10
+def add_contact(client_id, contact_type, contact_data):
+    """Add a new contact to the database"""
+    # Clean up contact type to match database values
+    contact_type = contact_type.split()[0]  # Extract first word (Primary/Authorized/Provider)
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO contacts (
+                client_id, contact_type, contact_name, phone,
+                email, fax, physical_address, mailing_address
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            client_id,
+            contact_type,
+            contact_data.get('contact_name'),
+            contact_data.get('phone'),
+            contact_data.get('email'),
+            contact_data.get('fax'),
+            contact_data.get('physical_address'),
+            contact_data.get('mailing_address')
+        ))
+        conn.commit()
+        contact_id = cursor.lastrowid
+        # Clear contact-related caches
+        if hasattr(st.session_state, 'get_contacts'):
+            st.session_state.get_contacts.clear()
+        if hasattr(st.session_state, 'get_client_dashboard_data'):
+            st.session_state.get_client_dashboard_data.clear()
+        return contact_id
+    finally:
+        conn.close()
+def delete_contact(contact_id):
+    """Delete a contact from the database"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM contacts WHERE contact_id = ?", (contact_id,))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+def update_contact(contact_id, contact_data):
+    """Update an existing contact in the database"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE contacts
+            SET contact_name = ?,
+                phone = ?,
+                email = ?,
+                fax = ?,
+                physical_address = ?,
+                mailing_address = ?
+            WHERE contact_id = ?
+        """, (
+            contact_data.get('contact_name'),
+            contact_data.get('phone'),
+            contact_data.get('email'),
+            contact_data.get('fax'),
+            contact_data.get('physical_address'),
+            contact_data.get('mailing_address'),
+            contact_id
+        ))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+def get_total_payment_count(client_id):
+    """Get total number of payments for a client."""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM payments p
+            WHERE p.client_id = ?
+        """, (client_id,))
+        return cursor.fetchone()[0]
+    finally:
+        conn.close()
+def get_payment_year_quarters(client_id):
+    """Get all available year/quarter combinations for quick navigation."""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT DISTINCT
+                applied_start_year as year,
+                applied_start_quarter as quarter
+            FROM payments
+            WHERE client_id = ?
+            ORDER BY year DESC, quarter DESC
+        """, (client_id,))
+        return cursor.fetchall()
+    finally:
+        conn.close()
+def get_paginated_payment_history(client_id, offset=0, limit=None, years=None, quarters=None):
+    """Get paginated payment records with optional year/quarter filters."""
+    base_query = """
+        SELECT
+            c.provider_name,
+            p.applied_start_quarter,
+            p.applied_start_year,
+            p.applied_end_quarter,
+            p.applied_end_year,
+            c.payment_schedule,
+            p.received_date,
+            p.total_assets,
+            p.expected_fee,
+            p.actual_fee,
+            p.notes,
+            p.payment_id,
+            p.method
+        FROM payments p
+        JOIN contracts c ON p.contract_id = c.contract_id
+        WHERE p.client_id = ?
+    """
+    params = [client_id]
+    # Handle multiple years filter
+    if years and len(years) > 0:
+        year_placeholders = ','.join(['?' for _ in years])
+        base_query += f" AND p.applied_start_year IN ({year_placeholders})"
+        params.extend(years)
+    # Handle multiple quarters filter
+    if quarters and len(quarters) > 0:
+        quarter_placeholders = ','.join(['?' for _ in quarters])
+        base_query += f" AND p.applied_start_quarter IN ({quarter_placeholders})"
+        params.extend(quarters)
+    base_query += " ORDER BY p.received_date DESC, p.payment_id DESC"
+    if limit is not None:
+        base_query += f" LIMIT {limit} OFFSET {offset}"
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(base_query, params)
+        return cursor.fetchall()
+    finally:
+        conn.close()
+def format_payment_data(payments):
+    """Format payment data for display with consistent formatting."""
+    table_data = []
+    for payment in payments:
+        provider_name = payment[0] or "N/A"
+        # Format payment period with Q prefix
+        if payment[1] payment[3] and payment[2] payment[4]:
+            period = f"Q{payment[1]} {payment[2]}"
+        else:
+            period = f"Q{payment[1]} {payment[2]} - Q{payment[3]} {payment[4]}"
+        frequency = payment[5].title() if payment[5] else "N/A"
+        # Format date
+        received_date = "N/A"
+        if payment[6]:
+            try:
+                date_obj = datetime.strptime(payment[6], '%Y-%m-%d')
+                received_date = date_obj.strftime('%b %d, %Y')
+            except:
+                received_date = payment[6]
+        # Format currency values
+        def format_currency(value):
+            try:
+                if value is None or value == "":
+                    return "N/A"
+                return f"${float(value):,.2f}"
+            except (ValueError, TypeError):
+                return "N/A"
+        total_assets = format_currency(payment[7])
+        expected_fee = format_currency(payment[8])
+        actual_fee = format_currency(payment[9])
+        # Calculate fee discrepancy
+        try:
+            if payment[8] is not None and payment[9] is not None and payment[8] != "" and payment[9] != "":
+                discrepancy = float(payment[9]) - float(payment[8])
+                discrepancy_str = f"${discrepancy:,.2f}" if discrepancy >= 0 else f"-${abs(discrepancy):,.2f}"
+            else:
+                discrepancy_str = "N/A"
+        except (ValueError, TypeError):
+            discrepancy_str = "N/A"
+        method = payment[11] or "N/A"  # Add method to display
+        notes = payment[10] or ""
+        payment_id = payment[12]
+        table_data.append({
+            "Provider": provider_name,
+            "Period": period,
+            "Frequency": frequency,
+            "Received": received_date,
+            "Total Assets": total_assets,
+            "Expected Fee": expected_fee,
+            "Actual Fee": actual_fee,
+            "Discrepancy": discrepancy_str,
+            "Method": method,  # Add method to returned data
+            "Notes": notes,
+            "payment_id": payment_id
+        })
+    return table_data
+def get_active_contracts_for_client(client_id):
+    """Get all active contracts for a client for payment provider selection"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT
+                contract_id,
+                provider_name,
+                contract_number,
+                payment_schedule,
+                fee_type,
+                percent_rate,
+                flat_rate
+            FROM contracts
+            WHERE client_id = ? AND active = 'TRUE'
+            ORDER BY contract_start_date DESC
+        """, (client_id,))
+        return cursor.fetchall()
+    finally:
+        conn.close()
+def format_currency_db(amount):
+    """Format currency for database storage: Convert UI format to decimal"""
+    if not amount:
+        return None
+    try:
+        # Remove any non-numeric characters except decimal point
+        cleaned = ''.join(c for c in str(amount) if c.isdigit() or c == '.')
+        # Convert to float
+        return float(cleaned)
+    except (ValueError, TypeError):
+        return None
+def format_currency_ui(amount):
+    """Format currency for UI display: $X,XXX.XX"""
+    if amount is None or amount == "":
+        return ""
+    try:
+        # Remove any non-numeric characters except decimal point
+        cleaned = ''.join(c for c in str(amount) if c.isdigit() or c == '.')
+        # Convert to float and format
+        value = float(cleaned)
+        return f"${value:,.2f}"
+    except (ValueError, TypeError):
+        return str(amount)
+def validate_payment_data(data):
+    """Validate payment data before saving to database"""
+    errors = []
+    # Check required fields
+    if not data.get('received_date'):
+        errors.append("Please enter when the payment was received")
+    # Validate payment amount
+    actual_fee = data.get('actual_fee', '')
+    if not actual_fee:
+        errors.append("Please enter the payment amount")
+    elif actual_fee == "$0.00":
+        errors.append("Please enter a payment amount")
+    # Get schedule info
+    schedule = data.get('payment_schedule', '').lower()
+    if not schedule:
+        errors.append("Payment schedule must be set in the contract before adding payments")
+        return errors
+    # Simple period validation
+    current_month = datetime.now().month
+    current_year = datetime.now().year
+    current_quarter = (current_month - 1)
+    start_period = data.get('applied_start_period')
+    start_year = data.get('applied_start_year')
+    end_period = data.get('applied_end_period')
+    end_year = data.get('applied_end_year')
+    # Validate start period is in arrears
+    if start_year > current_year or (start_year == current_year and start_period >= current_quarter):
+        errors.append("Payment must be for a previous period (in arrears)")
+    # If multi-period, validate end period
+    if end_period != start_period or end_year != start_year:
+        # Validate end period is in arrears
+        if end_year > current_year or (end_year == current_year and end_period >= current_quarter):
+            errors.append("End period must be in arrears")
+        # Validate end period is after start period
+        start_absolute = start_year * 4 + start_period
+        end_absolute = end_year * 4 + end_period
+        if end_absolute < start_absolute:
+            errors.append("End period cannot be before start period")
+    return errors
+def add_payment(client_id, payment_data):
+    """Add a new payment to the database"""
+    from .summaries import update_all_summaries
+    max_retries = 3
+    retry_count = 0
+    while retry_count < max_retries:
+        try:
+            contract = get_active_contract(client_id)
+            print(f"Active Contract: {contract}")
+            if not contract:
+                print("No active contract found!")
+                return None
+            conn = get_database_connection()
+            cursor = conn.cursor()
+            schedule = payment_data.get('payment_schedule', '').lower()
+            if schedule == 'monthly':
+                start_quarter = (payment_data['applied_start_period'] - 1)
+                end_quarter = (payment_data['applied_end_period'] - 1)
+            else:
+                start_quarter = payment_data['applied_start_period']
+                end_quarter = payment_data['applied_end_period']
+            values = (
+                client_id,
+                contract[0],
+                payment_data['received_date'],
+                start_quarter,
+                payment_data['applied_start_year'],
+                end_quarter,
+                payment_data['applied_end_year'],
+                format_currency_db(payment_data.get('total_assets')),
+                format_currency_db(payment_data.get('expected_fee')),
+                format_currency_db(payment_data.get('actual_fee')),
+                payment_data.get('method'),
+                payment_data.get('notes', '')
+            )
+            cursor.execute("""
+                INSERT INTO payments (
+                    client_id, contract_id, received_date,
+                    applied_start_quarter, applied_start_year,
+                    applied_end_quarter, applied_end_year,
+                    total_assets, expected_fee, actual_fee,
+                    method, notes
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, values)
+            payment_id = cursor.lastrowid
+            # Commit the payment first
+            conn.commit()
+            # Now update summaries in a separate transaction
+            update_all_summaries(client_id, payment_data['applied_start_year'], start_quarter)
+            return payment_id
+        except sqlite3.Error as e:
+            print(f"Database error (attempt {retry_count + 1}): {e}")
+            if conn:
+                conn.close()
+            retry_count += 1
+            if retry_count < max_retries:
+                import time
+                time.sleep(0.5)
+    return None
+def get_payment_by_id(payment_id):
+    """Get complete payment data for editing"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT
+                p.received_date,
+                p.applied_start_quarter,
+                p.applied_start_year,
+                p.applied_end_quarter,
+                p.applied_end_year,
+                p.total_assets,
+                p.actual_fee,
+                p.method,
+                p.notes,
+                c.payment_schedule
+            FROM payments p
+            JOIN contracts c ON p.contract_id = c.contract_id
+            WHERE p.payment_id = ?
+        """, (payment_id,))
+        result = cursor.fetchone()
+        return result
+    finally:
+        conn.close()
+def get_client_dashboard_data(client_id):
+    """Get all necessary client data for the dashboard in a single database call"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        # Get contacts
+        cursor.execute("""
+            SELECT
+                contact_type, contact_name, phone, email,
+                fax, physical_address, mailing_address, contact_id
+            FROM contacts
+            WHERE client_id = ?
+            ORDER BY
+                CASE contact_type
+                    WHEN 'Primary Contact' THEN 1
+                    WHEN 'Authorized Contact' THEN 2
+                    WHEN 'Provider Contact' THEN 3
+                    ELSE 4
+                END,
+                contact_name
+        """, (client_id,))
+        contacts = [
+            {
+                'contact_type': row[0],
+                'contact_name': row[1],
+                'phone': row[2],
+                'email': row[3],
+                'fax': row[4],
+                'physical_address': row[5],
+                'mailing_address': row[6],
+                'contact_id': row[7]
+            }
+            for row in cursor.fetchall()
+        ]
+        # Get active contract
+        cursor.execute("""
+            SELECT
+                contract_id, provider_name, contract_number,
+                payment_schedule, fee_type, percent_rate,
+                flat_rate, num_people
+            FROM contracts
+            WHERE client_id = ? AND active = 'TRUE'
+            LIMIT 1
+        """, (client_id,))
+        contract_row = cursor.fetchone()
+        active_contract = None
+        if contract_row:
+            active_contract = {
+                'contract_id': contract_row[0],
+                'provider_name': contract_row[1],
+                'contract_number': contract_row[2],
+                'payment_schedule': contract_row[3],
+                'fee_type': contract_row[4],
+                'percent_rate': contract_row[5],
+                'flat_rate': contract_row[6],
+                'num_people': contract_row[7]
+            }
+        # Get recent payments with contract info
+        cursor.execute("""
+            SELECT
+                p.payment_id,
+                c.provider_name,
+                p.applied_start_quarter,
+                p.applied_start_year,
+                p.applied_end_quarter,
+                p.applied_end_year,
+                c.payment_schedule,
+                p.received_date,
+                p.total_assets,
+                p.expected_fee,
+                p.actual_fee,
+                p.notes
+            FROM payments p
+            JOIN contracts c ON p.contract_id = c.contract_id
+            WHERE p.client_id = ?
+            ORDER BY p.received_date DESC
+            LIMIT 50
+        """, (client_id,))
+        recent_payments = [
+            {
+                'payment_id': row[0],
+                'provider_name': row[1],
+                'applied_start_quarter': row[2],
+                'applied_start_year': row[3],
+                'applied_end_quarter': row[4],
+                'applied_end_year': row[5],
+                'payment_schedule': row[6],
+                'received_date': row[7],
+                'total_assets': row[8],
+                'expected_fee': row[9],
+                'actual_fee': row[10],
+                'notes': row[11]
+            }
+            for row in cursor.fetchall()
+        ]
+        return {
+            'contacts': contacts,
+            'active_contract': active_contract,
+            'recent_payments': recent_payments
+        }
+    finally:
+        conn.close()
+def delete_payment(payment_id):
+    """Delete a payment from the database"""
+    from .summaries import update_all_summaries
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        # Get payment data for summary updates
+        cursor.execute("SELECT client_id, applied_start_year, applied_start_quarter FROM payments WHERE payment_id = ?", (payment_id,))
+        payment_data = cursor.fetchone()
+        cursor.execute("DELETE FROM payments WHERE payment_id = ?", (payment_id,))
+        # Commit the deletion first
+        conn.commit()
+        # Now update summaries in a separate transaction
+        if payment_data:
+            update_all_summaries(payment_data[0], payment_data[1], payment_data[2])
+        return True
+    finally:
+        conn.close()
+def get_unique_payment_methods():
+    """Get all unique payment methods from the database, including 'None Specified' and 'Other'"""
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT DISTINCT method
+            FROM payments
+            WHERE method IS NOT NULL
+            UNION
+            SELECT 'None Specified'
+            ORDER BY method
+        """)
+        methods = [row[0] if row[0] is not None else 'None Specified' for row in cursor.fetchall()]
+        if 'Other' not in methods:
+            methods.append('Other')
+        return methods
+    finally:
+        conn.close()
+def update_payment(payment_id: int, form_data: Dict[str, Any]) -> bool:
+    """Update an existing payment in the database."""
+    from .summaries import update_all_summaries
+    try:
+        total_assets = format_currency_db(form_data.get('total_assets'))
+        actual_fee = format_currency_db(form_data.get('actual_fee'))
+        conn = get_database_connection()
+        cursor = conn.cursor()
+        # Get original payment data for summary updates
+        cursor.execute("SELECT client_id, applied_start_year, applied_start_quarter FROM payments WHERE payment_id = ?", (payment_id,))
+        old_data = cursor.fetchone()
+        cursor.execute("""
+            UPDATE payments
+            SET received_date = ?,
+                applied_start_quarter = ?,
+                applied_start_year = ?,
+                applied_end_quarter = ?,
+                applied_end_year = ?,
+                total_assets = ?,
+                actual_fee = ?,
+                method = ?,
+                notes = ?
+            WHERE payment_id = ?
+        """, (
+            form_data['received_date'],
+            form_data['applied_start_period'],
+            form_data['applied_start_year'],
+            form_data['applied_end_period'],
+            form_data['applied_end_year'],
+            total_assets,
+            actual_fee,
+            form_data.get('method'),
+            form_data.get('notes'),
+            payment_id
+        ))
+        # Commit the update first
+        conn.commit()
+        # Now update summaries for both old and new periods in separate transactions
+        update_all_summaries(old_data[0], old_data[1], old_data[2])  # Update old period
+        if old_data[1] != form_data['applied_start_year'] or old_data[2] != form_data['applied_start_period']:
+            update_all_summaries(old_data[0], form_data['applied_start_year'], form_data['applied_start_period'])  # Update new period
+        return True
+    except Exception as e:
+        st.error(f"Error updating payment: {str(e)}")
+        return False
+    finally:
+        conn.close()
+def save_contract(client_id: int, contract_data: Dict[str, Any], mode: str = 'add') -> bool:
+    """Save contract to database.
+    Args:
+        client_id: The ID of the client
+        contract_data: Dictionary containing contract data
+        mode: Either 'add' for new contract or 'edit' for updating existing
+    Returns:
+        bool: True if save was successful, False otherwise
+    """
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        # If adding new contract, deactivate current active contract
+        if mode == 'add':
+            cursor.execute("""
+                UPDATE contracts
+                SET active = 'FALSE'
+                WHERE client_id = ? AND active = 'TRUE'
+            """, (client_id,))
+        # Insert new contract or update existing
+        if mode == 'add':
+            cursor.execute("""
+                INSERT INTO contracts (
+                    client_id, active, contract_number, provider_name,
+                    contract_start_date, fee_type, percent_rate, flat_rate,
+                    payment_schedule, num_people, notes
+                ) VALUES (?, 'TRUE', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                client_id,
+                contract_data.get('contract_number'),
+                contract_data.get('provider_name'),
+                contract_data.get('contract_start_date'),
+                contract_data.get('fee_type'),
+                contract_data.get('percent_rate'),
+                contract_data.get('flat_rate'),
+                contract_data.get('payment_schedule'),
+                contract_data.get('num_people'),
+                contract_data.get('notes')
+            ))
+        else:
+            cursor.execute("""
+                UPDATE contracts SET
+                    contract_number = ?,
+                    provider_name = ?,
+                    contract_start_date = ?,
+                    fee_type = ?,
+                    percent_rate = ?,
+                    flat_rate = ?,
+                    payment_schedule = ?,
+                    num_people = ?,
+                    notes = ?
+                WHERE contract_id = ? AND active = 'TRUE'
+            """, (
+                contract_data.get('contract_number'),
+                contract_data.get('provider_name'),
+                contract_data.get('contract_start_date'),
+                contract_data.get('fee_type'),
+                contract_data.get('percent_rate'),
+                contract_data.get('flat_rate'),
+                contract_data.get('payment_schedule'),
+                contract_data.get('num_people'),
+                contract_data.get('notes'),
+                contract_data.get('contract_id')
+            ))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error saving contract: {e}")
+        return False
+    finally:
+        conn.close()
+def validate_contract_data(data: Dict[str, Any]) -> list:
+    """Validate contract data before saving.
+    Args:
+        data: Dictionary containing contract data to validate
+    Returns:
+        list: List of validation error messages, empty if valid
+    """
+    errors = []
+    if not data.get('provider_name', '').strip():
+        errors.append("Provider name is required")
+    if data.get('fee_type') == 'percentage':
+        if not data.get('percent_rate') or data.get('percent_rate') <= 0:
+            errors.append("Please enter a valid rate percentage greater than 0")
+    else:
+        if not data.get('flat_rate') or data.get('flat_rate') <= 0:
+            errors.append("Please enter a valid flat rate amount greater than 0")
+    if not data.get('payment_schedule'):
+        errors.append("Payment schedule is required")
+    try:
+        start_date = datetime.strptime(data.get('contract_start_date', ''), '%Y-%m-%d')
+        if start_date > datetime.now():
+            errors.append("Contract start date cannot be in the future")
+    except ValueError:
+        errors.append("Invalid contract start date")
+    return errors
+def add_client(display_name: str, **optional_fields) -> int:
+    """
+    Add a new client to the database.
+    Args:
+        display_name (str): Required display name for the client
+        **optional_fields: Optional fields (full_name, ima_signed_date, file paths)
+    Returns:
+        int: The new client_id
+    """
+    if not display_name:
+        raise ValueError("display_name is required")
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        # Build the query dynamically based on provided fields
+        fields = ['display_name'] + list(optional_fields.keys())
+        placeholders = ['?'] * len(fields)
+        values = [display_name] + list(optional_fields.values())
+        query = f"""
+            INSERT INTO clients ({', '.join(fields)})
+            VALUES ({', '.join(placeholders)})
+        """
+        cursor.execute(query, values)
+        conn.commit()
+        return cursor.lastrowid
+    finally:
+        conn.close()
+def update_client(client_id: int, **fields_to_update) -> bool:
+    """
+    Update an existing client's information.
+    Args:
+        client_id (int): The ID of the client to update
+        **fields_to_update: Fields to update and their new values
+    Returns:
+        bool: True if successful
+    """
+    if not fields_to_update:
+        return False
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        # Build the update query dynamically
+        set_clause = ', '.join(f"{field} = ?" for field in fields_to_update.keys())
+        values = list(fields_to_update.values()) + [client_id]
+        query = f"""
+            UPDATE clients
+            SET {set_clause}
+            WHERE client_id = ?
+        """
+        cursor.execute(query, values)
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+def delete_client(client_id: int) -> bool:
+    """
+    Delete a client and all related records.
+    Args:
+        client_id (int): The ID of the client to delete
+    Returns:
+        bool: True if successful
+    """
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        # Start a transaction
+        cursor.execute("BEGIN TRANSACTION")
+        # Delete related records first (foreign key relationships)
+        cursor.execute("DELETE FROM payments WHERE client_id = ?", (client_id,))
+        cursor.execute("DELETE FROM contracts WHERE client_id = ?", (client_id,))
+        cursor.execute("DELETE FROM contacts WHERE client_id = ?", (client_id,))
+        # Finally delete the client
+        cursor.execute("DELETE FROM clients WHERE client_id = ?", (client_id,))
+        # Commit the transaction
+        conn.commit()
+        return True
+    except Exception as e:
+        # Rollback on error
+        conn.rollback()
+        logger.error(f"Error deleting client {client_id}: {str(e)}")
+        return False
+    finally:
+        conn.close()
+def get_client_file_paths(client_id: int) -> dict:
+    """Get document file paths for a specific client.
+    Args:
+        client_id: The ID of the client
+    Returns:
+        dict: Dictionary containing the document paths with keys:
+            - account_documentation
+            - consulting_fees
+            - meetings
+        Returns None if client not found
+    """
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT
+                file_path_account_documentation,
+                file_path_consulting_fees,
+                file_path_meetings
+            FROM clients
+            WHERE client_id = ?
+        """, (client_id,))
+        result = cursor.fetchone()
+        if result:
+            return {
+                'account_documentation': result[0],
+                'consulting_fees': result[1],
+                'meetings': result[2]
+            }
+        return None
+    finally:
+        conn.close()
+def get_onedrive_root() -> Optional[str]:
+    """Get the OneDrive root path for the current user."""
+    system = platform.system()
+    if system == "Windows":
+        # Standard OneDrive path on Windows
+        onedrive_path = os.path.expandvars("%USERPROFILE%/OneDrive")
+        if os.path.exists(onedrive_path):
+            return onedrive_path
+        # Business OneDrive path pattern
+        business_path = os.path.expandvars("%USERPROFILE%/OneDrive - Hohimer Wealth Management")
+        if os.path.exists(business_path):
+            return business_path
+    return None
+def validate_shared_path(full_path: str) -> Tuple[bool, str]:
+    """
+    Validate if a path is within the shared OneDrive system.
+    Returns (is_valid, error_message)
+    """
+    if not full_path:
+        return False, "Path cannot be empty"
+    # Clean the path
+    clean_path = full_path.strip().replace('\\', '/')
+    # Check if path contains the company identifier
+    if "hohimer wealth management" not in clean_path.lower():
+        return False, "Path must be within the Hohimer Wealth Management shared folder"
+    # Get OneDrive root
+    onedrive_root = get_onedrive_root()
+    if not onedrive_root:
+        return False, "Could not locate OneDrive folder"
+    # Construct full path
+    try:
+        full_path = os.path.join(onedrive_root, clean_path)
+        # Convert to Path object for validation
+        path_obj = Path(full_path)
+        # Check if path exists
+        if not path_obj.exists():
+            return False, f"Path does not exist: {clean_path}"
+        # Ensure path is within OneDrive root
+        if not str(path_obj).lower().startswith(onedrive_root.lower()):
+            return False, "Path must be within OneDrive shared folder"
+        return True, ""
+    except Exception as e:
+        return False, f"Invalid path: {str(e)}"
+def normalize_shared_path(full_path: str) -> Optional[str]:
+    """
+    Convert a full path to a relative path within the shared system.
+    Returns None if path is invalid.
+    """
+    if not full_path:
+        return None
+    # Clean the path
+    clean_path = full_path.strip().replace('\\', '/')
+    lower_path = clean_path.lower()
+    # Find the company identifier in the path
+    company_id = "hohimer wealth management"
+    if company_id not in lower_path:
+        return None
+    # Extract relative path
+    idx = lower_path.find(company_id)
+    relative_path = clean_path[idx:].rstrip('/')
+    # Validate the path exists
+    is_valid, _= validate_shared_path(relative_path)
+    if not is_valid:
+        return None
+    return relative_path
+def reconstruct_full_path(relative_path: str) -> Optional[str]:
+    """
+    Reconstruct a full path from a relative path for the current user.
+    Returns None if path cannot be reconstructed.
+    """
+    if not relative_path:
+        return None
+    onedrive_root = get_onedrive_root()
+    if not onedrive_root:
+        return None
+    try:
+        full_path = os.path.join(onedrive_root, relative_path)
+        path_obj = Path(full_path)
+        # Validate the path exists
+        if not path_obj.exists():
+            return None
+        return str(path_obj)
+    except:
+        return None
+def ensure_summaries_initialized() -> bool:
+    """Ensure summary tables are populated and triggers are active."""
+    from .summaries import populate_all_summaries
+    from .triggers import check_triggers_exist, initialize_triggers
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        # Check if summary tables have data
+        cursor.execute("SELECT COUNT(*) FROM quarterly_summaries")
+        has_quarterly = cursor.fetchone()[0] > 0
+        cursor.execute("SELECT COUNT(*) FROM yearly_summaries")
+        has_yearly = cursor.fetchone()[0] > 0
+        cursor.execute("SELECT COUNT(*) FROM client_metrics")
+        has_metrics = cursor.fetchone()[0] > 0
+        # Initialize triggers if needed
+        if not check_triggers_exist():
+            if not initialize_triggers():
+                return False
+        # Populate summaries if empty
+        if not (has_quarterly and has_yearly and has_metrics):
+            if not populate_all_summaries():
+                return False
+        return True
+    except Exception as e:
+        print(f"Error initializing summaries: {str(e)}")
+        return False
+    finally:
+        conn.close()
+def get_summary_metrics(client_id: int, year: int = None, quarter: int = None) -> Dict[str, Any]:
+    """Get summary metrics for a client with optional period filtering."""
+    if year is None:
+        year = datetime.now().year
+    if quarter is None:
+        quarter = (datetime.now().month - 1)
+    conn = get_database_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT
+                qs.total_payments,
+                qs.total_assets,
+                qs.payment_count,
+                qs.avg_payment,
+                qs.expected_total,
+                ys.yoy_growth,
+                cm.last_payment_date,
+                cm.last_payment_amount,
+                cm.total_ytd_payments,
+                cm.avg_quarterly_payment
+            FROM quarterly_summaries qs
+            LEFT JOIN yearly_summaries ys ON
+                qs.client_id = ys.client_id AND
+                qs.year = ys.year
+            LEFT JOIN client_metrics cm ON
+                qs.client_id = cm.client_id
+            WHERE qs.client_id = ?
+            AND qs.year = ?
+            AND qs.quarter = ?
+        """, (client_id, year, quarter))
+        row = cursor.fetchone()
+        if not row:
+            return None
+        return {
+            'total_payments': row[0],
+            'total_assets': row[1],
+            'payment_count': row[2],
+            'avg_payment': row[3],
+            'expected_total': row[4],
+            'yoy_growth': row[5],
+            'last_payment_date': row[6],
+            'last_payment_amount': row[7],
+            'total_ytd_payments': row[8],
+            'avg_quarterly_payment': row[9]
+        }
+    finally:
+        conn.close()
+```
+
+
+```
+# client_management.py
+import streamlit as st
+from utils.utils import (
+   add_client,
+   update_client,
+   delete_client,
+   get_clients,
+   get_client_details,
+   get_database_connection,
+   validate_shared_path,
+   normalize_shared_path,
+   reconstruct_full_path
+)
+from datetime import datetime
+import os
+import time
+
+def get_full_client_details(client_id: int):
+   conn = get_database_connection()
+   try:
+       cursor = conn.cursor()
+       cursor.execute("""
+           SELECT display_name, full_name, ima_signed_date,
+                  file_path_account_documentation,
+                  file_path_consulting_fees,
+                  file_path_meetings
+           FROM clients 
+           WHERE client_id = ?
+       """, (client_id,))
+       return cursor.fetchone()
+   finally:
+       conn.close()
+
+def show_manage_clients():
+   st.title("👥 Manage Clients")
+   
+   if "selected_client" not in st.session_state:
+       st.session_state.selected_client = None
+
+   st.markdown("""
+       <style>
+       .stButton>button {
+           height: 2.4rem;
+       }
+       div[data-testid="column"] {
+           padding: 0px 0.5rem;
+       }
+       </style>
+   """, unsafe_allow_html=True)
+       
+   col_main, col_form = st.columns([2, 1], gap="large")
+   
+   with col_main:
+       search_col, add_col = st.columns([3, 1])
+       with search_col:
+           search = st.text_input("🔍", 
+                                placeholder="Search clients...", 
+                                label_visibility="collapsed",
+                                key="client_search")
+       with add_col:
+           if st.button("➕ Add Client", type="primary", use_container_width=True):
+               st.session_state.selected_client = "new"
+               st.rerun()
+
+       with st.container(border=True):
+           show_client_list(search.lower() if search else "")
+
+   with col_form:
+       with st.container(border=True):
+           if st.session_state.selected_client == "new":
+               show_client_form("add")
+           elif st.session_state.selected_client:
+               show_client_form("edit", st.session_state.selected_client)
+           else:
+               st.info("Select a client to edit or click 'Add Client' to create one.")
+
+def show_client_list(search: str):
+   clients = get_clients()
+   filtered = [c for c in clients if search in c[1].lower()]
+   
+   total = len(clients)
+   filtered_count = len(filtered)
+   
+   st.caption(f"Found {filtered_count} of {total} clients" if search else f"Total Clients: {total}")
+   
+   if not filtered:
+       st.info("No clients found" if search else "No clients added yet")
+       return
+
+   # Generate a unique session ID if not exists
+   if 'session_id' not in st.session_state:
+       st.session_state.session_id = int(time.time() * 1000)
+
+   for idx, (client_id, display_name) in enumerate(filtered):
+       with st.container():
+           # Use session_id in the key to make it unique across sessions
+           is_deleting = st.session_state.get(f"confirm_delete_{client_id}_{st.session_state.session_id}", False)
+           
+           if is_deleting:
+               with st.container(border=True):
+                   st.error(f"⚠️ Delete {display_name}?")
+                   st.caption("This action cannot be undone")
+                   col1, col2 = st.columns(2)
+                   with col1:
+                       if st.button("✓ Confirm", 
+                                  key=f"confirm_{client_id}_{idx}_{st.session_state.session_id}", 
+                                  type="primary", 
+                                  use_container_width=True):
+                           if delete_client(client_id):
+                               st.rerun()
+                   with col2:
+                       if st.button("✗ Cancel", 
+                                  key=f"cancel_{client_id}_{idx}_{st.session_state.session_id}", 
+                                  use_container_width=True):
+                           del st.session_state[f"confirm_delete_{client_id}_{st.session_state.session_id}"]
+                           
+           details = get_full_client_details(client_id)
+           col_name, col_full, col_edit, col_del = st.columns([2, 4, 0.8, 0.8])
+           
+           with col_name:
+               st.write(display_name)
+           with col_full:
+               st.write(details[1] if details and details[1] else "—")
+           with col_edit:
+               if st.button("✏️", 
+                          key=f"edit_{client_id}_{idx}_{st.session_state.session_id}", 
+                          use_container_width=True):
+                   st.session_state.selected_client = client_id
+                   st.rerun()
+           with col_del:
+               if st.button("🗑️", 
+                          key=f"del_{client_id}_{idx}_{st.session_state.session_id}", 
+                          use_container_width=True):
+                   st.session_state[f"confirm_delete_{client_id}_{st.session_state.session_id}"] = True
+                   st.rerun()
+           st.divider()
+
+def show_client_form(mode="add", client_id=None):
+   client_data = get_full_client_details(client_id) if mode == "edit" and client_id else None
+   
+   # Generate a unique form key using session_id
+   if 'session_id' not in st.session_state:
+       st.session_state.session_id = int(time.time() * 1000)
+   form_key = f"client_form_{mode}_{st.session_state.session_id}"
+   
+   with st.form(form_key, clear_on_submit=True):
+       st.write("✨ New Client" if mode == "add" else f"✏️ Edit Client: {client_data[0]}" if client_data else "✏️ Edit Client")
+       
+       col1, col2 = st.columns([1,1])
+       with col1:
+           display_name = st.text_input("Display Name*", 
+                                      value=client_data[0] if client_data else "",
+                                      placeholder="Required")
+       with col2:
+           full_name = st.text_input("Full Name", 
+                                   value=client_data[1] if client_data else "",
+                                   placeholder="Optional")
+       
+       ima_date = st.date_input("IMA Signed Date",
+                               value=datetime.strptime(client_data[2], '%Y-%m-%d').date() 
+                               if client_data and client_data[2] else None)
+
+       st.write("📁 Document Folders")
+       st.caption("Paste full path from OneDrive or use relative path from 'Hohimer Wealth Management'")
+       
+       # Get current paths for validation messages
+       current_paths = {
+           'docs': client_data[3] if client_data else None,
+           'fees': client_data[4] if client_data else None,
+           'meetings': client_data[5] if client_data else None
+       }
+       
+       # Documentation path
+       docs_col1, docs_col2 = st.columns([3, 1])
+       with docs_col1:
+           docs_path = st.text_input(
+               "Account Documentation", 
+               value=current_paths['docs'] if current_paths['docs'] else "",
+               placeholder="Current Plans/Client Name/Documentation"
+           )
+       with docs_col2:
+           if docs_path:
+               is_valid, error_msg = validate_shared_path(docs_path)
+               if is_valid:
+                   st.success("✓ Valid path")
+               else:
+                   st.error("⚠ " + error_msg)
+       
+       # Fees path
+       fees_col1, fees_col2 = st.columns([3, 1])
+       with fees_col1:
+           fees_path = st.text_input(
+               "Consulting Fees",
+               value=current_paths['fees'] if current_paths['fees'] else "",
+               placeholder="Current Plans/Client Name/Fees"
+           )
+       with fees_col2:
+           if fees_path:
+               is_valid, error_msg = validate_shared_path(fees_path)
+               if is_valid:
+                   st.success("✓ Valid path")
+               else:
+                   st.error("⚠ " + error_msg)
+       
+       # Meetings path
+       meetings_col1, meetings_col2 = st.columns([3, 1])
+       with meetings_col1:
+           meetings_path = st.text_input(
+               "Meetings",
+               value=current_paths['meetings'] if current_paths['meetings'] else "",
+               placeholder="Current Plans/Client Name/Meetings"
+           )
+       with meetings_col2:
+           if meetings_path:
+               is_valid, error_msg = validate_shared_path(meetings_path)
+               if is_valid:
+                   st.success("✓ Valid path")
+               else:
+                   st.error("⚠ " + error_msg)
+
+       col1, col2 = st.columns(2)
+       with col1:
+           submitted = st.form_submit_button(
+               "Save Changes" if mode == "edit" else "Add Client",
+               type="primary",
+               use_container_width=True
+           )
+       with col2:
+           if st.form_submit_button("Cancel", use_container_width=True):
+               st.session_state.selected_client = None
+               st.rerun()
+
+       if submitted:
+           if not display_name:
+               st.error("Display Name is required")
+               return
+
+           try:
+               # Validate all paths before saving
+               paths_to_validate = {
+                   'Account Documentation': docs_path,
+                   'Consulting Fees': fees_path,
+                   'Meetings': meetings_path
+               }
+               
+               invalid_paths = []
+               for path_name, path in paths_to_validate.items():
+                   if path:
+                       is_valid, error_msg = validate_shared_path(path)
+                       if not is_valid:
+                           invalid_paths.append(f"{path_name}: {error_msg}")
+               
+               if invalid_paths:
+                   st.error("Invalid paths found:\n" + "\n".join(invalid_paths))
+                   return
+
+               data = {
+                   "full_name": full_name if full_name else None,
+                   "ima_signed_date": ima_date.strftime('%Y-%m-%d') if ima_date else None,
+                   "file_path_account_documentation": normalize_shared_path(docs_path),
+                   "file_path_consulting_fees": normalize_shared_path(fees_path),
+                   "file_path_meetings": normalize_shared_path(meetings_path)
+               }
+
+               success = False
+               if mode == "add":
+                   new_id = add_client(display_name, **data)
+                   success = bool(new_id)
+               else:
+                   success = update_client(client_id, display_name=display_name, **data)
+
+               if success:
+                   st.toast(f"Successfully {'added' if mode == 'add' else 'updated'} client: {display_name}")
+                   st.session_state.selected_client = None
+                   time.sleep(0.5)
+                   st.rerun()
+               else:
+                   st.error(f"Failed to {'add' if mode == 'add' else 'update'} client")
+                   
+           except Exception as e:
+               if "UNIQUE constraint" in str(e):
+                   st.error("A client with this display name already exists")
+               else:
+                   st.error(f"Error: {str(e)}")
+				   ```
+				   
+			```
+# app.py
+import streamlit as st
+
+# Configure the page - MUST be first Streamlit command
+st.set_page_config(
+    page_title="401K Payment Tracker",
+    page_icon="💰",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Simple tab-based navigation
+tabs = st.tabs([
+    "📊 Quarterly Summary",
+    "👥 Client Dashboard", 
+    "⚙️ Manage Clients",
+    "📝 Bulk Payment Entry",
+    "📊 Export Data"
+])
+
+# Render the selected page based on tab
+with tabs[0]:  # Quarterly Summary
+    from pages_new.main_summary.summary import show_main_summary
+    show_main_summary()
+
+with tabs[1]:  # Client Dashboard
+    from pages_new.client_display_and_forms.client_dashboard import show_client_dashboard
+    show_client_dashboard()
+
+with tabs[2]:  # Manage Clients
+    from pages_new.manage_clients.client_management import show_manage_clients
+    show_manage_clients()
+
+with tabs[3]:  # Bulk Payment Entry
+    from pages_new.bulk_payment.bulk_entry import show_bulk_payment_entry
+    show_bulk_payment_entry()
+
+with tabs[4]:  # Export Data
+    try:
+        from pages_new.document_export import show_export_data
+        show_export_data()
+    except Exception as e:
+        st.error(f"Error loading export module: {str(e)}")
+        st.error("Please check the console for more details.")
+    
+```
+
